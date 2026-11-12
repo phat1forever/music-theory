@@ -5,7 +5,7 @@ feedback, and tools for exploring scales and chords on the fretboard, the keyboa
 
 ## What is in it
 
-- **Lessons** in three tracks (45 lessons): music theory, guitar (first notes through to a full
+- **Lessons** in three tracks (56 lessons): music theory, guitar (first notes through to a full
   12-bar solo) and keyboard (finger numbers through to playing hands together). Each lesson has a
   goal, explanations with diagrams, something to play and a quick check. An optional placement
   check lets you skip what you already know.
@@ -13,13 +13,15 @@ feedback, and tools for exploring scales and chords on the fretboard, the keyboa
   fretboard or keyboard diagram of what to play. Listen to it, step through it note by note, or
   play in time with a metronome. Playing is checked by microphone, MIDI keyboard, or yourself.
   Passed exercises come back for review at a higher tempo.
+  Pieces can show key signatures, ties, 3/4 time and chord symbols; you can practise one hand or a
+  range of bars on a loop, with swing feel and backing chords where the piece calls for them.
 - **Explore**: any scale or chord in any key on the fretboard, keyboard, staff and tab, with the
   chords of the key, the circle of fifths, an interval ear trainer and a tuner.
 - **Chords**: build a chord sheet for a song. Pick chords, put them in your own order, and set the
   tuning (presets or per string) and capo; shapes are worked out for that setup.
   A key finder names the likely key, labels each chord with its Roman numeral and suggests scales
   to solo with; a chord identifier names any shape you tap out on the fretboard.
-- **Jam**: a looping backing track in four styles with the scale shown on the neck and the current
+- **Jam**: a looping backing track in ten styles with the scale shown on the neck and the current
   chord's notes highlighted.
 - Several players can keep separate progress. Everything is saved in the browser (localStorage).
 

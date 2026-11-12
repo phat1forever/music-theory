@@ -38,6 +38,8 @@ export interface Profile {
   input: InputMode
   leftHanded: boolean
   jamUnlocked: boolean
+  /** exercises tried at least once in any mode (step-by-step, one hand, a section, or in time) */
+  tried: string[]
   sheets: Sheet[]
   sheet: string | null
 }
@@ -60,6 +62,7 @@ function newProfile(name: string): Profile {
     input: 'self',
     leftHanded: false,
     jamUnlocked: false,
+    tried: [],
     sheets: [],
     sheet: null,
   }
@@ -126,12 +129,17 @@ export const actions = {
         ...p.exercises,
         [exerciseId]: recordAttempt(p.exercises[exerciseId], accuracy, tempo, today()),
       },
+      tried: p.tried.includes(exerciseId) ? p.tried : [...p.tried, exerciseId],
       days: withToday(p.days),
     }))
   },
   /** Count today as a practice day without changing any exercise's tempo record or review date. */
-  touch() {
-    patchProfile((p) => ({ ...p, days: withToday(p.days) }))
+  touch(exerciseId?: string) {
+    patchProfile((p) => ({
+      ...p,
+      days: withToday(p.days),
+      tried: exerciseId && !p.tried.includes(exerciseId) ? [...p.tried, exerciseId] : p.tried,
+    }))
   },
   setInput(input: InputMode) {
     patchProfile((p) => ({ ...p, input }))

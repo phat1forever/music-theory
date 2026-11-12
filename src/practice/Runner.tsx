@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { click, now, play, startTicker, type Ticker } from '../audio/audio'
+import { click, drum, now, play, startTicker, type Ticker } from '../audio/audio'
 import { Fretboard, type Mark } from '../components/Fretboard'
 import { InputBar } from '../components/InputBar'
 import { Keyboard, type KeyMark } from '../components/Keyboard'
@@ -7,8 +7,8 @@ import { Score } from '../components/Score'
 import type { Exercise } from '../curriculum/types'
 import { emitNote, onNote } from '../input/input'
 import { actions, useProfile } from '../store/store'
-import { BEATS, timeline, totalBeats, type Ev, type Piece } from '../theory/music'
-import { midiName, pretty } from '../theory/theory'
+import { barBeats, barChords, barCount, onsetEvents, sliceBars, timeline, totalBeats, type Onset, type Piece } from '../theory/music'
+import { chordMidi, midiName, mod, parseChord, pc, pretty } from '../theory/theory'
 import {
   gradeTimed,
   noteMatches,
@@ -23,51 +23,50 @@ import {
 
 type Mode = 'idle' | 'listen' | 'step' | 'tempo' | 'rate' | 'done'
 
-interface Timed {
-  beat: number
-  ev: Ev
-  hand: 'rh' | 'lh'
-}
-
-function events(piece: Piece): Timed[] {
-  const out: Timed[] = []
-  const add = (evs: Ev[], hand: 'rh' | 'lh') => {
-    let beat = 0
-    for (const ev of evs) {
-      if (ev.midi.length) out.push({ beat, ev, hand })
-      beat += BEATS[ev.dur]
-    }
-  }
-  add(piece.rh, 'rh')
-  if (piece.lh) add(piece.lh, 'lh')
-  return out
-}
-
-/** Play a piece through once with a moving cursor. Returns a stop function. */
+/**
+ * Play a piece with a moving cursor. Handles 3/4, swing, a count-in bar, a metronome, backing chords
+ * and looping. Returns the ticker, whose `stop()` ends playback.
+ */
 export async function playPiece(
   piece: Piece,
   bpm: number,
   onBeat: (beat: number | null) => void,
-  opts: { countIn?: boolean; metronome?: boolean; sound?: boolean } = {},
+  opts: { countIn?: boolean; metronome?: boolean; sound?: boolean; backing?: boolean; loop?: boolean } = {},
 ): Promise<Ticker> {
   const steps = new Map(timeline(piece).map((s) => [Math.round(s.beat * 2), s]))
-  const lead = opts.countIn ? 8 : 0
-  const end = Math.round(totalBeats(piece) * 2) + lead
+  const per = barBeats(piece) * 2 // eighth-note ticks per bar
+  const lead = opts.countIn ? per : 0
+  const length = Math.round(totalBeats(piece) * 2)
   const spb = 60 / bpm
   const voice = piece.instrument === 'guitar' ? 'guitar' : 'keys'
+  const chords = barChords(piece)
   const ticker = await startTicker(
     bpm,
     (i, t) => {
-      if (i >= end) return
-      if ((opts.metronome || i < lead) && i % 2 === 0) click(i % 8 === 0, t)
-      const s = steps.get(i - lead)
-      if (s && opts.sound !== false) play(voice, s.midi, Math.max(0.25, s.len * spb * 0.95), t)
+      if (!opts.loop && i >= length + lead) return
+      const pos = i < lead ? i - lead : (i - lead) % length
+      const inBar = mod(pos, per)
+      // Swung off-beat eighths arrive on the last third of the beat.
+      const when = piece.swing && inBar % 2 === 1 ? t + spb / 6 : t
+      if ((opts.metronome || i < lead) && inBar % 2 === 0) click(inBar === 0, t)
+      if (pos < 0) return
+      const chord = opts.backing ? chords[Math.floor(pos / per)] : ''
+      if (chord) {
+        const root = pc(parseChord(chord).root)
+        if (inBar === 0) play('pad', chordMidi(chord, 3), spb * (per / 2) * 0.95, when)
+        if (inBar === 0 || inBar === 4) play('bass', [36 + root], spb * 0.9, when)
+        if (inBar === 4 || (per === 6 && inBar === 2)) drum('snare', when)
+        if (inBar === 0) drum('kick', when)
+        drum('hat', when)
+      }
+      const s = steps.get(pos)
+      if (s && opts.sound !== false) play(voice, s.midi, Math.max(0.25, s.len * spb * 0.95), when)
     },
     (i) => {
-      if (i >= end) {
+      if (!opts.loop && i >= length + lead) {
         ticker.stop()
         onBeat(null)
-      } else if (i >= lead && steps.has(i - lead)) onBeat((i - lead) / 2)
+      } else if (i >= lead && steps.has((i - lead) % length)) onBeat(((i - lead) % length) / 2)
     },
   )
   return ticker
@@ -93,6 +92,12 @@ export function Runner({ ex, onAttempt }: Props) {
   const [guide, setGuide] = useState(true)
   const [hints, setHints] = useState(true)
   const [hand, setHand] = useState<'both' | 'rh' | 'lh'>('both')
+  const bars = barCount(ex.piece)
+  const [range, setRange] = useState<[number, number]>([1, bars])
+  const [loop, setLoop] = useState(false)
+  const [backing, setBacking] = useState(ex.piece.instrument === 'guitar')
+  const whole = range[0] === 1 && range[1] === bars
+  const hasChords = !!ex.piece.chords?.some(Boolean)
   const [got, setGot] = useState<number[]>([])
   const [wrong, setWrong] = useState<string | null>(null)
   const ticker = useRef<Ticker | null>(null)
@@ -105,13 +110,16 @@ export function Runner({ ex, onAttempt }: Props) {
   const twoHands = !guitar && !!ex.piece.lh && ex.piece.rh.some((e) => e.midi.length > 0)
   // Practising one hand alone: the other hand is replaced by rests (or dropped).
   const piece: Piece = useMemo(() => {
-    if (!twoHands || hand === 'both') return ex.piece
-    if (hand === 'rh') return { ...ex.piece, lh: undefined }
-    const bars = Math.ceil(totalBeats(ex.piece) / 4)
-    return { ...ex.piece, rh: Array.from({ length: bars }, () => ({ midi: [], dur: 'w' as const })) }
-  }, [ex, hand, twoHands])
+    const part = whole ? ex.piece : sliceBars(ex.piece, range[0], range[1])
+    if (!twoHands || hand === 'both') return part
+    if (hand === 'rh') return { ...part, lh: undefined }
+    const rest = barBeats(part) === 3 ? ('hd' as const) : ('w' as const)
+    return { ...part, rh: Array.from({ length: barCount(part) }, () => ({ midi: [], dur: rest })) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ex, hand, twoHands, range[0], range[1]])
   const steps = useMemo(() => timeline(piece), [piece])
-  const evs = useMemo(() => events(piece), [piece])
+  const evs: Onset[] = useMemo(() => onsetEvents(piece), [piece])
+  const partial = hand !== 'both' || !whole
 
   // Reset when the exercise changes.
   useEffect(() => {
@@ -136,9 +144,9 @@ export function Runner({ ex, onAttempt }: Props) {
 
   /** `counts` is false for run-throughs that should not move the tempo record: step-by-step and one hand alone. */
   function finish(accuracy: number, usedTempo: number, note: string, counts = true) {
-    if (counts && hand === 'both') actions.attempt(ex.id, accuracy, usedTempo)
-    else actions.touch()
-    setResult({ accuracy, note, counts: counts && hand === 'both' })
+    if (counts && !partial) actions.attempt(ex.id, accuracy, usedTempo)
+    else actions.touch(ex.id)
+    setResult({ accuracy, note, counts: counts && !partial })
     setMode('done')
     setCursor(null)
     onAttempt?.(accuracy)
@@ -148,10 +156,15 @@ export function Runner({ ex, onAttempt }: Props) {
     reset()
     frame()
     setMode('listen')
-    ticker.current = await playPiece(piece, tempo, (b) => {
-      setCursor(b)
-      if (b === null) setMode('idle')
-    })
+    ticker.current = await playPiece(
+      piece,
+      tempo,
+      (b) => {
+        setCursor(b)
+        if (b === null) setMode('idle')
+      },
+      { backing: backing && hasChords, loop },
+    )
   }
 
   // ---- step-by-step: the app waits for each correct note ----
@@ -236,13 +249,13 @@ export function Runner({ ex, onAttempt }: Props) {
         const stray = r.extra ? ` ${r.extra} extra or wrong note${r.extra > 1 ? 's' : ''}.` : ''
         finish(r.accuracy, tempo, `${r.hits} of ${r.total} notes on time.${stray}${timing}`)
       },
-      { countIn: true, metronome: true, sound: guide && profile.input !== 'mic' },
+      { countIn: true, metronome: true, sound: guide && profile.input !== 'mic', backing: backing && hasChords && profile.input !== 'mic' },
     )
     ticker.current = t
-    played.current.t0 = performance.now() + (t.startTime - now()) * 1000 + 4 * spb * 1000
+    played.current.t0 = performance.now() + (t.startTime - now()) * 1000 + barBeats(piece) * spb * 1000
     // count-in display
-    for (let i = 0; i < 4; i++)
-      window.setTimeout(() => setCount((c) => (ticker.current === t ? 4 - i : c)), (t.startTime - now() + i * spb) * 1000)
+    for (let i = 0; i < barBeats(piece); i++)
+      window.setTimeout(() => setCount((c) => (ticker.current === t ? barBeats(piece) - i : c)), (t.startTime - now() + i * spb) * 1000)
   }
 
   useEffect(() => {
@@ -347,6 +360,54 @@ export function Runner({ ex, onAttempt }: Props) {
               {label}
             </button>
           ))}
+        </div>
+      )}
+
+      {(bars > 2 || hasChords || ex.piece.swing) && (
+        <div className="runner-opts">
+          {ex.piece.swing && <span className="badge" title="Play each pair of eighth notes long–short, like a heartbeat">Shuffle feel: long–short eighths</span>}
+          {bars > 2 && (
+            <label className="check">
+              Bars
+              <select
+                value={range[0]}
+                disabled={mode !== 'idle' && mode !== 'done'}
+                onChange={(e) => {
+                  const from = Number(e.target.value)
+                  reset()
+                  setRange([from, Math.max(from, range[1])])
+                }}
+                aria-label="First bar"
+              >
+                {Array.from({ length: bars }, (_, i) => (
+                  <option key={i}>{i + 1}</option>
+                ))}
+              </select>
+              to
+              <select
+                value={range[1]}
+                disabled={mode !== 'idle' && mode !== 'done'}
+                onChange={(e) => {
+                  const to = Number(e.target.value)
+                  reset()
+                  setRange([Math.min(range[0], to), to])
+                }}
+                aria-label="Last bar"
+              >
+                {Array.from({ length: bars }, (_, i) => (
+                  <option key={i}>{i + 1}</option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="check" title="Listen repeats until you press Stop">
+            <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} /> Loop when listening
+          </label>
+          {hasChords && (
+            <label className="check" title="A simple band plays the chords written above the staff">
+              <input type="checkbox" checked={backing} onChange={(e) => setBacking(e.target.checked)} /> Backing chords
+            </label>
+          )}
         </div>
       )}
 
@@ -471,7 +532,9 @@ export function Runner({ ex, onAttempt }: Props) {
             <p className="muted">
               {result.note}{' '}
               {!result.counts
-                ? hand !== 'both'
+                ? !whole
+                  ? 'A section on its own is for fixing a hard spot. Play the whole piece in time to record a tempo.'
+                  : hand !== 'both'
                   ? 'One hand alone is for learning the notes. Put both hands together and use Play in time to record a tempo.'
                   : 'You know where the notes are. Now use Play in time to record a tempo.'
                 : passed

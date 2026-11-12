@@ -94,19 +94,22 @@ describe('curriculum', () => {
     expect(new Set(EXERCISES.map((e) => e.ex.id)).size).toBe(EXERCISES.length)
   })
   it('writes every exercise in whole 4/4 bars with both hands the same length', () => {
-    const check = (id: string, evs: Ev[]) => {
+    const check = (id: string, evs: Ev[], per: number) => {
       let beat = 0
       for (const e of evs) {
         const len = BEATS[e.dur]
-        expect(Math.floor(beat / 4), `${id}: note crosses a bar line at beat ${beat}`).toBe(Math.floor((beat + len - 0.001) / 4))
+        expect(Math.floor(beat / per), `${id}: note crosses a bar line at beat ${beat}`).toBe(Math.floor((beat + len - 0.001) / per))
         beat += len
       }
-      expect(beat % 4, `${id}: ${beat} beats`).toBe(0)
+      expect(beat % per, `${id}: ${beat} beats`).toBe(0)
       return beat
     }
     for (const { ex } of EXERCISES) {
-      const a = check(ex.id, ex.piece.rh)
-      if (ex.piece.lh) expect(check(ex.id, ex.piece.lh), `${ex.id}: hands differ`).toBe(a)
+      const per = ex.piece.meter ?? 4
+      const a = check(ex.id, ex.piece.rh, per)
+      if (ex.piece.lh) expect(check(ex.id, ex.piece.lh, per), `${ex.id}: hands differ`).toBe(a)
+      if (ex.piece.chords) expect(ex.piece.chords.length, `${ex.id}: one chord per bar`).toBe(a / per)
+      for (const c of ex.piece.chords ?? []) if (c) expect(() => chordMidi(c), `${ex.id}: chord ${c}`).not.toThrow()
       expect(ex.target).toBeGreaterThanOrEqual(ex.tempo)
     }
   })
@@ -272,5 +275,29 @@ describe('chord identifier', () => {
     expect(spell('Eb', SCALES.blues)).toEqual(['Eb', 'Gb', 'Ab', 'A', 'Bb', 'Db'])
     expect(keyRoot('Db', true)).toBe('C#')
     expect(pretty('F#m7b5')).toBe('F♯m7♭5')
+  })
+})
+
+import { barChords, onsetEvents, sliceBars } from '../theory/music'
+
+describe('ties, swing, sections', () => {
+  it('holds tied notes instead of striking them again', () => {
+    const p = keys('C4:h- C4 D4 | E4:h E4:h- | E4:w')
+    expect(timeline(p).map((s) => [s.beat, s.len])).toEqual([[0, 3], [3, 1], [4, 2], [6, 6]])
+    expect(onsetEvents(p)).toHaveLength(4)
+  })
+  it('delays swung off-beat eighths and grades against that', () => {
+    const p = gtr('6/0:8 6/3:8 6/0', { swing: true })
+    const t = timeline(p)
+    expect(t[1].at).toBeCloseTo(0.5 + 1 / 6)
+    const played = [{ midi: 40, time: 0 }, { midi: 43, time: (0.5 + 1 / 6) * 0.6 }, { midi: 40, time: 0.6 }]
+    expect(gradeTimed(t, played, 0.6, 'midi').accuracy).toBe(1)
+  })
+  it('cuts out a range of bars and carries the chord in', () => {
+    const p = gtr('6/0:w | 6/1:w | 6/3:w | 6/5:w', { chords: 'A7 . D7 .' })
+    const part = sliceBars(p, 2, 3)
+    expect(part.rh.map((e) => e.midi[0])).toEqual([41, 43])
+    expect(part.chords).toEqual(['A7', 'D7'])
+    expect(barChords(p)).toEqual(['A7', 'A7', 'D7', 'D7'])
   })
 })

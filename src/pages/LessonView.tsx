@@ -301,22 +301,22 @@ export function LessonView({ id }: { id: string }) {
       </div>
     )
 
-  const untried = lesson.steps.flatMap((st) => (st.t === 'exercise' && !profile.exercises[st.ex.id] ? [st.ex] : []))
+  const untried = lesson.steps.flatMap((st) => (st.t === 'exercise' && !profile.tried.includes(st.ex.id) && !profile.exercises[st.ex.id] ? [st.ex] : []))
   const all = trackLessons(track.id)
   const next = all[all.findIndex((r) => r.lesson.id === id) + 1]
 
   if (finished)
     return (
       <div className="card done-card">
-        <div className="eyebrow">Lesson complete</div>
+        <div className="eyebrow">{profile.lessons[id] === 'done' ? 'Lesson complete' : 'Lesson skipped for now'}</div>
         <h2>{lesson.title}</h2>
         <p>
           <strong>The goal was:</strong> {lesson.goal}
         </p>
         {untried.length > 0 ? (
           <p className="notice">
-            You have not played {untried.length === 1 ? 'the exercise' : `${untried.length} of the exercises`} in this lesson yet. Reading is the easy part: the skill comes
-            from playing.{' '}
+            This lesson is marked as skipped because {untried.length === 1 ? 'its exercise has' : `${untried.length} of its exercises have`} not been played yet. Come back
+            any time: playing each one once completes it.{' '}
             <a href={`#/practice/${untried[0].id}`}>Practise "{untried[0].title}" now</a>
           </p>
         ) : (
@@ -368,7 +368,30 @@ export function LessonView({ id }: { id: string }) {
         <button className="btn" disabled={i === 0} onClick={() => setI(i - 1)}>
           Back
         </button>
-        {last ? (
+        {last && untried.length > 0 && profile.lessons[id] !== 'done' ? (
+          <div className="finish-gate">
+            <small className="muted">
+              To complete this lesson, try {untried.length === 1 ? `the exercise "${untried[0].title}"` : `its ${untried.length} unplayed exercises`} at least once.
+            </small>
+            <div className="btns">
+              <button className="btn primary" onClick={() => setI(lesson.steps.findIndex((st) => st.t === 'exercise' && st.ex.id === untried[0].id))}>
+                Go to the exercise
+              </button>
+              <button
+                className="btn"
+                data-act="skip"
+                title="Moves on and unlocks the next lesson; this one is marked as skipped, not done"
+                onClick={() => {
+                  actions.skipLessons([id])
+                  setFinished(true)
+                  window.scrollTo(0, 0)
+                }}
+              >
+                Skip for now
+              </button>
+            </div>
+          </div>
+        ) : last ? (
           <button
             className="btn primary"
             data-act="finish"

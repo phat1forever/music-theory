@@ -12,6 +12,7 @@ interface Kit {
   click: Tone.Synth
   kick: Tone.MembraneSynth
   hat: Tone.NoiseSynth
+  snare: Tone.NoiseSynth
 }
 
 let kit: Kit | null = null
@@ -49,7 +50,12 @@ function build(): Kit {
     envelope: { attack: 0.001, decay: 0.05, sustain: 0 },
     volume: -24,
   }).connect(out)
-  return { guitar, keys, pad, bass, click, kick, hat }
+  const snare = new Tone.NoiseSynth({
+    noise: { type: 'pink' },
+    envelope: { attack: 0.001, decay: 0.16, sustain: 0 },
+    volume: -17,
+  }).connect(out)
+  return { guitar, keys, pad, bass, click, kick, hat, snare }
 }
 
 /** Must be called from a user gesture before any sound; safe to call repeatedly. */
@@ -87,9 +93,10 @@ export function click(accent: boolean, time?: number): void {
   )
 }
 
-export function drum(kind: 'kick' | 'hat', time: number): void {
+export function drum(kind: 'kick' | 'hat' | 'snare', time: number): void {
   if (!kit) return
   if (kind === 'kick') kit.kick.triggerAttackRelease('C1', 0.2, time)
+  else if (kind === 'snare') kit.snare.triggerAttackRelease(0.16, time)
   else kit.hat.triggerAttackRelease(0.05, time)
 }
 

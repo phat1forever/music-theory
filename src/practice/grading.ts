@@ -58,7 +58,7 @@ export function gradeTimed(
   let offsetSum = 0
   let hits = 0
   const outcome = steps.map((step) => {
-    const t = step.beat * secPerBeat
+    const t = step.at * secPerBeat
     const got = new Set<number>()
     let firstOffset: number | null = null
     played.forEach((p, i) => {

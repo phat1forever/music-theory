@@ -13,6 +13,10 @@ interface Style {
   bars: { step: number; q: string; roman: string }[]
   scales: string[]
   minor: boolean
+  /** a blues keeps its usual key name (A♭ blues) even though the scale is minor */
+  blues?: boolean
+  /** shuffle the eighth notes */
+  swing?: boolean
 }
 
 const c = (step: number, q: string, roman: string) => ({ step, q, roman })
@@ -24,6 +28,25 @@ const STYLES: Record<string, Style> = {
     bars: [c(0, '7', 'I7'), c(0, '7', 'I7'), c(0, '7', 'I7'), c(0, '7', 'I7'), c(5, '7', 'IV7'), c(5, '7', 'IV7'), c(0, '7', 'I7'), c(0, '7', 'I7'), c(7, '7', 'V7'), c(5, '7', 'IV7'), c(0, '7', 'I7'), c(7, '7', 'V7')],
     scales: ['minorPent', 'blues', 'mixolydian'],
     minor: true,
+    blues: true,
+    swing: true,
+  },
+  quick: {
+    name: 'Quick-change blues',
+    about: 'A 12-bar blues that jumps to the IV chord in bar 2 and straight back. Listen for it: the early change is easy to miss.',
+    bars: [c(0, '7', 'I7'), c(5, '7', 'IV7'), c(0, '7', 'I7'), c(0, '7', 'I7'), c(5, '7', 'IV7'), c(5, '7', 'IV7'), c(0, '7', 'I7'), c(0, '7', 'I7'), c(7, '7', 'V7'), c(5, '7', 'IV7'), c(0, '7', 'I7'), c(7, '7', 'V7')],
+    scales: ['minorPent', 'blues', 'mixolydian'],
+    minor: true,
+    blues: true,
+    swing: true,
+  },
+  minorBlues: {
+    name: 'Minor blues',
+    about: 'The 12-bar form with minor chords: darker and slower-feeling. The minor pentatonic fits every bar; the ♭VI7 and V7 in bars 9 and 10 are the moment of tension.',
+    bars: [c(0, 'm7', 'i7'), c(0, 'm7', 'i7'), c(0, 'm7', 'i7'), c(0, 'm7', 'i7'), c(5, 'm7', 'iv7'), c(5, 'm7', 'iv7'), c(0, 'm7', 'i7'), c(0, 'm7', 'i7'), c(8, '7', '♭VI7'), c(7, '7', 'V7'), c(0, 'm7', 'i7'), c(7, '7', 'V7')],
+    scales: ['minorPent', 'blues', 'minor'],
+    minor: true,
+    swing: true,
   },
   rock: {
     name: 'Minor rock',
@@ -46,6 +69,35 @@ const STYLES: Record<string, Style> = {
     scales: ['minorPent', 'dorian'],
     minor: true,
   },
+  spanish: {
+    name: 'Spanish cadence',
+    about: 'i – ♭VII – ♭VI – V. The major V chord at the end wants the harmonic minor scale: its raised 7th is that chord\'s 3rd.',
+    bars: [c(0, 'min', 'i'), c(10, 'maj', '♭VII'), c(8, 'maj', '♭VI'), c(7, 'maj', 'V')],
+    scales: ['minorPent', 'minor', 'harmonicMinor'],
+    minor: true,
+  },
+  doowop: {
+    name: 'Fifties (I–vi–IV–V)',
+    about: 'The doo-wop progression. Major pentatonic all the way; aim for the 3rd of each chord.',
+    bars: [c(0, 'maj', 'I'), c(9, 'min', 'vi'), c(5, 'maj', 'IV'), c(7, 'maj', 'V')],
+    scales: ['majorPent', 'major'],
+    minor: false,
+  },
+  funk: {
+    name: 'One-chord funk',
+    about: 'A single dominant 7th chord. With no changes to follow, everything depends on rhythm and space. Mixolydian for a major sound, minor pentatonic for grit.',
+    bars: [c(0, '7', 'I7'), c(0, '7', 'I7'), c(0, '7', 'I7'), c(0, '7', 'I7')],
+    scales: ['mixolydian', 'minorPent', 'majorPent'],
+    minor: false,
+  },
+  jazz: {
+    name: 'ii–V–I',
+    about: 'The core movement of jazz, swung. One major scale covers all three chords; the ringed notes show what changes from chord to chord.',
+    bars: [c(2, 'm7', 'ii7'), c(7, '7', 'V7'), c(0, 'maj7', 'Imaj7'), c(0, 'maj7', 'Imaj7')],
+    scales: ['major', 'majorPent'],
+    minor: false,
+    swing: true,
+  },
 }
 
 export function Jam() {
@@ -60,7 +112,7 @@ export function Jam() {
   const ticker = useRef<Ticker | null>(null)
   const style = STYLES[styleKey]
   // Minor-type styles on a black key use the usual sharp name (C♯ minor, not D♭ minor).
-  const root = keyRoot(picked, style.minor && styleKey !== 'blues')
+  const root = keyRoot(picked, style.minor && !style.blues)
   const flats = prefersFlats(root, style.minor ? 'minor' : 'major')
 
   useEffect(() => () => ticker.current?.stop(), [])
@@ -81,7 +133,7 @@ export function Jam() {
   async function start() {
     const rootPc = pc(root)
     const spb = 60 / tempo
-    const shuffle = styleKey === 'blues'
+    const shuffle = !!style.swing
     ticker.current = await startTicker(
       tempo,
       (i, t) => {
@@ -92,6 +144,7 @@ export function Jam() {
         // Swing the off-beat eighths for the blues.
         const when = shuffle && inBar % 2 === 1 ? t + spb * 0.16 : t
         if (inBar === 0 || inBar === 4) drum('kick', when)
+        if (inBar === 2 || inBar === 6) drum('snare', when)
         drum('hat', when)
         if (inBar === 0) play('pad', tones.map((s) => 48 + mod(chordRoot, 12) + s), spb * 3.6, when)
         if (inBar === 0 || inBar === 3 || inBar === 4) play('bass', [36 + mod(chordRoot, 12)], spb * 0.9, when)

@@ -4,6 +4,15 @@ import { exercise, fm, quiz, text, type Track } from './types'
 const bars = (chords: string, per: (c: string) => string) =>
   chords.split(' ').map(per).join(' | ')
 
+/** One bar of the classic shuffle rhythm: root + 5th, with the 5th stepping up to the 6th on beats 2 and 4. */
+const boogie = (chord: string) => {
+  const s = chord === 'A7' ? 5 : chord === 'D7' ? 4 : 6
+  const a = `[${s}/0 ${s - 1}/2]:8`
+  const b = `[${s}/0 ${s - 1}/4]:8`
+  return `${a} ${a} ${b} ${a} ${a} ${a} ${b} ${a}`
+}
+const BLUES_A = 'A7 A7 A7 A7 D7 D7 A7 A7 E7 D7 A7 E7'
+
 export const guitar: Track = {
   id: 'guitar',
   title: 'Guitar',
@@ -595,6 +604,63 @@ export const guitar: Track = {
           ],
         },
         {
+          id: 'g-boxlicks',
+          title: 'Licks in boxes 2 to 5',
+          goal: 'Play one lick in each of the other four boxes and a run that travels up the neck.',
+          minutes: 15,
+          steps: [
+            text(
+              'Same notes, new sounds',
+              'Every box holds the same five notes, but each one puts different notes under your strongest fingers, so each has its own character and its own classic moves. Learn one lick per box. A lick you can actually play is worth more than a pattern you can only run up and down.\n\nEach lick below ends on **A**, the root. Find that A before you start: it is your landing point.',
+            ),
+            { t: 'box', root: 'A', box: 2, kind: 'minorPent', caption: 'Box 2 (frets 7–10).' },
+            exercise(
+              'g-lick-b2',
+              'Box 2 lick',
+              gtr('2/10:8 2/8:8 3/9:8 3/7:8 4/7:h | 1/8:8 1/10:8 1/8:8 2/10:8 2/8 4/7~vib'),
+              60,
+              108,
+              'Finger 1 covers fret 7 and finger 4 fret 10. Both bars land on A at the 4th string, fret 7.',
+            ),
+            { t: 'box', root: 'A', box: 3, kind: 'minorPent', caption: 'Box 3 (frets 9–13).' },
+            exercise(
+              'g-lick-b3',
+              'Box 3 lick',
+              gtr('2/10 2/13:8 2/10:8 3/12 3/9 | 4/12:8 4/10:8 5/12:h~vib r'),
+              60,
+              108,
+              'Ends on A at the 5th string, fret 12.',
+            ),
+            { t: 'box', root: 'A', box: 4, kind: 'minorPent', caption: 'Box 4 (frets 12–15).' },
+            exercise(
+              'g-lick-b4',
+              'Box 4 lick',
+              gtr('1/12:8 1/15:8 1/12:8 2/15:8 2/13 3/14 | 3/12:8 4/14:8 4/12:8 4/14:8 3/14:h~vib'),
+              60,
+              108,
+              'Ends on A at the 3rd string, fret 14.',
+            ),
+            { t: 'box', root: 'A', box: 5, kind: 'minorPent', caption: 'Box 5 (frets 2–5), right below box 1.' },
+            exercise(
+              'g-lick-b5',
+              'Box 5 lick',
+              gtr('3/2 3/5:8 3/2:8 4/5 4/2 | 5/3:8 5/5:8 4/2:8 4/5:8 3/2:h~vib'),
+              60,
+              108,
+              'Starts and ends on A at the 3rd string, fret 2.',
+            ),
+            exercise(
+              'g-threebox',
+              'Three-box run',
+              gtr('3/5 3/7 3/9~sl 2/8 | 2/10 2/13~sl 1/10 1/12 | 1/12:w~vib'),
+              60,
+              100,
+              'Two slides carry you from box 1 through box 2 into box 3. Slide with the finger that played the note before.',
+            ),
+            quiz('What do all five boxes have in common?', ['The same fingering', 'The same five notes', 'The same frets', 'Nothing'], 1),
+          ],
+        },
+        {
           id: 'g-majpent',
           title: 'Major pentatonic and the blues scale',
           goal: 'Add a brighter scale and the "blue note" to your vocabulary.',
@@ -662,6 +728,43 @@ export const guitar: Track = {
           ],
         },
         {
+          id: 'g-shuffle',
+          title: 'The shuffle feel',
+          goal: 'Play swung eighth notes: the blues rhythm guitar pattern and a swung lick.',
+          minutes: 15,
+          steps: [
+            text(
+              'Long–short',
+              'Most blues is not played with even eighth notes. In a **shuffle**, each beat is split into three, and the pair of eighths takes the first and last thirds: **long–short, long–short**. Say "**DOO**-ba **DOO**-ba" or think of a heartbeat.\n\nIt is written as ordinary eighth notes with the word *shuffle* or *swing* at the top. In this app those exercises carry a **Shuffle feel** badge, and Listen plays them swung.\n\nThe pattern below is the most used rhythm guitar part in blues and early rock and roll: the root and 5th together, with the upper note stepping up two frets on beats 2 and 4. Pick every stroke **down** and rest your palm lightly on the strings near the bridge.',
+            ),
+            exercise(
+              'g-shuffle1',
+              'Shuffle rhythm on A',
+              gtr([1, 2, 3, 4].map(() => boogie('A7')).join(' | '), { swing: true, chords: 'A7 . . .' }),
+              60,
+              104,
+              'Finger 1 holds fret 2 on the 4th string the whole time; finger 3 reaches fret 4 on beats 2 and 4.',
+            ),
+            exercise(
+              'g-shuffle12',
+              '12-bar shuffle in A',
+              gtr(BLUES_A.split(' ').map(boogie).join(' | '), { swing: true, chords: 'A7 . . . D7 . A7 . E7 D7 A7 E7' }),
+              60,
+              100,
+              'The same shape on three string pairs: 5th and 4th strings for A, 4th and 3rd for D, 6th and 5th for E.',
+            ),
+            exercise(
+              'g-swinglick',
+              'Swung lick',
+              gtr('3/5:8 3/7:8 2/5:8 3/7:8 3/5 4/7 | r 3/5:8 3/7:8 2/5:h | 2/8:8 2/5:8 3/7:8 3/5:8 4/7:h | r:w', { swing: true, chords: 'A7 . . .' }),
+              60,
+              104,
+              'Play it first with even eighths, then swung. Same notes, completely different feel.',
+            ),
+            quiz('In a shuffle, how are two eighth notes in a beat played?', ['Evenly', 'Long then short', 'Short then long', 'Both very short'], 1),
+          ],
+        },
+        {
           id: 'g-chordtones',
           title: 'Targeting chord tones',
           goal: 'Land on a note from the current chord whenever the chord changes.',
@@ -682,7 +785,7 @@ export const guitar: Track = {
             exercise(
               'g-roots12',
               'Roots through the 12-bar',
-              gtr('4/7:w | 4/7:w | 4/7:w | 4/7:w | 3/7:w | 3/7:w | 4/7:w | 4/7:w | 2/5:w | 3/7:w | 4/7:w | 2/5:w'),
+              gtr('4/7:w | 4/7:w | 4/7:w | 4/7:w | 3/7:w | 3/7:w | 4/7:w | 4/7:w | 2/5:w | 3/7:w | 4/7:w | 2/5:w', { chords: 'A7 . . . D7 . A7 . E7 D7 A7 E7' }),
               80,
               120,
               'One note per bar: the root of the chord. Boring on purpose. This trains your ear to hear the changes.',
@@ -690,7 +793,7 @@ export const guitar: Track = {
             exercise(
               'g-approach',
               'Walking into the target',
-              gtr('4/7:h 4/7 3/5 | 3/7:h 3/7 3/5 | 4/7:h 3/5 3/7 | 2/5:w'),
+              gtr('4/7:h 4/7 3/5 | 3/7:h 3/7 3/5 | 4/7:h 3/5 3/7 | 2/5:w', { chords: 'A7 D7 A7 E7' }),
               66,
               110,
               'The last note of each bar is a neighbour of the root that follows: C leads up to D, C leads down to A, D leads up to E.',
@@ -735,7 +838,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Putting it together',
-              'This 12-bar solo in A uses only box 1 and everything from this unit: phrases that **breathe**, **repetition**, and **chord roots on the changes** (D in bar 5, E in bar 9, A in bar 11). The last bar is the turnaround over E7, so the solo finishes on **E**, which pulls you back to the top for another chorus.\n\nLearn it four bars at a time. When you can play it at 90 bpm, open **Jam** and improvise over the same progression: start by stealing these phrases, then change one thing at a time.',
+              'This 12-bar solo in A uses only box 1 and everything from this unit: phrases that **breathe**, **repetition**, and **chord roots on the changes** (D in bar 5, E in bar 9, A in bar 11). The last bar is the turnaround over E7, so the solo finishes on **E**, which pulls you back to the top for another chorus.\n\nLearn it four bars at a time: set **Bars** to 1–4 and tick **Loop when listening**. The chords are printed above the staff and **Backing chords** plays them under you, so you can hear each phrase against its chord. When you can play it at 90 bpm, open **Jam** and improvise over the same progression: start by stealing these phrases, then change one thing at a time.',
             ),
             exercise(
               'g-solo12',
@@ -744,6 +847,7 @@ export const guitar: Track = {
                 '3/5 3/7 2/5:h | 2/8:8 2/5:8 3/7 4/7:h | 3/5 3/7 2/5 2/8 | 1/5:h~vib r:h | ' +
                   '3/7:h 2/5:8 3/7:8 3/5 | 3/7:8 3/5:8 4/7 3/7:h | 1/8:8 1/5:8~P 2/8:8 2/5:8~P 3/7 3/5 | 4/7:h~vib r:h | ' +
                   '2/5:h 2/8 2/5 | 3/7:h 3/5 3/7 | 3/5:8 3/7:8~H 2/5 3/7:8 3/5:8 4/7 | 2/5:w~vib',
+                { chords: 'A7 . . . D7 . A7 . E7 D7 A7 E7' },
               ),
               66,
               100,
@@ -754,6 +858,45 @@ export const guitar: Track = {
               'You now have the full toolkit for easy-to-medium solos: a scale, techniques, a form, targets and phrasing. From here improvement is about **mileage**:\n\n- Jam for ten minutes a day over different keys and styles.\n- Learn one new box per week and connect it to the ones you know.\n- Record yourself, listen back and pick one thing to improve.\n- Copy short phrases from solos you love, then change them.',
             ),
             quiz('The best way to practise a long solo is to…', ['Play it start to finish at full speed', 'Learn it in short sections, slowly', 'Only listen to it', 'Skip the hard bars'], 1),
+          ],
+        },
+        {
+          id: 'g-solo2',
+          title: 'Second solo: shuffle in E',
+          goal: 'Play a swung 12-bar solo in a new key and position, with bends and slides.',
+          minutes: 20,
+          steps: [
+            text(
+              'New key, same shapes',
+              'Everything you know in A moves to any key by sliding the boxes. **E minor pentatonic box 1 sits at the 12th fret**, where the neck\'s double dots are. The three chord roots keep their places inside the box: E (I) where A was, A (IV) where D was, B (V) where E was.\n\nThis solo is a **shuffle**, so swing the eighths. It also uses the lead techniques from unit 4:\n\n- Bar 2 opens with a **full bend** from D up to E (2nd string, fret 15). Use finger 3 backed by 1 and 2.\n- Bar 7 has a **slide** down the 3rd string.\n- Long notes get **vibrato**.\n\nBars 1 and 3 begin with a rest: starting a phrase *after* beat 1 is one of the easiest ways to sound less mechanical.',
+            ),
+            { t: 'box', root: 'E', box: 1, kind: 'minorPent', caption: 'E minor pentatonic, box 1 at the 12th fret.' },
+            {
+              t: 'fretboard',
+              title: 'Chord roots in this box',
+              marks: fm('*4/14=E *1/12=E *6/12=E +3/14=A +5/12=A 2/12=B 5/14=B'),
+              from: 11,
+              to: 16,
+              caption: 'Orange: E (I chord). Teal: A (IV chord). Grey: B (V chord).',
+            },
+            exercise(
+              'g-solo-e',
+              '12-bar shuffle solo in E',
+              gtr(
+                'r 3/12:8 3/14:8 2/12:h | 2/15:8~full 2/12:8 3/14 4/14:h | r 3/12:8 3/14:8 2/12 2/15 | 1/12:hd~vib r | ' +
+                  '3/14:h 2/12:8 3/14:8 3/12 | 3/14:8 3/12:8 4/14 3/14:h | 1/15:8 1/12:8 2/15:8 2/12:8 3/14~sl 3/12 | 4/14:h~vib r:h | ' +
+                  '2/12:h 2/15 2/12 | 3/14:h 3/12 3/14 | 3/12:8 3/14:8~H 2/12 3/14:8 3/12:8 4/14 | 2/12:w~vib',
+                { swing: true, chords: 'E7 . . . A7 . E7 . B7 A7 E7 B7' },
+              ),
+              60,
+              96,
+              'Bar 5 lands on A, bar 9 on B, bar 11 on E; the last bar holds B over the turnaround.',
+            ),
+            text(
+              'Make it yours',
+              'Open **Jam**, choose **12-bar blues** or **Quick-change blues** in E, and play this solo over it. Then keep bars 1–4 and improvise the rest. Then keep only the rhythm of each phrase and change the notes. That is how players turn a learned solo into their own vocabulary.',
+            ),
+            quiz('Where is box 1 of the E minor pentatonic scale?', ['At the 5th fret', 'At the 7th fret', 'At the 12th fret (and the open position)', 'At the 9th fret'], 2),
           ],
         },
       ],

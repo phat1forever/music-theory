@@ -109,6 +109,52 @@ export const theory: Track = {
             quiz('What does a dot after a note do?', ['Doubles its length', 'Adds half its length', 'Halves its length', 'Makes it louder'], 1),
           ],
         },
+        {
+          id: 'th-rests',
+          title: 'Rests, ties and 3/4 time',
+          goal: 'Count silence, hold a note across the beat, and feel three beats in a bar.',
+          minutes: 12,
+          steps: [
+            text(
+              'Silence is counted too',
+              'Every note value has a matching **rest** of the same length: a whole rest hangs below a line, a half rest sits on top of one, a quarter rest looks like a squiggle and an eighth rest like a small 7.\n\nA rest is not a pause in the counting. Keep counting through it at the same speed and simply do not play. On guitar, stop the string ringing with either hand; on keyboard, lift your finger.',
+            ),
+            exercise(
+              'th-rests1',
+              'Counting rests',
+              keys('C4 r C4 r | C4:h r:h | C4:8 C4:8 r C4 r | C4:w'),
+              60,
+              100,
+              'Say the count out loud all the way through, including the silent beats.',
+            ),
+            text(
+              'Ties',
+              'A **tie** is a curved line joining two notes of the **same pitch**. Play the first one and keep holding for the length of both: the second note is not struck again.\n\nTies let a note last across a bar line, or for a length no single note value has. A half note tied to a quarter lasts three beats.',
+            ),
+            exercise(
+              'th-ties1',
+              'Holding across the beat',
+              keys('C4:h- C4 C4 | C4 C4:h- C4 | C4:h C4:h- | C4:w'),
+              60,
+              100,
+              'The last tie crosses the bar line: one long note of six beats.',
+            ),
+            text(
+              'Three beats in a bar',
+              'In **3/4 time** each bar has three quarter-note beats: count "**1** 2 3, **1** 2 3" with a gentle lean on beat 1. It is the feel of a waltz.\n\nA whole note does not fit in a bar of 3/4. The note that fills the bar is the **dotted half note** (3 beats).',
+            ),
+            exercise(
+              'th-34',
+              'Counting in three',
+              keys('C4 C4 C4 | C4:hd | C4:h C4 | C4:hd', undefined, { meter: 3 }),
+              72,
+              120,
+              'The count-in is three clicks, not four.',
+            ),
+            quiz('How long does a quarter note tied to a half note last?', ['2 beats', '3 beats', '4 beats', '1½ beats'], 1),
+            quiz('Which note fills a whole bar of 3/4?', ['Whole note', 'Half note', 'Dotted half note', 'Dotted quarter note'], 2),
+          ],
+        },
       ],
     },
     {
@@ -188,8 +234,13 @@ export const theory: Track = {
           steps: [
             text(
               'What "in the key of" means',
-              'A piece **in the key of G major** mostly uses the notes of the G major scale and feels at rest on G. Instead of writing ♯ next to every F, the sharps or flats are written once at the start of each line: the **key signature**. (The scores in this app write the sharp or flat next to each note instead, so you always see exactly which note is changed.)',
+              'A piece **in the key of G major** mostly uses the notes of the G major scale and feels at rest on G. Instead of writing ♯ next to every F, the sharps or flats are written once at the start of each line: the **key signature**. A sharp on the F line there means **every F in the piece is F♯**, in any octave, unless a natural sign (♮) cancels it for a bar.\n\nThe first exercises in this app write each sharp or flat next to its note. From the scale lessons on, pieces use a key signature, the way printed music does.',
             ),
+            {
+              t: 'score',
+              piece: keys('G4 A4 B4 C5 | D5 E5 F#5 G5', undefined, { key: 'G' }),
+              caption: 'G major with its key signature: one sharp, on the F line. The F in bar 2 has no sharp beside it, but it is still F♯.',
+            },
             {
               t: 'circle',
               caption:
@@ -276,6 +327,35 @@ export const theory: Track = {
           ],
         },
         {
+          id: 'th-sevenths',
+          title: 'Seventh chords',
+          goal: 'Build the four common seventh chords and hear why the V7 chord pulls home.',
+          minutes: 12,
+          steps: [
+            text(
+              'One more third',
+              'Stack one more 3rd on top of a triad and you get a four-note **seventh chord**. Four types cover most music:\n\n- **Major 7th** (Cmaj7): 1 – 3 – 5 – 7. Lush, relaxed.\n- **Dominant 7th** (C7): 1 – 3 – 5 – ♭7. Restless; wants to move on.\n- **Minor 7th** (Cm7): 1 – ♭3 – 5 – ♭7. Mellow.\n- **Half-diminished** (Cm7♭5): 1 – ♭3 – ♭5 – ♭7. Dark and unstable.\n\nBuilt on each note of a major scale, the pattern is always **Imaj7 – ii7 – iii7 – IVmaj7 – V7 – vi7 – viiø7**. In C: Cmaj7, Dm7, Em7, Fmaj7, **G7**, Am7, Bm7♭5.',
+            ),
+            { t: 'keyboard', title: 'Cmaj7', marks: km('*C4 +E4 +G4 +B4'), from: 55, to: 74, caption: 'C – E – G – B.' },
+            { t: 'keyboard', title: 'G7', marks: km('*G3 +B3 +D4 +F4'), from: 53, to: 72, caption: 'G – B – D – F. The B and F are three whole steps apart (a tritone), which is what makes the chord restless.' },
+            text(
+              'Why V7 leads home',
+              'Only one chord in a major key is a **dominant 7th**: the one on the 5th degree. Its 3rd and 7th (B and F in G7) each sit a half step from a note of the I chord (C and E), so they slide there naturally. That **V7 → I** movement is the strongest ending in music.\n\nThe blues breaks the rule on purpose: it plays dominant 7ths on I, IV and V, so nothing ever fully settles.',
+            ),
+            { t: 'chords', names: ['A7', 'D7', 'E7', 'B7'], caption: 'Open dominant 7th shapes on guitar. Tap to hear them.' },
+            exercise(
+              'th-sevenths1',
+              'ii7 – V7 – Imaj7 in C',
+              keys('[D4 F4 A4 C5]:w | [D4 F4 G4 B4]:w | [C4 E4 G4 B4]:w | [C4 E4 G4 B4]:w', 'D3:w | G2:w | C3:w | C3:w', { chords: 'Dm7 G7 Cmaj7 .' }),
+              60,
+              92,
+              'From Dm7 to G7 only two notes move, each down a step. On guitar, play any note of each chord in time.',
+            ),
+            quiz('Which seventh chord is built on the 5th degree of a major key?', ['Major 7th', 'Dominant 7th', 'Minor 7th', 'Half-diminished'], 1),
+            quiz('Which notes make G7?', ['G B D F♯', 'G B♭ D F', 'G B D F', 'G B D E'], 2),
+          ],
+        },
+        {
           id: 'th-minor',
           title: 'Minor keys',
           goal: 'Find the relative minor of any major key and build the natural minor scale.',
@@ -295,6 +375,41 @@ export const theory: Track = {
             ),
             quiz('What is the relative minor of G major?', ['A minor', 'B minor', 'D minor', 'E minor'], 3),
             quiz('Which degrees are lowered in natural minor compared with major?', ['2, 3, 6', '3, 6, 7', '3, 5, 7', '4, 6, 7'], 1),
+          ],
+        },
+        {
+          id: 'th-harmonic',
+          title: 'Harmonic minor and the major V',
+          goal: 'Understand why minor keys borrow a major V chord, and play the harmonic minor scale.',
+          minutes: 10,
+          steps: [
+            text(
+              'The missing pull',
+              'In a natural minor key the chord on the 5th degree is **minor** (Em in the key of A minor). It has no half-step pull back to the tonic, so endings sound soft.\n\nThe fix composers settled on centuries ago: **raise the 7th note of the scale by a half step** (G becomes G♯ in A minor). Now the V chord is **major** (E, or E7), and its G♯ leans straight into A.\n\nThe scale with that raised 7th is the **harmonic minor**: 1 2 ♭3 4 5 ♭6 **7**. The wide gap between its ♭6 and 7 gives it a dramatic, Spanish or Middle-Eastern colour.',
+            ),
+            { t: 'scale', root: 'A', scale: 'harmonicMinor', on: 'both', from: 0, to: 5, caption: 'A harmonic minor: A B C D E F G♯. Only one note differs from A natural minor.' },
+            exercise(
+              'th-harm1',
+              'A harmonic minor scale',
+              keys('A3 B3 C4 D4 | E4 F4 G#4 A4 | A4 G#4 F4 E4 | D4 C4 B3 A3', undefined, { key: 'Am' }),
+              66,
+              110,
+              'The key signature of A minor is empty, like C major, so the G♯ is written in each time.',
+            ),
+            exercise(
+              'th-harm2',
+              'i – iv – V – i in A minor',
+              keys('[A3 C4 E4]:w | [A3 D4 F4]:w | [G#3 B3 E4]:w | [A3 C4 E4]:w', 'A2:w | D3:w | E2:w | A2:w', { key: 'Am', chords: 'Am Dm E Am' }),
+              60,
+              96,
+              'Listen to bar 3 resolving into bar 4. Guitarists: strum Am, Dm, E, Am.',
+            ),
+            text(
+              'In practice',
+              'Songs in minor keys mix both: natural minor most of the time, and the raised 7th whenever the V chord arrives. When soloing, the minor pentatonic avoids the question entirely, since it contains neither version of the 7th\'s neighbour. The "Spanish cadence" style in Jam is built to practise this.',
+            ),
+            quiz('Which note is raised to turn A natural minor into A harmonic minor?', ['C', 'D', 'F', 'G'], 3),
+            quiz('Why is the V chord usually major in a minor key?', ['It is easier to play', 'Its 3rd pulls a half step up to the tonic', 'It has fewer notes', 'To make the key major'], 1),
           ],
         },
       ],
