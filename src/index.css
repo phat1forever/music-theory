@@ -582,7 +582,7 @@ input[type='range'] {
 }
 .track-row {
   display: grid;
-  grid-template-columns: 110px 1fr 50px;
+  grid-template-columns: 110px 1fr auto;
   gap: 12px;
   align-items: center;
   margin-bottom: 10px;
@@ -1493,4 +1493,8 @@ input[type='range'] {
   fill: #fff;
   font-weight: 700;
   font-family: inherit;
+}
+.tuner-strings button:active {
+  background: var(--accent-soft);
+  transform: scale(0.94);
 }

@@ -104,6 +104,7 @@ export function Runner({ ex, onAttempt }: Props) {
   const [wrong, setWrong] = useState<string | null>(null)
   // Name black keys the way the piece's key signature does (B♭ in F major and D minor, not A♯).
   const flat = ex.flats ?? ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Dm', 'Gm', 'Cm', 'Fm'].includes(ex.piece.key ?? '')
+  const lastPos = useRef<{ string: number; fret: number } | null>(null)
   const ticker = useRef<Ticker | null>(null)
   const paper = useRef<HTMLDivElement>(null)
   /** On a phone, bring the score to the top of the screen so it and the diagram are both visible while playing. */
@@ -192,7 +193,9 @@ export function Runner({ ex, onAttempt }: Props) {
         st.got.add(matchKey(step, e.midi, e.source)!)
         setWrong(null)
         setGot(e.source === 'mic' ? [] : [...st.got])
-        if (st.got.size >= notesNeeded(step, e.source)) {
+        // Tapping out a six-string chord dot by dot teaches nothing: on the on-screen fretboard one tap strums it.
+        const strummed = guitar && e.source === 'click' && step.midi.length >= 3
+        if (strummed || st.got.size >= notesNeeded(step, e.source)) {
           setGood((g) => [...g, step.beat])
           setGot([])
           st.index++
@@ -210,6 +213,14 @@ export function Runner({ ex, onAttempt }: Props) {
         const from = [...step.midi, ...(prev?.midi ?? [])]
         if (e.source === 'mic' && ex.piece.instrument === 'guitar' && from.some((m) => e.midi - m === 1 || e.midi - m === 2)) return
         st.mistakes++
+        if (guitar) {
+          // Guitarists think in strings and frets, not note names with octave numbers.
+          const targets = evs.filter((o) => o.beat === step.beat).flatMap((o) => o.ev.tab ?? [])
+          const want = targets.length >= 3 ? 'any highlighted dot of the chord' : targets.map((t) => `the ${where(t)}`).join(' and ')
+          const was = e.source === 'click' && lastPos.current ? `the ${where(lastPos.current)}` : `the note ${pretty(midiName(e.midi, flat).replace(/-?\d+$/, ''))}`
+          setWrong(`That was ${was}. Look for ${want}.`)
+          return
+        }
         const want = [...new Set(step.midi)].filter((m) => e.source === 'mic' || !st.got.has(m)).map((m) => pretty(midiName(m, flat))).join(' + ')
         setWrong(`That was ${pretty(midiName(e.midi, flat))}. Look for ${want}.`)
       }
@@ -319,8 +330,12 @@ export function Runner({ ex, onAttempt }: Props) {
   const needed = new Set(current.flatMap((e) => e.ev.midi)).size
   const handsNow = [...new Set(current.map((e) => e.hand))]
 
-  const pick = (m: number) => {
-    play(guitar ? 'guitar' : 'keys', [m], 0.6)
+  const pick = (m: number, pos?: { string: number; fret: number }) => {
+    lastPos.current = pos ?? null
+    // A tap on a chord dot in step-by-step mode strums the whole chord.
+    const chord = mode === 'step' && guitar && current.length === 1 && current[0].ev.midi.length >= 3 && current[0].ev.midi.includes(m)
+    if (chord) current[0].ev.midi.forEach((n, i) => play('guitar', [n], 1.2, now() + i * 0.03))
+    else play(guitar ? 'guitar' : 'keys', [m], 0.6)
     emitNote(m, 'click')
   }
 
@@ -374,7 +389,7 @@ export function Runner({ ex, onAttempt }: Props) {
         <div className="runner-opts">
           {ex.piece.swing && <span className="badge" title="Play each pair of eighth notes long–short, like a heartbeat">Shuffle feel: long–short eighths</span>}
           {bars > 2 && (
-            <label className="check">
+            <label className="check" title="Practise just part of the piece: choose the first and last bar. A bar is the space between two vertical lines.">
               Bars
               <select
                 value={range[0]}
@@ -502,8 +517,12 @@ export function Runner({ ex, onAttempt }: Props) {
           {wrong ??
             `${!guitar && handsNow.length === 1 ? (handsNow[0] === 'lh' ? 'Left hand: play' : 'Right hand: play') : handsNow.length > 1 ? 'Both hands: play' : 'Play'} the ${
               hints ? 'highlighted ' : ''
-            }${needed > 1 ? `${needed} notes together` : 'note'}${
-              profile.input === 'self' ? ` by tapping the ${guitar ? 'fretboard' : 'keys'} (or switch on the microphone or MIDI below).` : '. The app waits for you.'
+            }${guitar && needed >= 3 ? 'chord' : needed > 1 ? `${needed} notes together` : 'note'}${
+              profile.input === 'self'
+                ? guitar && needed >= 3
+                  ? ' by tapping any of its dots on the fretboard (or switch on the microphone below).'
+                  : ` by tapping the ${guitar ? 'fretboard' : 'keys'} (or switch on the microphone or MIDI below).`
+                : '. The app waits for you.'
             }`}
         </p>
       )}
@@ -572,6 +591,10 @@ export function Runner({ ex, onAttempt }: Props) {
     </div>
   )
 }
+
+const ORDINAL = ['1st', '2nd', '3rd', '4th', '5th', '6th']
+/** A fretboard position in words. */
+const where = (p: { string: number; fret: number }) => (p.fret === 0 ? `open ${ORDINAL[p.string - 1]} string` : `${ORDINAL[p.string - 1]} string, fret ${p.fret}`)
 
 function uniq<T extends { string: number; fret: number }>(list: T[]): T[] {
   const seen = new Set<string>()

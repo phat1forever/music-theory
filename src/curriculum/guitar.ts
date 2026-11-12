@@ -46,7 +46,7 @@ export const guitar: Track = {
             ),
             text(
               'Strings and fingers',
-              'The six strings are numbered from the **thinnest (1st)** to the **thickest (6th)**. From thick to thin they are tuned **E A D G B E**. A classic memory aid: *Eddie Ate Dynamite, Good Bye Eddie*.\n\nFretting-hand fingers are numbered 1 (index) to 4 (little finger). Press just **behind** the metal fret wire, not on top of it and not in the middle of the space, using your fingertip.\n\nHold the pick between the pad of your thumb and the side of your index finger with only a few millimetres showing.',
+              'The six strings are numbered from the **thinnest (1st)** to the **thickest (6th)**. From thick to thin they are tuned **E A D G B E**. Two strings are called E, so diagrams write the thin one as a small **e**. A classic memory aid: *Eddie Ate Dynamite, Good Bye Eddie*.\n\nFretting-hand fingers are numbered 1 (index) to 4 (little finger). Press just **behind** the metal fret wire, not on top of it and not in the middle of the space, using your fingertip.\n\nHold the pick between the pad of your thumb and the side of your index finger with only a few millimetres showing.',
             ),
             {
               t: 'fretboard',
@@ -91,7 +91,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Tablature (tab)',
-              'Tab has **six lines, one per string**. The bottom line is the thick low E (6th) string and the top line is the thin high E (1st). A **number is the fret** to press; 0 means play the string open.\n\nRead left to right. Numbers stacked vertically are played together as a chord.',
+              'Tab has **six lines, one per string**. The bottom line is the thick low E (6th) string and the top line is the thin high E (1st). A **number is the fret** to press; 0 means play the string open.\n\nRead left to right. Numbers stacked vertically are played together as a chord.\n\nThe vertical lines divide the music into **bars** (also called measures): short, equal chunks of time, usually four beats each. "Bars 1 to 2" means from the start up to the second vertical line.',
             ),
             text(
               'The staff above the tab',
@@ -312,7 +312,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Root and fifth',
-              'A **power chord** has only two different notes: the **root** and the **fifth** (written E5, A5, G5…). There is no third, so it is neither major nor minor, which is why it sounds so solid with distortion.\n\nAdd the root again an octave higher and you have the fuller **three-note** version; it is still only two different notes.\n\n**E5 and A5** use an open string as the root, so you only fret the other notes. The fretted shape (**G5, C5, D5**) is **movable**: finger 1 on the root, fingers 3 and 4 two frets up on the next two strings. Slide that shape anywhere and the chord takes the name of the note under finger 1.\n\nStrum **only the two or three strings in the shape**. Every string marked × stays silent: let the underside of finger 1 rest lightly on the higher strings to mute them.',
+              'A **power chord** has only two different notes: the **root** (the note the chord is named after) and the **fifth** (the note five letter names higher: E up to B, A up to E). It is written E5, A5, G5… There is no third, so it is neither major nor minor, which is why it sounds so solid, especially through an overdriven or distorted amp.\n\nAdd the root again an octave higher and you have the fuller **three-note** version; it is still only two different notes.\n\n**E5 and A5** use an open string as the root, so you only fret the other notes. The fretted shape (**G5, C5, D5**) is **movable**: finger 1 on the root, fingers 3 and 4 two frets up on the next two strings. Slide that shape anywhere and the chord takes the name of the note under finger 1.\n\nStrum **only the two or three strings in the shape**. Every string marked × stays silent: let the underside of finger 1 rest lightly on the higher strings to mute them.',
             ),
             { t: 'chords', names: ['E5', 'A5', 'G5', 'C5', 'D5'] },
             exercise(

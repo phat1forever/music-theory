@@ -314,7 +314,17 @@ export function Lessons({ trackId }: { trackId?: string }) {
                     </span>
                   </>
                 )
-                return <li key={l.id}>{open ? <a href={`#/lesson/${l.id}`}>{inner}</a> : <div className="locked-row">{inner}</div>}</li>
+                return (
+                  <li key={l.id}>
+                    {open ? (
+                      <a href={`#/lesson/${l.id}`}>{inner}</a>
+                    ) : (
+                      <div className="locked-row" title="Finish the lessons before this one to unlock it, or use the placement check or Jump to this unit to skip ahead">
+                        {inner}
+                      </div>
+                    )}
+                  </li>
+                )
               })}
             </ol>
           </section>
@@ -333,7 +343,11 @@ function reviewIn(due: string): string {
 
 export function Practice({ exerciseId }: { exerciseId?: string }) {
   const p = useProfile()
-  const [filter, setFilter] = useState<'all' | Track['id']>('all')
+  // Start on the track the player is actually working in, so one instrument's list is not padded with the others'.
+  const [filter, setFilter] = useState<'all' | Track['id']>(() => {
+    const active = TRACKS.filter((t) => trackLessons(t.id).some((r) => p.lessons[r.lesson.id]))
+    return active.length === 1 ? active[0].id : 'all'
+  })
   const [showSkipped, setShowSkipped] = useState(false)
   if (exerciseId) {
     const ref = findExercise(exerciseId)
@@ -429,6 +443,8 @@ export function Progress() {
   const p = useProfile()
   const [name, setName] = useState('')
   const attempted = Object.values(p.exercises)
+  const triedCount = new Set([...p.tried, ...Object.keys(p.exercises)]).size
+  const skippedIn = (trackId: string) => trackLessons(trackId).filter((r) => p.lessons[r.lesson.id] === 'skipped').length
   const mastered = EXERCISES.filter((r) => (p.exercises[r.ex.id]?.bestTempo ?? 0) >= r.ex.target).length
   return (
     <div className="stack">
@@ -464,12 +480,14 @@ export function Progress() {
               <Bar value={prog.done / prog.total} />
               <small className="muted">
                 {prog.done}/{prog.total}
+                {skippedIn(t.id) ? ` (${skippedIn(t.id)} skipped)` : ''}
               </small>
             </div>
           )
         })}
         <p className="muted">
-          {attempted.length} exercises attempted, {attempted.reduce((n, e) => n + e.attempts, 0)} attempts in total.
+          {triedCount} exercise{triedCount === 1 ? '' : 's'} tried; {attempted.length} played in time ({attempted.reduce((n, e) => n + e.attempts, 0)} timed attempts in
+          total). Step-by-step runs count as tried but do not record a tempo.
         </p>
       </section>
 
