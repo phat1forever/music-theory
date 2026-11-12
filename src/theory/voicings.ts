@@ -121,3 +121,8 @@ export function transpose(symbol: string, semis: number, flats = false): string 
 export function soundingMidi(open: number[], shape: ChordShape): number[] {
   return shape.frets.map((f, i) => (f < 0 ? -1 : open[i] + f)).filter((n) => n >= 0)
 }
+
+/** A diagram-ready shape (fingers and barre worked out) from six fret numbers, low string first; -1 = muted. */
+export function shapeFromFrets(frets: number[]): ChordShape {
+  return fingerShape([...frets]).shape
+}

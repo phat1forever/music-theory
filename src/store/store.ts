@@ -11,6 +11,8 @@ export interface SheetChord {
   symbol: string
   /** which alternative shape to show */
   variant: number
+  /** a shape the user tapped out themselves: six frets, low string first, -1 = muted */
+  custom?: number[]
 }
 
 export interface Sheet {

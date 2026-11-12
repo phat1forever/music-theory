@@ -195,3 +195,58 @@ describe('chord shapes for any tuning', () => {
         }
   })
 })
+
+import { findKeys, identifyChord } from '../theory/analysis'
+
+describe('key finder', () => {
+  const key = (s: string) => {
+    const k = findKeys(s.split(' '))[0]
+    return `${k.root} ${k.mode}`
+  }
+  it('finds common keys', () => {
+    expect(key('G D Em C')).toBe('G major')
+    expect(key('C G Am F')).toBe('C major')
+    expect(key('Am F C G')).toBe('A minor')
+    expect(key('Em C G D')).toBe('E minor')
+    expect(key('D A Bm G')).toBe('D major')
+    expect(key('Am Dm E7 Am')).toBe('A minor')
+    expect(key('F#m D A E')).toBe('F# minor')
+    expect(key('Bb Eb F Bb')).toBe('Bb major')
+    expect(key('Dm7 G7 Cmaj7')).toBe('C major')
+  })
+  it('labels chords with Roman numerals and spots a blues', () => {
+    const k = findKeys(['G', 'D', 'Em', 'C'])[0]
+    expect(k.numerals).toEqual(['I', 'V', 'vi', 'IV'])
+    expect(k.family).toEqual(['G', 'Am', 'Bm', 'C', 'D', 'Em', 'F#dim'])
+    expect(k.scales[0]).toEqual({ root: 'G', scale: 'majorPent' })
+    const blues = findKeys(['A7', 'D7', 'A7', 'E7'])[0]
+    expect(`${blues.root} ${blues.blues}`).toBe('A true')
+    expect(blues.numerals).toEqual(['I7', 'IV7', 'I7', 'V7'])
+    expect(blues.scales[0].scale).toBe('minorPent')
+    const borrowed = findKeys(['C', 'Bb', 'F', 'C'])[0]
+    // starts and ends on C, so C is home and Bb is a borrowed chord
+    expect(borrowed.root).toBe('C')
+    expect(borrowed.numerals).toEqual(['I', '♭VII', 'IV', 'I'])
+    expect(borrowed.outside).toEqual([false, true, false, false])
+    expect(findKeys(['E', 'G', 'A', 'E'])[0].outside).toContain(true)
+  })
+})
+
+describe('chord identifier', () => {
+  const name = (frets: number[], open = TUNINGS.standard.notes) =>
+    identifyChord(frets.map((f, i) => (f < 0 ? -1 : open[i] + f)).filter((n) => n >= 0))[0]?.name
+  it('names shapes in standard tuning', () => {
+    expect(name([-1, 3, 2, 0, 1, 0])).toBe('C')
+    expect(name([0, 2, 2, 0, 0, 0])).toBe('Em')
+    expect(name([0, 2, 0, 1, 0, 0])).toBe('E7')
+    expect(name([-1, 0, 2, 0, 1, 0])).toBe('Am7')
+    expect(name([-1, -1, 0, 2, 3, 3])).toBe('Dsus4')
+    expect(name([0, 2, 2, -1, -1, -1])).toBe('E5')
+  })
+  it('uses a slash for a bass note that is not the root, and follows the tuning', () => {
+    expect(name([-1, 2, 0, 0, 0, 3])).toBe('G/B')
+    expect(name([0, 0, 0, 2, 3, 2], TUNINGS.dropD.notes)).toBe('D')
+    expect(name([0, 0, 0, 0, 0, 0], TUNINGS.openG.notes)).toBe('G/D')
+    expect(name([-1, -1, -1, -1, -1, 0])).toBeUndefined()
+  })
+})

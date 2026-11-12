@@ -46,11 +46,12 @@ function asPiece(root: string, formula: Formula): Piece {
   return { instrument: 'guitar', rh }
 }
 
-export function Explore() {
+export function Explore({ init = [] }: { init?: string[] }) {
   const profile = useProfile()
-  const [root, setRoot] = useState('A')
+  // A link such as #/explore/G/majorPent opens on that scale.
+  const [root, setRoot] = useState(() => (init[0] && /^[A-G][#b]?$/.test(init[0]) ? ROOTS[ROOTS.map(pc).indexOf(pc(init[0]))] : 'A'))
   const [kind, setKind] = useState<'scale' | 'chord'>('scale')
-  const [scale, setScale] = useState('minorPent')
+  const [scale, setScale] = useState(() => (init[1] && SCALES[init[1]] ? init[1] : 'minorPent'))
   const [chord, setChord] = useState('maj')
   const [labels, setLabels] = useState<'names' | 'degrees'>('names')
   const [box, setBox] = useState(0)

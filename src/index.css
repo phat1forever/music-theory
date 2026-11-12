@@ -1364,3 +1364,29 @@ input[type='range'] {
   text-align: center;
   padding: 0 8px;
 }
+.numeral {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+.numeral.out {
+  color: var(--root);
+}
+.named {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+.named p {
+  margin: 0;
+}
+.named-big {
+  font-size: 1.7rem;
+  font-family: 'Iowan Old Style', Palatino, Georgia, serif;
+}
+.fretboard text {
+  pointer-events: none;
+}

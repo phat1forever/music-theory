@@ -15,12 +15,14 @@ interface Props {
   onPick?: (midi: number, pos: FretPos) => void
   /** fret positions of muted strings shown as "x" at the nut */
   muted?: number[]
+  /** open-string names, string 1 (thinnest) first; defaults to standard tuning */
+  names?: string[]
 }
 
 const INLAYS = [3, 5, 7, 9, 15, 17, 19, 21]
 
 /** Guitar neck seen as in tablature: low E string at the bottom, nut on the left. */
-export function Fretboard({ marks, from = 0, to = 12, leftHanded, onPick, muted }: Props) {
+export function Fretboard({ marks, from = 0, to = 12, leftHanded, onPick, muted, names }: Props) {
   const lo = Math.max(0, from)
   const first = lo === 0 ? 1 : lo // first fretted column
   const cols = to - first + 1
@@ -122,7 +124,7 @@ export function Fretboard({ marks, from = 0, to = 12, leftHanded, onPick, muted 
           {fret}
         </text>
       ))}
-      {['e', 'B', 'G', 'D', 'A', 'E'].map((n, i) => (
+      {(names ?? ['e', 'B', 'G', 'D', 'A', 'E']).map((n, i) => (
         <text key={i} x={tx(8)} y={sy(i + 1) + 4} textAnchor="middle" className="fb-num">
           {n}
         </text>

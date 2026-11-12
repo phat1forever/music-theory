@@ -17,6 +17,8 @@ feedback, and tools for exploring scales and chords on the fretboard, the keyboa
   chords of the key, the circle of fifths, an interval ear trainer and a tuner.
 - **Chords**: build a chord sheet for a song. Pick chords, put them in your own order, and set the
   tuning (presets or per string) and capo; shapes are worked out for that setup.
+  A key finder names the likely key, labels each chord with its Roman numeral and suggests scales
+  to solo with; a chord identifier names any shape you tap out on the fretboard.
 - **Jam**: a looping backing track in four styles with the scale shown on the neck and the current
   chord's notes highlighted.
 - Several players can keep separate progress. Everything is saved in the browser (localStorage).

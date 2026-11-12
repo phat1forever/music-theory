@@ -32,7 +32,8 @@ function useRoute(): string[] {
 }
 
 export default function App() {
-  const [page, arg] = useRoute()
+  const route = useRoute()
+  const [page, arg] = route
   const state = useStore()
   const profile = useProfile()
 
@@ -69,7 +70,7 @@ export default function App() {
         {page === 'lessons' && <Lessons trackId={arg} />}
         {page === 'lesson' && <LessonView key={arg} id={arg} />}
         {page === 'practice' && <Practice exerciseId={arg} />}
-        {page === 'explore' && <Explore />}
+        {page === 'explore' && <Explore key={route.join('/')} init={route.slice(1)} />}
         {page === 'chords' && <Chords />}
         {page === 'jam' && <Jam />}
         {page === 'transcribe' && <Transcribe />}
