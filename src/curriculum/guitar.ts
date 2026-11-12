@@ -127,8 +127,8 @@ export const guitar: Track = {
               caption: 'These eight notes are a full octave from G to G.',
             },
             text(
-              'Alternate your attention',
-              'Look at the music, not at your hands, as soon as you can. Your fingers learn where the frets are much faster when your eyes are not doing the job for them.',
+              'Why the notes skip frets',
+              'Each fret raises a note by the smallest step in music, a **half step**. Most letter names are **two frets apart**, which is why A is at fret 2 and not fret 1 on the 3rd string. Only **B–C and E–F are one fret apart**, which is why F sits right next to the open E. The frets you skip are the sharps and flats; the first theory lesson covers them.\n\nWhile you learn a new note, look at your hand. Once you can find it, practise glancing back at the music: your fingers learn the frets faster when your eyes are not doing all the work.',
             ),
             exercise(
               'g-first1',
@@ -163,7 +163,7 @@ export const guitar: Track = {
             },
             text(
               'Octaves',
-              'Notice the E on the 4th string, fret 2. It is the **same note name** as the open 6th string but higher: an **octave** apart. The musical alphabet only has seven letters (A to G), then it repeats.',
+              'Notice the E on the 4th string, fret 2. It is the **same note name** as the open 6th string but higher: an **octave** apart. There are only seven letter names (A to G), with sharps and flats in between, and then they repeat.',
             ),
             exercise(
               'g-lowroad',
@@ -281,7 +281,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Three tricks teachers use',
-              '- **Anchor fingers**: look for a finger that stays on the same string or fret between two chords and keep it down (finger 3 can stay on the 2nd string between D and G in some fingerings).\n- **Move as a shape**: lift all fingers together and land them together, not one at a time.\n- **One-minute changes**: pick two chords, set a timer for 60 seconds and count how many clean changes you make. Write the number down and beat it tomorrow.\n\nMost important: **keep the strumming hand moving** even if the fretting hand is late. Rhythm matters more than a perfect chord.',
+              '- **Anchor fingers**: look for a finger that stays on the same string and fret between two chords and keep it down. Between **C and Am**, fingers 1 and 2 do not move at all: only finger 3 changes. Between **Em and Am**, fingers 2 and 3 keep their shape and move across one string together.\n- **Move as a shape**: lift all fingers together and land them together, not one at a time.\n- **One-minute changes**: pick two chords, set a timer for 60 seconds and count how many clean changes you make. Write the number down and beat it tomorrow.\n\nMost important: **keep the strumming hand moving** even if the fretting hand is late. Rhythm matters more than a perfect chord.',
             ),
             { t: 'chords', names: ['G', 'D', 'Em', 'C'], caption: 'These four chords, in this order, sit under thousands of songs.' },
             exercise(
@@ -303,7 +303,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Root and fifth',
-              'A **power chord** has only two different notes: the **root** and the **fifth** (written E5, A5, G5…). There is no third, so it is neither major nor minor, which is why it sounds so solid with distortion.\n\nThe fretted shape is **movable**: finger 1 on the root, finger 3 two frets up on the next string. Slide the same shape anywhere and the chord takes the name of the note under finger 1.',
+              'A **power chord** has only two different notes: the **root** and the **fifth** (written E5, A5, G5…). There is no third, so it is neither major nor minor, which is why it sounds so solid with distortion.\n\nAdd the root again an octave higher and you have the fuller **three-note** version; it is still only two different notes.\n\n**E5 and A5** use an open string as the root, so you only fret the other notes. The fretted shape (**G5, C5, D5**) is **movable**: finger 1 on the root, fingers 3 and 4 two frets up on the next two strings. Slide that shape anywhere and the chord takes the name of the note under finger 1.\n\nStrum **only the two or three strings in the shape**. Every string marked × stays silent: let the underside of finger 1 rest lightly on the higher strings to mute them.',
             ),
             { t: 'chords', names: ['E5', 'A5', 'G5', 'C5', 'D5'] },
             exercise(
@@ -409,7 +409,7 @@ export const guitar: Track = {
               'One finger as the nut',
               'In a barre chord your **first finger lies flat across the strings** and acts as a movable nut, while the other fingers make a familiar open-chord shape in front of it.\n\n- **E shape** (root on the 6th string): F is an E chord moved up one fret.\n- **A shape** (root on the 5th string): Bm is an Am chord moved up two frets.\n\nTips: roll the barre finger slightly onto its bony edge, keep it close to the fret, drop your thumb low behind the neck, and pull back gently with your arm instead of squeezing.',
             ),
-            { t: 'chords', names: ['F', 'Fm', 'Bm', 'B'], caption: 'The curved bar is the first-finger barre.' },
+            { t: 'chords', names: ['F', 'Fm', 'Bm', 'B'], caption: 'The long rounded bar is the first-finger barre.' },
             text(
               'Move it anywhere',
               'Slide the F shape so the barre is on fret 3 and you have **G**; fret 5 gives **A**. Slide the Bm shape to fret 5 for **Dm**. The chord is named after the root note under your barre, which is why the last lesson matters.',
@@ -433,9 +433,9 @@ export const guitar: Track = {
       level: 'Intermediate',
       about: 'The scale behind most rock and blues solos, with the techniques that make it sing.',
       placement: {
-        q: 'In A minor pentatonic box 1, which frets do you play on the low E string?',
-        options: ['3 and 5', '5 and 7', '5 and 8', '7 and 10'],
-        answer: 2,
+        q: 'You play a full bend at the 7th fret of the 3rd string (the note D). Which note should the bend reach?',
+        options: ['D♯', 'E', 'F', 'G'],
+        answer: 1,
       },
       lessons: [
         {
@@ -475,7 +475,7 @@ export const guitar: Track = {
           steps: [
             text(
               'A scale is an alphabet, a lick is a word',
-              'Running up and down a scale is not a solo. A **lick** is a short musical phrase, usually three to eight notes, with a clear ending. Good soloists know dozens of licks and combine and vary them.\n\nNotice how these licks **end on the root (A)** or the fifth (E). Ending on a strong note makes a phrase sound finished.',
+              'Running up and down a scale is not a solo. A **lick** is a short musical phrase, usually three to eight notes, with a clear ending. Good soloists know dozens of licks and combine and vary them.\n\nNotice where each lick **ends**. Licks 1 and 3 land on the **root (A)** and sound finished. In lick 2 the first bar stops on the fifth (E), which feels like a question, and the second bar settles on C, the note that gives the scale its minor colour.',
             ),
             exercise(
               'g-lick1',
@@ -540,7 +540,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Making the guitar sing',
-              '**Slide (sl)**: pick a note and slide the same finger along the string to another fret, keeping pressure on.\n\n**Bend**: push the string across the fretboard to raise its pitch. A **full bend** raises it a whole step (two frets); a **half bend** one fret. Use finger 3 with fingers 1 and 2 behind it helping, and turn your wrist like a doorknob. Always know the **target pitch**: play the note two frets higher first, then bend up to match it.\n\n**Vibrato (vib)**: small, even, repeated bends on a held note. This is the single biggest difference between a beginner and an experienced lead sound.',
+              '**Slide (sl)**: pick a note and slide the same finger along the string to another fret, keeping pressure on.\n\n**Bend**: push the string across the fretboard to raise its pitch. A **full bend** raises it a whole step (two frets); a **half bend** one fret. Bend with **finger 3**, with fingers 1 and 2 on the same string behind it helping, and turn your wrist like a doorknob. That goes for the fret-8 bend on the 2nd string too: reach up with finger 3 instead of the little finger you would normally use there. Always know the **target pitch**: play the note two frets higher first, then bend up to match it.\n\n**Vibrato (vib)**: small, even, repeated bends on a held note. This is the single biggest difference between a beginner and an experienced lead sound.',
             ),
             {
               t: 'fretboard',
@@ -553,10 +553,10 @@ export const guitar: Track = {
             exercise(
               'g-bend1',
               'Slide, bend, vibrato',
-              gtr('3/5 3/7~sl 3/9:h~sl | 2/8:h~bend 2/5:h | 3/7:h~bend 3/5:h | 4/7:w~vib'),
+              gtr('3/5 3/7~sl 3/9:h~sl | 2/8:h~full 2/5:h | 3/7:h~full 3/5:h | 4/7:w~vib'),
               56,
               90,
-              'With the microphone on, the app listens for the starting note of each bend. Use your ears for the target.',
+              '"full" means bend up a whole step: 2nd string fret 8 (G) up to A, 3rd string fret 7 (D) up to E. With the microphone on, the app listens for the starting note; use your ears for the target.',
             ),
             quiz('A full bend raises the note by…', ['One fret', 'Two frets', 'Three frets', 'An octave'], 1),
           ],
@@ -604,7 +604,7 @@ export const guitar: Track = {
               'Same shape, different home',
               'The **major pentatonic** (1 2 3 5 6) sounds sweet and open. Here is the trick: **A major pentatonic uses exactly the box shapes you already know, moved down three frets**, because it shares its notes with F♯ minor pentatonic. What changes is which note is home.\n\nThe **blues scale** is the minor pentatonic plus one extra note, the **♭5** ("blue note"). It is a passing note: slide or hammer through it; do not sit on it.',
             ),
-            { t: 'box', root: 'A', box: 1, kind: 'majorPent', caption: 'A major pentatonic. The shape is box 1, but the roots (orange) are now under your little finger.' },
+            { t: 'box', root: 'A', box: 1, kind: 'majorPent', caption: 'A major pentatonic. The shape is box 1, but the roots (orange) have moved: on the 6th and 1st strings they are now under your little finger.' },
             exercise(
               'g-majpent1',
               'A major pentatonic',
@@ -620,6 +620,8 @@ export const guitar: Track = {
               gtr('6/5 6/8 5/5 5/6 | 5/7 4/5 4/7 3/5 | 3/7 3/8 3/7 3/5 | 4/7:w'),
               60,
               110,
+              'The blue note (E♭) is at fret 6 on the 5th string and fret 8 on the 3rd. Pass through it; do not stop on it.',
+              true,
             ),
             quiz('Which note does the blues scale add to the minor pentatonic?', ['Major 3rd', 'Flat 5th', 'Major 7th', '2nd'], 1),
           ],
@@ -667,7 +669,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Why some notes sound "right"',
-              'Any pentatonic note is safe, but notes that **belong to the chord being played right now** sound strongest. The simplest target is the **root of each chord**. Aim to land on it on beat 1 when the chord changes and your solo will suddenly sound like it is following the song.',
+              'Any pentatonic note is safe, but notes that **belong to the chord being played right now** sound strongest. The simplest target is the **root of each chord**. Aim to land on it on beat 1 when the chord changes and your solo will suddenly sound like it is following the song.\n\n**Why a minor scale over major chords?** A7, D7 and E7 are major-type chords, yet the A *minor* pentatonic is the classic choice. The rub between the scale\'s C and the chord\'s C♯ is the sound of the blues. Players lean into it by bending or hammering the C slightly upward toward C♯.\n\nThe next targets after the roots are the **3rds**: C♯ over A7, F♯ over D7, G♯ over E7. They are not in the pentatonic scale, which is why they sound so strong when you reach for them. In Jam mode they appear as ringed dots.',
             ),
             {
               t: 'fretboard',
@@ -688,10 +690,10 @@ export const guitar: Track = {
             exercise(
               'g-approach',
               'Walking into the target',
-              gtr('4/7:h 3/5 4/7 | 3/7:h 3/5 3/7 | 4/7:h 3/5 3/7 | 2/5:w'),
+              gtr('4/7:h 4/7 3/5 | 3/7:h 3/7 3/5 | 4/7:h 3/5 3/7 | 2/5:w'),
               66,
               110,
-              'Use the last two beats of each bar to walk toward the next chord root.',
+              'The last note of each bar is a neighbour of the root that follows: C leads up to D, C leads down to A, D leads up to E.',
             ),
             quiz('When the band moves to the IV chord (D7 in A), the strongest note to land on is…', ['A', 'D', 'G', 'C'], 1),
           ],
@@ -733,7 +735,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Putting it together',
-              'This 12-bar solo in A uses only box 1 and everything from this unit: phrases that **breathe**, **repetition**, and **chord roots on the changes** (D in bar 5, E in bar 9, back to A at the end).\n\nLearn it four bars at a time. When you can play it at 90 bpm, open **Jam** and improvise over the same progression: start by stealing these phrases, then change one thing at a time.',
+              'This 12-bar solo in A uses only box 1 and everything from this unit: phrases that **breathe**, **repetition**, and **chord roots on the changes** (D in bar 5, E in bar 9, A in bar 11). The last bar is the turnaround over E7, so the solo finishes on **E**, which pulls you back to the top for another chorus.\n\nLearn it four bars at a time. When you can play it at 90 bpm, open **Jam** and improvise over the same progression: start by stealing these phrases, then change one thing at a time.',
             ),
             exercise(
               'g-solo12',
@@ -741,11 +743,11 @@ export const guitar: Track = {
               gtr(
                 '3/5 3/7 2/5:h | 2/8:8 2/5:8 3/7 4/7:h | 3/5 3/7 2/5 2/8 | 1/5:h~vib r:h | ' +
                   '3/7:h 2/5:8 3/7:8 3/5 | 3/7:8 3/5:8 4/7 3/7:h | 1/8:8 1/5:8~P 2/8:8 2/5:8~P 3/7 3/5 | 4/7:h~vib r:h | ' +
-                  '2/5:h 2/8 2/5 | 3/7:h 3/5 3/7 | 3/5:8 3/7:8~H 2/5 3/7:8 3/5:8 4/7 | 4/7:w~vib',
+                  '2/5:h 2/8 2/5 | 3/7:h 3/5 3/7 | 3/5:8 3/7:8~H 2/5 3/7:8 3/5:8 4/7 | 2/5:w~vib',
               ),
               66,
               100,
-              'Bars 1–4 are over A7, 5–6 over D7, 7–8 over A7, then E7, D7, A7 and home.',
+              'Bars 1–4 are over A7, 5–6 over D7, 7–8 over A7, then E7, D7, A7 and the E7 turnaround. When you loop it, end the very last time on A (4th string, fret 7).',
             ),
             text(
               'Where to go from here',

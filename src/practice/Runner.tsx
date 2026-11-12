@@ -8,6 +8,7 @@ import type { Exercise } from '../curriculum/types'
 import { emitNote, onNote } from '../input/input'
 import { actions, useProfile } from '../store/store'
 import { BEATS, timeline, totalBeats, type Ev, type Piece } from '../theory/music'
+import { midiName, pretty } from '../theory/theory'
 import {
   gradeTimed,
   noteMatches,
@@ -88,12 +89,29 @@ export function Runner({ ex, onAttempt }: Props) {
   const [good, setGood] = useState<number[]>([])
   const [bad, setBad] = useState<number[]>([])
   const [count, setCount] = useState<number | null>(null)
-  const [result, setResult] = useState<{ accuracy: number; note: string } | null>(null)
+  const [result, setResult] = useState<{ accuracy: number; note: string; counts: boolean } | null>(null)
   const [guide, setGuide] = useState(true)
+  const [hints, setHints] = useState(true)
+  const [hand, setHand] = useState<'both' | 'rh' | 'lh'>('both')
+  const [got, setGot] = useState<number[]>([])
+  const [wrong, setWrong] = useState<string | null>(null)
   const ticker = useRef<Ticker | null>(null)
-  const steps = useMemo(() => timeline(ex.piece), [ex])
-  const evs = useMemo(() => events(ex.piece), [ex])
+  const paper = useRef<HTMLDivElement>(null)
+  /** On a phone, bring the score to the top of the screen so it and the diagram are both visible while playing. */
+  const frame = () => {
+    if (window.innerWidth < 720) paper.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   const guitar = ex.piece.instrument === 'guitar'
+  const twoHands = !guitar && !!ex.piece.lh && ex.piece.rh.some((e) => e.midi.length > 0)
+  // Practising one hand alone: the other hand is replaced by rests (or dropped).
+  const piece: Piece = useMemo(() => {
+    if (!twoHands || hand === 'both') return ex.piece
+    if (hand === 'rh') return { ...ex.piece, lh: undefined }
+    const bars = Math.ceil(totalBeats(ex.piece) / 4)
+    return { ...ex.piece, rh: Array.from({ length: bars }, () => ({ midi: [], dur: 'w' as const })) }
+  }, [ex, hand, twoHands])
+  const steps = useMemo(() => timeline(piece), [piece])
+  const evs = useMemo(() => events(piece), [piece])
 
   // Reset when the exercise changes.
   useEffect(() => {
@@ -112,11 +130,15 @@ export function Runner({ ex, onAttempt }: Props) {
     setBad([])
     setCount(null)
     setResult(null)
+    setGot([])
+    setWrong(null)
   }
 
-  function finish(accuracy: number, usedTempo: number, note: string) {
-    actions.attempt(ex.id, accuracy, usedTempo)
-    setResult({ accuracy, note })
+  /** `counts` is false for run-throughs that should not move the tempo record: step-by-step and one hand alone. */
+  function finish(accuracy: number, usedTempo: number, note: string, counts = true) {
+    if (counts && hand === 'both') actions.attempt(ex.id, accuracy, usedTempo)
+    else actions.touch()
+    setResult({ accuracy, note, counts: counts && hand === 'both' })
     setMode('done')
     setCursor(null)
     onAttempt?.(accuracy)
@@ -124,8 +146,9 @@ export function Runner({ ex, onAttempt }: Props) {
 
   async function listen() {
     reset()
+    frame()
     setMode('listen')
-    ticker.current = await playPiece(ex.piece, tempo, (b) => {
+    ticker.current = await playPiece(piece, tempo, (b) => {
       setCursor(b)
       if (b === null) setMode('idle')
     })
@@ -138,6 +161,7 @@ export function Runner({ ex, onAttempt }: Props) {
     reset()
     stepState.current = { index: 0, got: new Set(), mistakes: 0 }
     setMode('step')
+    frame()
     setCursor(steps[0]?.beat ?? null)
   }
 
@@ -149,13 +173,16 @@ export function Runner({ ex, onAttempt }: Props) {
       if (!step) return
       if (noteMatches(step, e.midi, e.source)) {
         st.got.add(e.source === 'mic' ? 0 : e.midi)
+        setWrong(null)
+        setGot(e.source === 'mic' ? [] : [...st.got])
         if (st.got.size >= notesNeeded(step, e.source)) {
           setGood((g) => [...g, step.beat])
+          setGot([])
           st.index++
           st.got = new Set()
           if (st.index >= steps.length) {
             const acc = stepAccuracy(steps.length, st.mistakes)
-            finish(acc, ex.tempo, st.mistakes ? `${st.mistakes} wrong note${st.mistakes > 1 ? 's' : ''} along the way.` : 'No wrong notes.')
+            finish(acc, ex.tempo, st.mistakes ? `${st.mistakes} wrong note${st.mistakes > 1 ? 's' : ''} along the way.` : 'No wrong notes.', false)
           } else setCursor(steps[st.index].beat)
         }
       } else {
@@ -163,6 +190,8 @@ export function Runner({ ex, onAttempt }: Props) {
         const prev = steps[st.index - 1]
         if (e.source === 'mic' && prev && noteMatches(prev, e.midi, 'mic')) return
         st.mistakes++
+        const want = [...new Set(step.midi)].map((m) => pretty(midiName(m, ex.flats))).join(' + ')
+        setWrong(`That was ${pretty(midiName(e.midi, ex.flats))}. Look for ${want}.`)
       }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,12 +202,13 @@ export function Runner({ ex, onAttempt }: Props) {
 
   async function startTempo() {
     reset()
+    frame()
     setMode('tempo')
     played.current = { list: [], source: null, t0: Infinity }
     const self = profile.input === 'self'
     const spb = 60 / tempo
     const t = await playPiece(
-      ex.piece,
+      piece,
       tempo,
       (b) => {
         setCount(null)
@@ -198,13 +228,13 @@ export function Runner({ ex, onAttempt }: Props) {
           p.list.map((n) => ({ ...n, time: n.time - shift })),
           spb,
           source,
-          Math.min(0.3, spb * 0.45),
         )
         setGood(steps.filter((_, i) => r.steps[i]).map((s) => s.beat))
         setBad(steps.filter((_, i) => !r.steps[i]).map((s) => s.beat))
         const timing =
           r.hits < 2 ? '' : Math.abs(r.offset) < 0.05 ? ' Timing was right on the beat.' : r.offset > 0 ? ' You tended to play a little late.' : ' You tended to rush ahead of the beat.'
-        finish(r.accuracy, tempo, `${r.hits} of ${r.total} notes on time.${timing}`)
+        const stray = r.extra ? ` ${r.extra} extra or wrong note${r.extra > 1 ? 's' : ''}.` : ''
+        finish(r.accuracy, tempo, `${r.hits} of ${r.total} notes on time.${stray}${timing}`)
       },
       { countIn: true, metronome: true, sound: guide && profile.input !== 'mic' },
     )
@@ -241,21 +271,33 @@ export function Runner({ ex, onAttempt }: Props) {
     return { from: lo - 3, to: Math.max(hi + 3, lo + 14), all: [] }
   }, [evs, guitar])
 
+  // Notes of the current step already played (in step-by-step mode) turn green.
   const fretMarks: Mark[] = guitar
     ? [
         ...uniq(diagram.all.map((p) => ({ ...p, kind: 'ghost' as const }))),
-        ...current.flatMap((e) => (e.ev.tab ?? []).map((p) => ({ ...p, kind: 'active' as const, label: String(p.fret) }))),
+        ...(hints
+          ? current.flatMap((e) =>
+              (e.ev.tab ?? []).map((p, i) => ({
+                ...p,
+                kind: got.includes(e.ev.midi[i]) ? ('chord' as const) : ('active' as const),
+                label: String(p.fret),
+              })),
+            )
+          : []),
       ]
     : []
-  const keyMarks: KeyMark[] = !guitar
-    ? current.flatMap((e) =>
-        e.ev.midi.map((m, i) => ({
-          midi: m,
-          kind: e.hand === 'lh' ? ('lh' as const) : ('active' as const),
-          label: e.ev.fingers?.[i] ? String(e.ev.fingers[i]) : '',
-        })),
-      )
-    : []
+  const keyMarks: KeyMark[] =
+    !guitar && hints
+      ? current.flatMap((e) =>
+          e.ev.midi.map((m, i) => ({
+            midi: m,
+            kind: got.includes(m) ? ('done' as const) : e.hand === 'lh' ? ('lh' as const) : ('active' as const),
+            label: e.ev.fingers?.[i] ? String(e.ev.fingers[i]) : '',
+          })),
+        )
+      : []
+  const needed = new Set(current.flatMap((e) => e.ev.midi)).size
+  const handsNow = [...new Set(current.map((e) => e.hand))]
 
   const pick = (m: number) => {
     play(guitar ? 'guitar' : 'keys', [m], 0.6)
@@ -284,8 +326,32 @@ export function Runner({ ex, onAttempt }: Props) {
         </div>
       </div>
 
-      <div className="paper">
-        <Score piece={ex.piece} cursor={cursor} good={good} bad={bad} flats={ex.flats} />
+      {twoHands && (
+        <div className="seg hand-seg" role="group" aria-label="Which hand to practise">
+          {(
+            [
+              ['both', 'Both hands'],
+              ['rh', 'Right hand only'],
+              ['lh', 'Left hand only'],
+            ] as const
+          ).map(([h, label]) => (
+            <button
+              key={h}
+              className={hand === h ? 'on' : ''}
+              disabled={mode === 'listen' || mode === 'step' || mode === 'tempo'}
+              onClick={() => {
+                reset()
+                setHand(h)
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="paper follow" ref={paper}>
+        <Score piece={piece} cursor={cursor} good={good} bad={bad} flats={ex.flats} follow />
       </div>
 
       <div className="runner-diagram">
@@ -302,6 +368,11 @@ export function Runner({ ex, onAttempt }: Props) {
         )}
         {count !== null && mode === 'tempo' && <div className="countin">{count}</div>}
       </div>
+      {!guitar && (ex.piece.lh || ex.piece.rh.some((e) => e.fingers)) && (
+        <p className="legend">
+          <span className="lg root" /> right hand <span className="lg lh" /> left hand. Numbers are fingers (1 = thumb).
+        </p>
+      )}
 
       <div className="runner-controls">
         <label className="tempo">
@@ -339,8 +410,18 @@ export function Runner({ ex, onAttempt }: Props) {
         </div>
       </div>
 
+      {mode === 'idle' && !result && (
+        <p className="howto muted">
+          <strong>Listen</strong> plays it for you. <strong>Step by step</strong> waits while you find each note, with no time pressure. <strong>Play in time</strong> counts
+          you in, then you play along with the metronome and get a score.
+        </p>
+      )}
+
       <div className="runner-foot">
         <InputBar />
+        <label className="check" title="Turn this off to practise reading the notes without being shown where they are">
+          <input type="checkbox" checked={hints} onChange={(e) => setHints(e.target.checked)} /> Show {guitar ? 'frets' : 'keys'} to play
+        </label>
         {profile.input !== 'mic' && (
           <label className="check">
             <input type="checkbox" checked={guide} onChange={(e) => setGuide(e.target.checked)} /> Guide sound
@@ -349,9 +430,13 @@ export function Runner({ ex, onAttempt }: Props) {
       </div>
 
       {mode === 'step' && (
-        <p className="status">
-          Play the highlighted {current.some((e) => e.ev.midi.length > 1) ? 'notes' : 'note'}
-          {profile.input === 'self' ? ' by tapping the diagram (or switch on the microphone or MIDI below).' : '. The app waits for you.'}
+        <p className={`status${wrong ? ' wrong' : ''}`} data-status>
+          {wrong ??
+            `${!guitar && handsNow.length === 1 ? (handsNow[0] === 'lh' ? 'Left hand: play' : 'Right hand: play') : handsNow.length > 1 ? 'Both hands: play' : 'Play'} the ${
+              hints ? 'highlighted ' : ''
+            }${needed > 1 ? `${needed} notes together` : 'note'}${
+              profile.input === 'self' ? ` by tapping the ${guitar ? 'fretboard' : 'keys'} (or switch on the microphone or MIDI below).` : '. The app waits for you.'
+            }`}
         </p>
       )}
       {mode === 'tempo' && profile.input === 'mic' && <p className="status">Listening… headphones stop the metronome leaking into the microphone.</p>}
@@ -381,11 +466,15 @@ export function Runner({ ex, onAttempt }: Props) {
           </div>
           <div>
             <strong>
-              {Math.round(result.accuracy * 100)}% {passed ? '· passed' : '· keep going'}
+              {Math.round(result.accuracy * 100)}% {!result.counts ? '· notes checked' : passed ? '· passed' : '· keep going'}
             </strong>
             <p className="muted">
               {result.note}{' '}
-              {passed
+              {!result.counts
+                ? hand !== 'both'
+                  ? 'One hand alone is for learning the notes. Put both hands together and use Play in time to record a tempo.'
+                  : 'You know where the notes are. Now use Play in time to record a tempo.'
+                : passed
                 ? tempo >= ex.target
                   ? 'You have reached the goal tempo for this exercise.'
                   : `Next step: ${nextTempo} bpm.`
@@ -393,7 +482,7 @@ export function Runner({ ex, onAttempt }: Props) {
             </p>
           </div>
           <div className="btns">
-            {passed && tempo < ex.target && (
+            {result.counts && passed && tempo < ex.target && (
               <button
                 className="btn primary"
                 onClick={() => {

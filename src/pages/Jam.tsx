@@ -3,9 +3,8 @@ import { drum, play, startTicker, type Ticker } from '../audio/audio'
 import { Fretboard, type Mark } from '../components/Fretboard'
 import { Keyboard, type KeyMark } from '../components/Keyboard'
 import { actions, useProfile } from '../store/store'
-import { CHORDS, fretMidi, mod, nameIn, pc, pcName, pentatonicBox, positions, prefersFlats, ROOTS, SCALES } from '../theory/theory'
+import { CHORDS, fretMidi, keyRoot, mod, nameIn, pc, pcName, pentatonicBox, positions, prefersFlats, pretty, ROOTS, SCALES, spell } from '../theory/theory'
 
-const pretty = (n: string) => n.replace(/#/g, '♯').replace(/b/g, '♭')
 
 interface Style {
   name: string
@@ -21,7 +20,7 @@ const c = (step: number, q: string, roman: string) => ({ step, q, roman })
 const STYLES: Record<string, Style> = {
   blues: {
     name: '12-bar blues',
-    about: 'The classic form. Land on the root of each chord as it arrives.',
+    about: 'The classic form. The minor pentatonic rubbing against these major-type chords is the sound of the blues. Land on the root of each chord as it arrives; Mixolydian fits the I chord best, so take care with its 3rd when the IV chord comes.',
     bars: [c(0, '7', 'I7'), c(0, '7', 'I7'), c(0, '7', 'I7'), c(0, '7', 'I7'), c(5, '7', 'IV7'), c(5, '7', 'IV7'), c(0, '7', 'I7'), c(0, '7', 'I7'), c(7, '7', 'V7'), c(5, '7', 'IV7'), c(0, '7', 'I7'), c(7, '7', 'V7')],
     scales: ['minorPent', 'blues', 'mixolydian'],
     minor: true,
@@ -51,7 +50,7 @@ const STYLES: Record<string, Style> = {
 
 export function Jam() {
   const profile = useProfile()
-  const [root, setRoot] = useState('A')
+  const [picked, setRoot] = useState('A')
   const [styleKey, setStyleKey] = useState('blues')
   const [scaleKey, setScaleKey] = useState('minorPent')
   const [tempo, setTempo] = useState(84)
@@ -60,6 +59,8 @@ export function Jam() {
   const [beat, setBeat] = useState(0)
   const ticker = useRef<Ticker | null>(null)
   const style = STYLES[styleKey]
+  // Minor-type styles on a black key use the usual sharp name (C♯ minor, not D♭ minor).
+  const root = keyRoot(picked, style.minor && styleKey !== 'blues')
   const flats = prefersFlats(root, style.minor ? 'minor' : 'major')
 
   useEffect(() => () => ticker.current?.stop(), [])
@@ -75,7 +76,7 @@ export function Jam() {
     if (ticker.current) stop()
     if (!STYLES[styleKey].scales.includes(scaleKey)) setScaleKey(STYLES[styleKey].scales[0])
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [root, styleKey, tempo])
+  }, [picked, styleKey, tempo])
 
   async function start() {
     const rootPc = pc(root)
@@ -118,12 +119,23 @@ export function Jam() {
     return p === pc(root) ? 'root' : 'tone'
   }
 
+  // Chord tones that are not in the scale (the 3rds over a blues, for example) are shown ringed.
+  const outsidePcs = chordPcs.filter((p) => !scalePcs.includes(p))
+  const chordSpelling = current ? spell(pcName(pc(root) + current.step, flats), CHORDS[current.q]) : []
+  const outsideName = (m: number) => pretty(chordSpelling[chordPcs.indexOf(mod(m, 12))] ?? pcName(m, flats))
   const fretMarks: Mark[] = useMemo(() => {
     const pos = canBox && box > 0 ? pentatonicBox(root, box, scaleKey as 'minorPent' | 'majorPent' | 'blues') : positions(scalePcs, 0, 15)
-    return pos.map((p) => {
-      const m = fretMidi(p.string, p.fret)
-      return { ...p, label: pretty(nameIn(m, root, scale, scaleKey)), kind: kindOf(m) }
-    })
+    const frets = pos.map((p) => p.fret)
+    const lo = canBox && box > 0 ? Math.max(0, Math.min(...frets) - 1) : 0
+    const hi = canBox && box > 0 ? Math.max(...frets) + 1 : 15
+    const extra: Mark[] = positions(outsidePcs, lo, hi).map((p) => ({ ...p, label: outsideName(fretMidi(p.string, p.fret)), kind: 'outside' as const }))
+    return [
+      ...extra,
+      ...pos.map((p) => {
+        const m = fretMidi(p.string, p.fret)
+        return { ...p, label: pretty(nameIn(m, root, scale, scaleKey)), kind: kindOf(m) }
+      }),
+    ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [root, scaleKey, box, bar, styleKey])
 
@@ -131,12 +143,12 @@ export function Jam() {
   for (let m = 55; m <= 84; m++)
     if (scalePcs.includes(mod(m, 12))) {
       const k = kindOf(m)
-      keyMarks.push({ midi: m, label: pretty(nameIn(m, root, scale, scaleKey)), kind: k === 'ghost' ? 'tone' : (k as KeyMark['kind']) })
-    }
+      keyMarks.push({ midi: m, label: pretty(nameIn(m, root, scale, scaleKey)), kind: k as KeyMark['kind'] })
+    } else if (outsidePcs.includes(mod(m, 12))) keyMarks.push({ midi: m, label: outsideName(m), kind: 'outside' })
 
   const chordName = (b: Style['bars'][number]) => pretty(pcName(pc(root) + b.step, flats)) + CHORDS[b.q].suffix
 
-  if (!profile.jamUnlocked && !profile.lessons['g-pent1'])
+  if (!profile.jamUnlocked && !profile.lessons['g-pent1'] && !profile.lessons['k-cscale'])
     return (
       <div className="stack">
         <h1>Jam</h1>
@@ -145,11 +157,12 @@ export function Jam() {
           <h2>Improvise over a backing track</h2>
           <p>
             Jam mode loops a chord progression while the fretboard and keyboard show the scale to use and light up the notes of the chord being played. It opens
-            when you finish <a href="#/lesson/g-pent1">Minor pentatonic: box 1</a> in the guitar track.
+            when you finish <a href="#/lesson/g-pent1">Minor pentatonic: box 1</a> in the guitar track or <a href="#/lesson/k-cscale">The C major scale</a> in the keyboard
+            track.
           </p>
           <div className="btns">
-            <a className="btn primary" href="#/lessons/guitar">
-              Go to guitar lessons
+            <a className="btn primary" href="#/lessons">
+              Go to lessons
             </a>
             <button className="btn" data-act="unlock" onClick={() => actions.unlockJam()}>
               I already know a scale: open it now
@@ -167,8 +180,8 @@ export function Jam() {
           <span className="muted">Key</span>
           <div className="seg wrap">
             {ROOTS.map((r) => (
-              <button key={r} className={r === root ? 'on' : ''} onClick={() => setRoot(r)}>
-                {pretty(r)}
+              <button key={r} className={r === picked ? 'on' : ''} onClick={() => setRoot(r)}>
+                {pretty(pc(r) === pc(root) ? root : r)}
               </button>
             ))}
           </div>
@@ -254,8 +267,13 @@ export function Jam() {
         <p className="legend">
           {current ? (
             <>
-              <span className="lg root" /> root of {chordName(current)} <span className="lg chord" /> other notes of the chord <span className="lg ghost" /> rest of the
-              scale
+              <span className="lg root" /> root of {chordName(current)} <span className="lg chord" /> chord notes in the scale{' '}
+              {outsidePcs.length > 0 && (
+                <>
+                  <span className="lg outside" /> chord notes outside the scale (strong targets){' '}
+                </>
+              )}
+              <span className="lg ghost" /> rest of the scale
             </>
           ) : (
             <>
@@ -275,6 +293,7 @@ export function Jam() {
           <li>Play only three notes for a whole chorus. Change the rhythm, not the notes.</li>
           <li>Play a phrase, then stay silent for the same length of time.</li>
           <li>Each time the chord changes, land on an orange or teal dot on beat 1.</li>
+          <li>Slide or bend into a ringed dot from the scale note one fret below it.</li>
           <li>Stay in one box for a chorus, then move to the next box for the following one.</li>
         </ul>
       </section>

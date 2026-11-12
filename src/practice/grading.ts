@@ -9,14 +9,15 @@ export interface Played {
   time: number
 }
 
-const samePc = (a: number, b: number) => (((a - b) % 12) + 12) % 12 === 0
+// A pitch detector sometimes lands exactly one octave out; anything further off is a different note.
+const nearOctave = (a: number, b: number) => a === b || Math.abs(a - b) === 12
 
 /**
  * Does a played note count toward a step?
- * A microphone often hears a note an octave off, so mic input matches on note name only.
+ * A microphone can hear a note an octave off, so mic input also accepts the octave above or below.
  */
 export function noteMatches(step: Step, played: number, source: Source): boolean {
-  return source === 'mic' ? step.midi.some((m) => samePc(m, played)) : step.midi.includes(played)
+  return source === 'mic' ? step.midi.some((m) => nearOctave(m, played)) : step.midi.includes(played)
 }
 
 /**
@@ -25,6 +26,11 @@ export function noteMatches(step: Step, played: number, source: Source): boolean
  */
 export function notesNeeded(step: Step, source: Source): number {
   return source === 'mic' ? 1 : new Set(step.midi).size
+}
+
+/** How close to the beat a note must land: about a third of a beat, and never more than 0.2 s. */
+export function timingWindow(secPerBeat: number): number {
+  return Math.min(0.2, secPerBeat * 0.3)
 }
 
 export interface TimedResult {
@@ -36,6 +42,8 @@ export interface TimedResult {
   steps: boolean[]
   /** average timing error of hits in seconds (positive = late) */
   offset: number
+  /** notes played that matched nothing (not counted for the microphone, which hears stray sounds) */
+  extra: number
 }
 
 /** Grade a performance played along with the metronome. `tol` is the timing window in seconds. */
@@ -44,7 +52,7 @@ export function gradeTimed(
   played: Played[],
   secPerBeat: number,
   source: Source,
-  tol = 0.25,
+  tol = timingWindow(secPerBeat),
 ): TimedResult {
   const used = new Set<number>()
   let offsetSum = 0
@@ -68,10 +76,13 @@ export function gradeTimed(
     }
     return ok
   })
+  // Wrong or extra notes cost half a note each, so hitting everything at once does not pass.
+  const extra = source === 'mic' ? 0 : played.length - used.size
   return {
     hits,
     total: steps.length,
-    accuracy: steps.length ? hits / steps.length : 0,
+    extra,
+    accuracy: steps.length ? hits / (steps.length + extra * 0.5) : 0,
     steps: outcome,
     offset: hits ? offsetSum / hits : 0,
   }

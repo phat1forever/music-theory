@@ -65,9 +65,11 @@ export function voicings(open: number[], symbol: string, limit = 4): ChordShape[
         if (sounding.length < (power ? 2 : 4)) return
         const lo = sounding[0].s
         const hi = sounding[sounding.length - 1].s
-        if (hi - lo + 1 !== sounding.length) return // no muted strings in the middle
-        if (power ? sounding.length > 3 || lo > 2 : hi !== 5 || lo > 2) return
-        if (mod(open[lo] + frets[lo], 12) !== rootPc) return
+        const inner = hi - lo + 1 - sounding.length // muted strings between sounding ones
+        if (power ? inner > 0 || sounding.length > 3 || lo > 2 : inner > 1 || hi < 4 || lo > 2) return
+        // The lowest pitch, not just the lowest string, must be the root.
+        const bass = sounding.reduce((a, x) => (open[x.s] + x.f < open[a.s] + a.f ? x : a))
+        if (mod(open[bass.s] + bass.f, 12) !== rootPc) return
         const heard = new Set(sounding.map((x) => mod(open[x.s] + x.f, 12)))
         if (!required.every((t) => heard.has(t))) return
         const key = frets.join(',')
@@ -77,16 +79,18 @@ export function voicings(open: number[], symbol: string, limit = 4): ChordShape[
         const fretted = frets.filter((f) => f > 0)
         const pos = fretted.length ? Math.min(...fretted) : 0
         const span = fretted.length ? Math.max(...fretted) - pos : 0
-        const score = pos * 1.2 + fingers * 0.5 + span * 0.4 + (barre ? 0.6 : 0) - sounding.length * 0.9
+        const score = pos * 1.2 + fingers * 0.5 + span * 0.4 + (barre ? 0.6 : 0) - sounding.length * 0.9 + inner * 1.5 + (hi < 5 && !power ? 0.4 : 0)
         found.set(key, { shape, score })
       }
       walk(0)
     }
   }
 
-  search(tones)
+  // Five-note chords (9ths) are normally played without the fifth.
+  const fifth = mod(rootPc + 7, 12)
+  search(tones.length >= 5 ? tones.filter((t) => t !== fifth) : tones)
   // Four-note chords often drop the fifth when no full shape is reachable.
-  if (!found.size && tones.length >= 4) search(tones.filter((t) => t !== mod(rootPc + 7, 12)))
+  if (!found.size && tones.length >= 4) search(tones.filter((t) => t !== fifth))
 
   const ranked = [...found.values()].sort((a, b) => a.score - b.score).map((x) => x.shape)
   // In standard tuning, lead with the shape players actually learn first.

@@ -1075,7 +1075,13 @@ input[type='range'] {
   display: flex;
   gap: 8px;
 }
-.tuner-strings span {
+.tuner-strings button {
+  appearance: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+.tuner-strings button {
   width: 38px;
   height: 38px;
   display: grid;
@@ -1085,11 +1091,11 @@ input[type='range'] {
   font-weight: 700;
   color: var(--muted);
 }
-.tuner-strings span.on {
+.tuner-strings button.on {
   border-color: var(--root);
   color: var(--root);
 }
-.tuner-strings span.ok {
+.tuner-strings button.ok {
   border-color: var(--good);
   background: var(--good);
   color: var(--surface);
@@ -1389,4 +1395,70 @@ input[type='range'] {
 }
 .fretboard text {
   pointer-events: none;
+}
+.kb-ghost circle {
+  fill: #b9b3a6;
+}
+.kb-done circle {
+  fill: #0f8a5f;
+}
+.paper.follow {
+  scroll-behavior: smooth;
+}
+@media (max-width: 720px) {
+  .paper.follow {
+    max-height: 46vh;
+    overflow-y: auto;
+  }
+  .top nav {
+    -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+    mask-image: linear-gradient(to right, #000 85%, transparent);
+    padding-right: 28px;
+  }
+}
+.hand-seg {
+  margin-top: 8px;
+}
+.howto {
+  font-size: 0.88rem;
+  margin: 12px 0 0;
+}
+.status.wrong {
+  color: var(--bad);
+}
+.lg.lh {
+  background: #2563eb;
+}
+.fb-outside circle {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+.fb-outside text {
+  fill: var(--ink);
+}
+.kb-outside circle {
+  fill: #fff;
+  stroke: #0f766e;
+  stroke-width: 2.5;
+}
+.kb-outside text {
+  fill: #1f1c17;
+}
+.lg.outside {
+  background: var(--surface);
+  border: 2.5px solid var(--accent);
+}
+
+.notice {
+  background: color-mix(in srgb, var(--root) 10%, var(--surface));
+  border-left: 3px solid var(--root);
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+.start-here h2 {
+  margin-bottom: 12px;
+}
+.paper {
+  scroll-margin-top: 104px;
 }

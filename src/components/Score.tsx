@@ -16,7 +16,7 @@ import {
   type StemmableNote,
 } from 'vexflow'
 import { BEATS, type Ev, type Piece } from '../theory/music'
-import { mod } from '../theory/theory'
+import { mod, pc } from '../theory/theory'
 
 interface Props {
   piece: Piece
@@ -27,6 +27,10 @@ interface Props {
   bad?: number[]
   /** spell black keys with flats */
   flats?: boolean
+  /** exact note names to use, e.g. ["F#", "G#", "A#", "B", "C#", "D#", "E#"] */
+  spelling?: string[]
+  /** keep the line being played in view when the score is taller than its box */
+  follow?: boolean
 }
 
 const SHARP = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
@@ -57,7 +61,7 @@ function vexDur(e: Ev): string {
 }
 
 /** Sheet music with either guitar tab underneath or a left-hand bass staff. Always drawn on white "paper". */
-export function Score({ piece, cursor, good, bad, flats }: Props) {
+export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Props) {
   const host = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
 
@@ -75,10 +79,21 @@ export function Score({ piece, cursor, good, bad, flats }: Props) {
     if (!el || width < 120) return
     el.innerHTML = ''
     const guitar = piece.instrument === 'guitar'
-    const top = measures(piece.rh)
-    const bottom = piece.lh ? measures(piece.lh) : null
+    // A left-hand-only piece is drawn on a single bass staff instead of under an empty treble staff.
+    const bassOnly = !guitar && !!piece.lh && piece.rh.every((e) => !e.midi.length)
+    const top = measures(bassOnly ? piece.lh! : piece.rh)
+    const bottom = !bassOnly && piece.lh ? measures(piece.lh) : null
+    const topClef = bassOnly ? 'bass' : 'treble'
     const hasLower = guitar || !!bottom
     const names = flats ? FLAT : SHARP
+    const exact = new Map((spelling ?? []).map((n) => [pc(n), n]))
+    /** How a MIDI note is written: letter, accidental and octave (B# and Cb sit in the neighbouring octave). */
+    const written = (m: number) => {
+      const n = exact.get(mod(m, 12)) ?? names[mod(m, 12)]
+      const acc = n.slice(1)
+      const shift = [...acc].reduce((a, ch) => a + (ch === '#' ? 1 : -1), 0)
+      return { letter: n[0].toLowerCase(), acc, oct: Math.floor((m - shift) / 12) - 1 }
+    }
 
     const density = Math.max(...top.map((m) => m.length), ...(bottom ?? []).map((m) => m.length))
     const want = Math.max(170, density * 38 + 50)
@@ -104,15 +119,18 @@ export function Score({ piece, cursor, good, bad, flats }: Props) {
         // Guitar music is written an octave above where it sounds.
         const shown = [...new Set(e.midi.map((m) => m + (guitar ? 12 : 0)))].sort((a, b) => a - b)
         const note = new StaveNote({
-          keys: shown.map((m) => `${names[mod(m, 12)]}/${Math.floor(m / 12) - 1}`),
+          keys: shown.map((m) => {
+            const w = written(m)
+            return `${w.letter}${w.acc}/${w.oct}`
+          }),
           duration: vexDur(e),
           clef,
           auto_stem: true,
         })
         shown.forEach((m, i) => {
-          const n = names[mod(m, 12)]
-          const id = n[0] + Math.floor(m / 12)
-          const acc = n.slice(1) || 'n'
+          const w = written(m)
+          const id = w.letter + w.oct
+          const acc = w.acc || 'n'
           if ((state.get(id) ?? 'n') !== acc) {
             note.addModifier(new Accidental(acc), i)
             state.set(id, acc)
@@ -170,12 +188,12 @@ export function Score({ piece, cursor, good, bad, flats }: Props) {
         const y = line * lineH + 8
         const upper = new Stave(x, y, w)
         if (i === 0) {
-          upper.addClef('treble')
+          upper.addClef(topClef)
           if (line === 0) upper.addTimeSignature('4/4')
         }
         upper.setContext(ctx).draw()
 
-        const notes = staveNotes(top[idx], 'treble', false)
+        const notes = staveNotes(top[idx], topClef, bassOnly)
         const voices = [voice(notes)]
         const beamGroups = [notes]
         let lower: Stave | TabStave | null = null
@@ -219,7 +237,11 @@ export function Score({ piece, cursor, good, bad, flats }: Props) {
         x += w
       }
     }
-  }, [piece, cursor, good, bad, flats, width])
+    // On a small screen a long score is shown in a short scrolling box: keep the current line visible.
+    const box = el.parentElement
+    if (follow && cursor != null && box && box.scrollHeight > box.clientHeight + 4)
+      box.scrollTo({ top: Math.max(0, Math.floor(Math.floor(cursor / 4) / perLine) * lineH - 6), behavior: 'smooth' })
+  }, [piece, cursor, good, bad, flats, spelling, follow, width])
 
   return <div className="score" ref={host} />
 }

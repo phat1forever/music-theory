@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { EXERCISES, LESSONS, TRACKS } from '../curriculum'
 import { addDays, gradeTimed, noteMatches, recordAttempt, stepAccuracy, streak, suggestedTempo } from '../practice/grading'
 import { BEATS, gtr, keys, timeline, totalBeats, type Ev } from '../theory/music'
-import { CHORDS, chordMidi, diatonicChords, fretMidi, midi, midiName, midiToFret, pentatonicBox, SCALES, shapeMidi, CHORD_SHAPES, spell, parseChord, pc, mod } from '../theory/theory'
+import { keyRoot, pretty, CHORDS, chordMidi, diatonicChords, fretMidi, midi, midiName, midiToFret, pentatonicBox, SCALES, shapeMidi, CHORD_SHAPES, spell, parseChord, pc, mod } from '../theory/theory'
 
 describe('note basics', () => {
   it('maps names to MIDI and back', () => {
@@ -122,6 +122,7 @@ describe('grading', () => {
     expect(noteMatches(steps[0], 60, 'midi')).toBe(true)
     expect(noteMatches(steps[0], 72, 'midi')).toBe(false)
     expect(noteMatches(steps[0], 72, 'mic')).toBe(true)
+    expect(noteMatches(steps[0], 84, 'mic')).toBe(false)
   })
   it('grades a timed performance', () => {
     const perfect = [
@@ -140,6 +141,9 @@ describe('grading', () => {
       { midi: 64, time: 2 },
     ]
     expect(gradeTimed(steps, sloppy, 1, 'midi').hits).toBe(1)
+    // mashing every key on every beat no longer passes
+    const mash = [0, 1, 2].flatMap((t) => [60, 62, 64, 65, 67, 69, 71].map((midi) => ({ midi, time: t })))
+    expect(gradeTimed(steps, mash, 1, 'midi').accuracy).toBeLessThan(0.5)
     // the microphone needs only one chord tone
     expect(gradeTimed(steps, [{ midi: 60, time: 0 }, { midi: 62, time: 1 }, { midi: 76, time: 2 }], 1, 'mic').accuracy).toBe(1)
   })
@@ -176,6 +180,13 @@ describe('chord shapes for any tuning', () => {
     expect(voicings(std.map((n) => n + 2), 'E')[0].frets).toEqual([-1, -1, 0, 2, 3, 2])
     expect(transpose('D', 2)).toBe('E')
     expect(transpose('Am7', 3, true)).toBe('Cm7')
+  })
+  it('finds the standard grips, and keeps the root as the lowest pitch', () => {
+    const all = (sym: string) => voicings(std, sym, 30).map((v) => v.frets.join(','))
+    expect(all('C9')).toContain('-1,3,2,3,3,-1')
+    expect(all('F#m7b5')).toContain('2,-1,2,2,1,-1')
+    for (const sym of ['Bbmaj7', 'C9', 'Am7', 'F#m7b5', 'Edim7'])
+      for (const v of voicings(std, sym, 30)) expect(mod(Math.min(...soundingMidi(std, v)), 12), `${sym} ${v.frets}`).toBe(pc(parseChord(sym).root))
   })
   it('only ever uses chord tones, with the root in the bass, in every tuning', () => {
     for (const t of Object.values(TUNINGS))
@@ -224,10 +235,14 @@ describe('key finder', () => {
     expect(blues.numerals).toEqual(['I7', 'IV7', 'I7', 'V7'])
     expect(blues.scales[0].scale).toBe('minorPent')
     const borrowed = findKeys(['C', 'Bb', 'F', 'C'])[0]
-    // starts and ends on C, so C is home and Bb is a borrowed chord
-    expect(borrowed.root).toBe('C')
+    // starts and ends on C with a Bb chord: C Mixolydian, not F major
+    expect(`${borrowed.root} ${borrowed.mode}`).toBe('C mixolydian')
     expect(borrowed.numerals).toEqual(['I', '♭VII', 'IV', 'I'])
-    expect(borrowed.outside).toEqual([false, true, false, false])
+    expect(borrowed.scales[0].scale).toBe('mixolydian')
+    expect(key('D C G D')).toBe('D mixolydian')
+    expect(key('Dm7 G')).toBe('D dorian')
+    expect(key('Dm7 G7 Cmaj7')).toBe('C major')
+    expect(key('Am G F E')).toBe('A minor')
     expect(findKeys(['E', 'G', 'A', 'E'])[0].outside).toContain(true)
   })
 })
@@ -248,5 +263,14 @@ describe('chord identifier', () => {
     expect(name([0, 0, 0, 2, 3, 2], TUNINGS.dropD.notes)).toBe('D')
     expect(name([0, 0, 0, 0, 0, 0], TUNINGS.openG.notes)).toBe('G/D')
     expect(name([-1, -1, -1, -1, -1, 0])).toBeUndefined()
+    // sharp-side chords keep sharp names; flat-side chords keep flats
+    expect(name([2, -1, 2, 2, 1, -1])).toBe('F#m7b5')
+    expect(name([2, 4, 4, 3, 2, 2])).toBe('F#')
+    expect(name([-1, 4, 6, 4, 5, -1])).toBe('C#m7')
+    expect(identifyChord([48, 55, 58, 63])[0].spelled[10]).toBe('Bb')
+    expect(spell('E', CHORDS.dim7)).toEqual(['E', 'G', 'Bb', 'Db'])
+    expect(spell('Eb', SCALES.blues)).toEqual(['Eb', 'Gb', 'Ab', 'A', 'Bb', 'Db'])
+    expect(keyRoot('Db', true)).toBe('C#')
+    expect(pretty('F#m7b5')).toBe('F♯m7♭5')
   })
 })

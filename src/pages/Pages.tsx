@@ -53,6 +53,28 @@ export function Home() {
         </div>
       </header>
 
+      {!started && (
+        <section className="card start-here">
+          <div className="eyebrow">Start here</div>
+          <h2>What would you like to do first?</h2>
+          <div className="btns">
+            <a className="btn primary" href="#/lesson/g-setup">
+              I'm new to guitar
+            </a>
+            <a className="btn primary" href="#/lesson/k-posture">
+              I'm new to keyboard
+            </a>
+            <a className="btn" href="#/lessons/guitar">
+              I already play: find my level
+            </a>
+          </div>
+          <p className="muted tight">
+            Each track starts from zero. If you already play, open a track and use the placement check to skip what you know. The theory track explains the "why" and
+            can be taken alongside either instrument.
+          </p>
+        </section>
+      )}
+
       {due.length > 0 && (
         <section className="card">
           <div className="eyebrow">Warm-up · due for review</div>
@@ -95,8 +117,8 @@ export function Home() {
                 </>
               ) : (
                 <>
-                  <h3>All lessons complete</h3>
-                  <p className="muted">Keep reviewing in Practice and Jam.</p>
+                  <h3>{trackLessons(t.id).every((r) => p.lessons[r.lesson.id] === 'done') ? 'All lessons complete' : 'No lessons left to unlock'}</h3>
+                  <p className="muted">Skipped lessons stay open under All lessons. Keep reviewing in Practice and Jam.</p>
                 </>
               )}
               <Bar value={prog.done / prog.total} />
@@ -144,19 +166,24 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
   const [answered, setAnswered] = useState(false)
   const unit = track.units[i]
   const finish = (count: number) => {
+    // Never skip the final unit: even a perfect score starts you there.
+    count = Math.min(count, track.units.length - 1)
     actions.skipLessons(track.units.slice(0, count).flatMap((u) => u.lessons.map((l) => l.id)))
     if (track.id === 'guitar' && count >= 4) actions.unlockJam()
   }
+  const last = track.units.length - 1
   if (stopped || i >= track.units.length) {
-    const startAt = track.units[Math.min(i, track.units.length - 1)]
+    const startAt = track.units[Math.min(i, last)]
     return (
       <div className="card">
         <div className="eyebrow">Placement result</div>
-        <h3>{i === 0 ? `Start at the beginning: ${startAt.title}` : i >= track.units.length ? 'You know this material' : `Start at: ${startAt.title}`}</h3>
+        <h3>{i === 0 ? `Start at the beginning: ${startAt.title}` : `Start at: ${startAt.title}`}</h3>
         <p className="muted">
           {i === 0
             ? 'Nothing was skipped.'
-            : `${i} unit${i > 1 ? 's' : ''} marked as known. Those lessons stay open, so you can go back to any of them.`}
+            : `${Math.min(i, last)} earlier unit${Math.min(i, last) > 1 ? 's' : ''} marked as known. Those lessons stay open, so you can go back to any of them.`}
+          {i > last ? ' You answered everything correctly, so you start at the final unit; skim it, or use it as a check.' : ''} A few questions cannot measure
+          everything: if a skipped unit holds something new, just open it.
         </p>
         <button className="btn primary" onClick={onClose}>
           Done
@@ -192,6 +219,17 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
             }}
           >
             {i + 1 < track.units.length ? 'Next question' : 'See result'}
+          </button>
+        )}
+        {!answered && (
+          <button
+            className="btn"
+            onClick={() => {
+              finish(i)
+              setStopped(true)
+            }}
+          >
+            I'm not sure
           </button>
         )}
         <button className="btn" onClick={onClose}>
@@ -288,16 +326,22 @@ export function Lessons({ trackId }: { trackId?: string }) {
 
 // ---------- Practice ----------
 
+function reviewIn(due: string): string {
+  const days = Math.round((new Date(due + 'T12:00:00Z').getTime() - new Date(today() + 'T12:00:00Z').getTime()) / 86400000)
+  return days <= 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`
+}
+
 export function Practice({ exerciseId }: { exerciseId?: string }) {
   const p = useProfile()
   const [filter, setFilter] = useState<'all' | Track['id']>('all')
+  const [showSkipped, setShowSkipped] = useState(false)
   if (exerciseId) {
     const ref = findExercise(exerciseId)
     if (!ref) return <p>Exercise not found.</p>
     const list = unlockedExercises(p)
     const idx = list.findIndex((r) => r.ex.id === exerciseId)
-    const due = dueExercises(p).filter((r) => r.ex.id !== exerciseId)
-    const nextUp = due[0] ?? list[idx + 1]
+    const due = dueExercises(p).filter((r) => r.ex.id !== exerciseId && r.track.id === ref.track.id)
+    const nextUp = due[0] ?? (idx >= 0 ? list.slice(idx + 1).find((r) => r.track.id === ref.track.id) : undefined)
     return (
       <div className="stack">
         <a className="crumb" href="#/practice">
@@ -317,7 +361,10 @@ export function Practice({ exerciseId }: { exerciseId?: string }) {
       </div>
     )
   }
-  const list = unlockedExercises(p).filter((r) => filter === 'all' || r.track.id === filter)
+  // Exercises from lessons skipped by the placement check stay out of the way unless asked for (or already tried).
+  const inTrack = unlockedExercises(p).filter((r) => filter === 'all' || r.track.id === filter)
+  const hidden = inTrack.filter((r) => p.lessons[r.lesson.id] === 'skipped' && !p.exercises[r.ex.id])
+  const list = showSkipped ? inTrack : inTrack.filter((r) => !hidden.includes(r))
   const due = new Set(dueExercises(p).map((r) => r.ex.id))
   const sorted = [...list].sort((a, b) => Number(due.has(b.ex.id)) - Number(due.has(a.ex.id)))
   return (
@@ -353,7 +400,7 @@ export function Practice({ exerciseId }: { exerciseId?: string }) {
                     <Bar value={mastery(r.ex.tempo, r.ex.target, pr)} />
                     <small>
                       {pr?.bestTempo ? `${pr.bestTempo} / ${r.ex.target} bpm` : pr ? 'Not passed yet' : 'New'}
-                      {due.has(r.ex.id) && <em className="due"> · due</em>}
+                      {due.has(r.ex.id) ? <em className="due"> · due now</em> : pr?.bestTempo ? ` · review ${reviewIn(pr.due)}` : ''}
                     </small>
                   </span>
                 </a>
@@ -364,7 +411,12 @@ export function Practice({ exerciseId }: { exerciseId?: string }) {
         {sorted.length === 0 && <p className="muted">Nothing here yet. Start a lesson to unlock exercises.</p>}
       </section>
       <small className="muted">
-        {list.length} of {EXERCISES.filter((r) => filter === 'all' || r.track.id === filter).length} exercises unlocked
+        {inTrack.length} of {EXERCISES.filter((r) => filter === 'all' || r.track.id === filter).length} exercises unlocked.{' '}
+        {hidden.length > 0 && (
+          <button className="link" onClick={() => setShowSkipped(!showSkipped)}>
+            {showSkipped ? 'Hide' : 'Show'} {hidden.length} from lessons you skipped
+          </button>
+        )}
       </small>
     </div>
   )

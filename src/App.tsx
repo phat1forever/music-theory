@@ -18,7 +18,17 @@ const NAV = [
 ] as const
 
 function useRoute(): string[] {
-  const read = () => window.location.hash.replace(/^#\/?/, '').split('/')
+  const read = () =>
+    window.location.hash
+      .replace(/^#\/?/, '')
+      .split('/')
+      .map((part) => {
+        try {
+          return decodeURIComponent(part)
+        } catch {
+          return part
+        }
+      })
   const [route, setRoute] = useState(read)
   useEffect(() => {
     const on = () => {

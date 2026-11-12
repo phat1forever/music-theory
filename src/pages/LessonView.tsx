@@ -5,7 +5,7 @@ import { Fretboard, type Mark } from '../components/Fretboard'
 import { Tuner } from '../components/InputBar'
 import { Keyboard, type KeyMark } from '../components/Keyboard'
 import { Score } from '../components/Score'
-import { findLesson, isOpen, trackLessons } from '../curriculum'
+import { findLesson, isOpen, nextLesson, trackLessons } from '../curriculum'
 import type { Quiz, StepDef } from '../curriculum/types'
 import { playPiece, Runner } from '../practice/Runner'
 import { actions, useProfile } from '../store/store'
@@ -17,12 +17,12 @@ import {
   pc,
   pcs,
   pentatonicBox,
+  pretty,
   positions,
   SCALES,
   spell,
 } from '../theory/theory'
 
-const pretty = (n: string) => n.replace(/#/g, '♯').replace(/b/g, '♭')
 
 /** Minimal rich text: blank-line paragraphs, "- " bullet lists, **bold**, *italic*. */
 export function Rich({ body }: { body: string }) {
@@ -288,12 +288,20 @@ export function LessonView({ id }: { id: string }) {
       <div className="card">
         <h2>{lesson.title}</h2>
         <p>This lesson unlocks when you finish the ones before it.</p>
-        <a className="btn" href={`#/lessons/${track.id}`}>
-          Back to {track.title}
-        </a>
+        <div className="btns">
+          {nextLesson(track.id, profile) && (
+            <a className="btn primary" href={`#/lesson/${nextLesson(track.id, profile)!.lesson.id}`}>
+              Go to your next lesson: {nextLesson(track.id, profile)!.lesson.title}
+            </a>
+          )}
+          <a className="btn" href={`#/lessons/${track.id}`}>
+            All {track.title.toLowerCase()} lessons (you can jump ahead there)
+          </a>
+        </div>
       </div>
     )
 
+  const untried = lesson.steps.flatMap((st) => (st.t === 'exercise' && !profile.exercises[st.ex.id] ? [st.ex] : []))
   const all = trackLessons(track.id)
   const next = all[all.findIndex((r) => r.lesson.id === id) + 1]
 
@@ -303,11 +311,17 @@ export function LessonView({ id }: { id: string }) {
         <div className="eyebrow">Lesson complete</div>
         <h2>{lesson.title}</h2>
         <p>
-          <strong>You can now:</strong> {lesson.goal}
+          <strong>The goal was:</strong> {lesson.goal}
         </p>
-        <p className="muted">
-          The exercises from this lesson are in Practice. They will come back for review, a little faster each time.
-        </p>
+        {untried.length > 0 ? (
+          <p className="notice">
+            You have not played {untried.length === 1 ? 'the exercise' : `${untried.length} of the exercises`} in this lesson yet. Reading is the easy part: the skill comes
+            from playing.{' '}
+            <a href={`#/practice/${untried[0].id}`}>Practise "{untried[0].title}" now</a>
+          </p>
+        ) : (
+          <p className="muted">The exercises from this lesson are in Practice. They will come back for review, a little faster each time.</p>
+        )}
         <div className="btns">
           {next ? (
             <a className="btn primary" href={`#/lesson/${next.lesson.id}`}>

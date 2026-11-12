@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ensureAudio } from '../audio/audio'
+import { ensureAudio, play } from '../audio/audio'
 import { micRunning, midiSupported, onPitch, startMic, startMidi, stopMic } from '../input/input'
 import { actions, useProfile, type InputMode } from '../store/store'
 import { pcName } from '../theory/theory'
@@ -114,9 +114,9 @@ export function Tuner() {
     <div className="tuner">
       <div className="tuner-strings">
         {STRINGS.map((s) => (
-          <span key={s.midi} className={nearest?.midi === s.midi ? (inTune ? 'ok' : 'on') : ''}>
+          <button key={s.midi} className={nearest?.midi === s.midi ? (inTune ? 'ok' : 'on') : ''} onClick={() => play('guitar', [s.midi], 2.5)} title={`Hear the ${s.name} string`}>
             {s.name}
-          </span>
+          </button>
         ))}
       </div>
       <div className="tuner-meter" aria-hidden="true">
@@ -125,7 +125,7 @@ export function Tuner() {
       </div>
       <p className="tuner-read">
         {!on
-          ? 'Use the microphone to tune each string.'
+          ? 'Tap a string name to hear the note it should make, or start the tuner and let the microphone check each string.'
           : !nearest
             ? 'Pluck a string…'
             : inTune

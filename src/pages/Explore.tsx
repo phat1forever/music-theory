@@ -13,6 +13,9 @@ import {
   diatonicChords,
   fretMidi,
   INTERVALS,
+  isMinorish,
+  keyRoot,
+  pretty,
   midiToFret,
   mod,
   pc,
@@ -27,7 +30,6 @@ import {
 } from '../theory/theory'
 import { PlayButton } from './LessonView'
 
-const pretty = (n: string) => n.replace(/#/g, '♯').replace(/b/g, '♭')
 const PENT = ['minorPent', 'majorPent', 'blues']
 
 /** One octave of a formula as a guitar piece (notation + tab), kept in a single hand position. */
@@ -53,17 +55,38 @@ export function Explore({ init = [] }: { init?: string[] }) {
   const [kind, setKind] = useState<'scale' | 'chord'>('scale')
   const [scale, setScale] = useState(() => (init[1] && SCALES[init[1]] ? init[1] : 'minorPent'))
   const [chord, setChord] = useState('maj')
+
+  const formula = kind === 'scale' ? SCALES[scale] : CHORDS[chord]
+  // The picker has one button per black key; show the usual name for what is selected (C♯ minor, D♭ major).
+  const picked = root
+  const shown = keyRoot(picked, isMinorish(kind === 'scale' ? scale : chord))
+  return <ExploreBody {...{ picked, setRoot, kind, setKind, scale, setScale, chord, setChord, formula }} root={shown} leftHanded={profile.leftHanded} />
+}
+
+interface BodyProps {
+  picked: string
+  root: string
+  setRoot: (r: string) => void
+  kind: 'scale' | 'chord'
+  setKind: (k: 'scale' | 'chord') => void
+  scale: string
+  setScale: (s: string) => void
+  chord: string
+  setChord: (c: string) => void
+  formula: Formula
+  leftHanded: boolean
+}
+
+function ExploreBody({ picked, root, setRoot, kind, setKind, scale, setScale, chord, setChord, formula, leftHanded }: BodyProps) {
   const [labels, setLabels] = useState<'names' | 'degrees'>('names')
   const [box, setBox] = useState(0)
   const [cursor, setCursor] = useState<number | null>(null)
-
-  const formula = kind === 'scale' ? SCALES[scale] : CHORDS[chord]
   const names = spell(root, formula)
   const set = pcs(root, formula)
   const flats = prefersFlats(root, kind === 'scale' ? scale : chord === 'min' ? 'minor' : 'major')
   const label = (p: number) => {
     const i = set.indexOf(mod(p, 12))
-    return labels === 'names' ? pretty(names[i]) : formula.labels[i].replace('b', '♭').replace('#', '♯')
+    return labels === 'names' ? pretty(names[i]) : pretty(formula.labels[i])
   }
   const kindOf = (p: number): Mark['kind'] =>
     mod(p, 12) === pc(root) ? 'root' : kind === 'scale' && scale === 'blues' && mod(p - pc(root), 12) === 6 ? 'blue' : 'tone'
@@ -95,13 +118,14 @@ export function Explore({ init = [] }: { init?: string[] }) {
   return (
     <div className="stack">
       <h1>Explore</h1>
+      <p className="muted">A reference for any scale or chord. Pick a root note and a type; the same notes are shown on the guitar neck, the keyboard and the staff. Orange marks the root.</p>
       <section className="card controls">
         <div className="field">
           <span className="muted">Root</span>
           <div className="seg wrap">
             {ROOTS.map((r) => (
-              <button key={r} className={r === root ? 'on' : ''} onClick={() => setRoot(r)}>
-                {pretty(r)}
+              <button key={r} className={r === picked ? 'on' : ''} onClick={() => setRoot(r)}>
+                {pretty(pc(r) === pc(root) ? root : r)}
               </button>
             ))}
           </div>
@@ -161,7 +185,7 @@ export function Explore({ init = [] }: { init?: string[] }) {
           {names.map((n, i) => (
             <span key={i} className={i === 0 ? 'root' : ''}>
               <strong>{pretty(n)}</strong>
-              <small>{formula.labels[i].replace('b', '♭').replace('#', '♯')}</small>
+              <small>{pretty(formula.labels[i])}</small>
             </span>
           ))}
         </div>
@@ -177,7 +201,7 @@ export function Explore({ init = [] }: { init?: string[] }) {
           </div>
         )}
         <div className="scroll-x">
-          <Fretboard marks={fretMarks} from={0} to={15} leftHanded={profile.leftHanded} onPick={(m) => play('guitar', [m])} />
+          <Fretboard marks={fretMarks} from={0} to={15} leftHanded={leftHanded} onPick={(m) => play('guitar', [m])} />
         </div>
         {shape && (
           <div className="chord-row">
@@ -192,7 +216,7 @@ export function Explore({ init = [] }: { init?: string[] }) {
 
         <h3>Notation and tab</h3>
         <div className="paper">
-          <Score piece={piece} cursor={cursor} flats={flats} />
+          <Score piece={piece} cursor={cursor} flats={flats} spelling={names} />
         </div>
         <PlayButton piece={piece} tempo={90} onBeat={setCursor} />
       </section>
@@ -247,7 +271,7 @@ const EASY = [3, 4, 5, 7, 12]
 
 function IntervalTrainer() {
   const [all, setAll] = useState(false)
-  const [q, setQ] = useState<{ low: number; semis: number } | null>(null)
+  const [q, setQ] = useState<{ low: number; semis: number; pool: number[] } | null>(null)
   const [picked, setPicked] = useState<number | null>(null)
   const [score, setScore] = useState({ right: 0, total: 0 })
   const pool = all ? INTERVALS.filter((i) => i.semis > 0).map((i) => i.semis) : EASY
@@ -257,7 +281,7 @@ function IntervalTrainer() {
     window.setTimeout(() => play('keys', [low + semis], 0.9), 650)
   }
   const ask = () => {
-    const next = { low: 55 + Math.floor(Math.random() * 10), semis: pool[Math.floor(Math.random() * pool.length)] }
+    const next = { low: 55 + Math.floor(Math.random() * 10), semis: pool[Math.floor(Math.random() * pool.length)], pool }
     setQ(next)
     setPicked(null)
     sound(next.low, next.semis)
@@ -281,7 +305,7 @@ function IntervalTrainer() {
       </div>
       {q && (
         <div className="quiz-opts two">
-          {INTERVALS.filter((i) => pool.includes(i.semis)).map((i) => (
+          {INTERVALS.filter((i) => q.pool.includes(i.semis)).map((i) => (
             <button
               key={i.semis}
               disabled={picked !== null}

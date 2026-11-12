@@ -3,7 +3,7 @@ import { mod } from '../theory/theory'
 export interface KeyMark {
   midi: number
   label?: string
-  kind?: 'root' | 'chord' | 'tone' | 'active' | 'lh' | 'blue'
+  kind?: 'root' | 'chord' | 'tone' | 'active' | 'lh' | 'blue' | 'ghost' | 'done' | 'outside'
 }
 
 interface Props {
@@ -44,7 +44,7 @@ export function Keyboard({ marks, from = 48, to = 84, onPick, names = true }: Pr
     <svg
       className="keyboard"
       viewBox={`0 0 ${W} ${H}`}
-      style={{ maxWidth: W * 1.15, width: '100%' }}
+      style={{ maxWidth: W * 1.3, minWidth: whites.length * 26, width: '100%' }}
       role="img"
       aria-label="Piano keyboard diagram"
     >
@@ -53,20 +53,20 @@ export function Keyboard({ marks, from = 48, to = 84, onPick, names = true }: Pr
         return (
           <g key={m} onClick={onPick ? () => onPick(m) : undefined} className={onPick ? 'kb-click' : ''}>
             <rect x={wx(m)} y={1} width={ww} height={wh} rx={3} className="kb-white" />
-            {names && mod(m, 12) === 0 && !mark && (
+            {names && mod(m, 12) === 0 && (
               <text x={wx(m) + ww / 2} y={wh - 8} textAnchor="middle" className="kb-name">
                 C{Math.floor(m / 12) - 1}
               </text>
             )}
-            {names && mod(m, 12) !== 0 && !mark && (
+            {names && mod(m, 12) !== 0 && (
               <text x={wx(m) + ww / 2} y={wh - 8} textAnchor="middle" className="kb-name kb-faint">
                 {WHITE_NAMES[mod(m, 12)]}
               </text>
             )}
             {mark && (
               <g className={`kb-mark kb-${mark.kind ?? 'tone'}`}>
-                <circle cx={wx(m) + ww / 2} cy={wh - 20} r={11} />
-                <text x={wx(m) + ww / 2} y={wh - 16} textAnchor="middle">
+                <circle cx={wx(m) + ww / 2} cy={wh - 32} r={11} />
+                <text x={wx(m) + ww / 2} y={wh - 28} textAnchor="middle">
                   {mark.label}
                 </text>
               </g>

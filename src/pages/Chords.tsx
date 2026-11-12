@@ -4,13 +4,12 @@ import { ChordDiagram } from '../components/Diagrams'
 import { Fretboard, type Mark } from '../components/Fretboard'
 import { actions, newId, useProfile, type Sheet } from '../store/store'
 import { findKeys, identifyChord } from '../theory/analysis'
-import { CHORDS, mod, parseChord, pc, pcName, prefersFlats, SCALES } from '../theory/theory'
+import { CHORDS, mod, parseChord, pc, pcName, prefersFlats, pretty, SCALES } from '../theory/theory'
 import { shapeFromFrets, soundingMidi, transpose, TUNINGS, voicings } from '../theory/voicings'
 
-const pretty = (n: string) => n.replace(/#/g, '♯').replace(/([A-G])b/g, '$1♭')
 const SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 const FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
-const QUALITIES = ['maj', 'min', '7', 'm7', 'maj7', '5', 'sus4', 'sus2', '6', 'm6', 'add9', '9', 'dim', 'dim7', 'm7b5', 'aug']
+const QUALITIES = ['maj', 'min', '7', 'm7', 'maj7', '5', 'sus4', 'sus2', '6', 'm6', 'add9', '9', '7#9', 'dim', 'dim7', 'm7b5', 'aug']
 
 const blank = (): Sheet => ({
   id: newId(),
@@ -21,18 +20,24 @@ const blank = (): Sheet => ({
   chords: [],
 })
 
-/** Read chord symbols out of free text such as "E7 F# Bm, A". Unknown words are returned separately. */
-export function readChords(text: string): { good: string[]; bad: string[] } {
+/**
+ * Read chord symbols out of free text such as "E7 F# Bm, A". "C-7" means C minor 7; a slash bass
+ * ("D/F#") is dropped, since sheet chords are stored by root and type. Unknown words are returned separately.
+ */
+export function readChords(text: string): { good: string[]; bad: string[]; slashed: boolean } {
   const good: string[] = []
   const bad: string[] = []
-  for (const raw of text.split(/[\s,|–-]+/).filter(Boolean)) {
-    const tok = raw.replace('♯', '#').replace('♭', 'b').replace(/^([a-g])/, (c) => c.toUpperCase())
-    const m = /^([A-G][#b]?)(.*)$/.exec(tok)
-    const suffix = m ? m[2].replace(/^min$/, 'm').replace(/^maj$/, '').replace(/^M7$/, 'maj7').replace(/^-/, 'm') : ''
-    if (m && Object.values(CHORDS).some((c) => c.suffix === suffix)) good.push(m[1] + suffix)
-    else bad.push(raw)
+  let slashed = false
+  for (const raw of text.split(/[\s,|–]+/).filter(Boolean)) {
+    const tok = raw.replace(/♯/g, '#').replace(/♭/g, 'b').replace(/^([a-g])/, (c) => c.toUpperCase())
+    const m = /^([A-G][#b]?)([^/]*)(\/[A-G][#b]?)?$/.exec(tok)
+    const suffix = m ? m[2].replace(/^min/, 'm').replace(/^maj$/, '').replace(/^M7$/, 'maj7').replace(/^-/, 'm').replace(/^ø7?$/, 'm7b5').replace(/^°7$/, 'dim7').replace(/^°$/, 'dim') : ''
+    if (m && Object.values(CHORDS).some((c) => c.suffix === suffix)) {
+      good.push(m[1] + suffix)
+      if (m[3]) slashed = true
+    } else bad.push(raw)
   }
-  return { good, bad }
+  return { good, bad, slashed }
 }
 
 export function Chords() {
@@ -46,12 +51,18 @@ export function Chords() {
   const [flats, setFlats] = useState(false)
   const [typed, setTyped] = useState('')
   const [unknown, setUnknown] = useState<string[]>([])
+  const [slashNote, setSlashNote] = useState(false)
   const [drag, setDrag] = useState<number | null>(null)
 
   const open = useMemo(() => sheet.tuning.map((n) => n + sheet.capo), [sheet.tuning, sheet.capo])
-  const byShape = sheet.capo > 0 && sheet.names === 'shape'
+  // A guitar tuned down (or up) as a whole behaves like a capo: players still think in standard shapes.
+  const drop = sheet.tuning[0] - TUNINGS.standard.notes[0]
+  const uniform = sheet.tuning.every((n, i) => n - TUNINGS.standard.notes[i] === drop)
+  const shift = sheet.capo + (uniform ? drop : 0)
+  const canShape = sheet.capo > 0 || (uniform && drop !== 0)
+  const byShape = canShape && sheet.names === 'shape'
   /** The chord that is actually heard for a symbol on this sheet. */
-  const heard = (symbol: string) => (byShape ? transpose(symbol, sheet.capo, prefersFlats(parseChord(symbol).root)) : symbol)
+  const heard = (symbol: string) => (byShape ? transpose(symbol, shift, prefersFlats(parseChord(symbol).root)) : symbol)
   /** Shapes for a sheet chord: a shape the user tapped out comes first, while it still fits the tuning. */
   const shapesFor = (symbol: string, custom?: number[]) => {
     const found = voicings(open, heard(symbol), 5)
@@ -177,7 +188,7 @@ export function Chords() {
               ))}
             </div>
           </div>
-          {sheet.capo > 0 && (
+          {canShape && (
             <div className="field">
               <span className="muted">Chord names are</span>
               <div className="seg">
@@ -192,11 +203,11 @@ export function Chords() {
           )}
         </div>
         <p className="muted tight">
-          {sheet.capo > 0
-            ? byShape
-              ? `Capo on fret ${sheet.capo}: a chord named D is fingered as a D shape above the capo and sounds as ${pretty(transpose('D', sheet.capo))}. Fret numbers count from the capo.`
-              : `Capo on fret ${sheet.capo}: each chord is shown as the shape that produces that exact chord. Fret numbers count from the capo.`
-            : 'Chord names are the actual pitches heard in this tuning. Shapes are worked out for the tuning you set.'}
+          {byShape
+            ? `A chord named D is fingered as the familiar D shape and sounds as ${pretty(transpose('D', shift, shift < 0))}.${sheet.capo ? ' Fret numbers count from the capo.' : ''}`
+            : canShape
+              ? `Each chord is shown as the shape that produces that exact pitch.${sheet.capo ? ' Fret numbers count from the capo.' : ''}`
+              : 'Chord names are the actual pitches heard in this tuning. Shapes are worked out for the tuning you set.'}
         </p>
       </section>
 
@@ -238,9 +249,10 @@ export function Chords() {
               className="type-chords"
               onSubmit={(e) => {
                 e.preventDefault()
-                const { good, bad } = readChords(typed)
+                const { good, bad, slashed } = readChords(typed)
                 if (good.length) add(good)
                 setUnknown(bad)
+                setSlashNote(slashed)
                 setTyped(bad.join(' '))
               }}
             >
@@ -250,6 +262,7 @@ export function Chords() {
                 <button className="btn">Add all</button>
               </div>
               {unknown.length > 0 && <small className="warn">Not recognised: {unknown.join(', ')}</small>}
+              {slashNote && <small className="muted">Slash chords were added without their bass note. To keep an exact shape, tap it out in the chord identifier below.</small>}
             </form>
           </div>
           <div className="add-preview">
@@ -342,14 +355,17 @@ export function Chords() {
         <section className="card" data-key={`${key.root} ${key.mode}`}>
           <div className="eyebrow">Key finder</div>
           <h2>
-            Most likely key: {pretty(key.root)} {key.mode}
+            Most likely key: {pretty(key.root)} {key.mode === 'mixolydian' ? 'Mixolydian' : key.mode === 'dorian' ? 'Dorian' : key.mode}
             {key.blues ? ' (blues)' : ''}
           </h2>
           <p className="muted">
             {key.fit === 1
               ? 'Every chord on the sheet belongs to this key.'
               : `${Math.round(key.fit * sheet.chords.length)} of ${sheet.chords.length} chords belong to this key; the others are marked in orange above.`}
-            {byShape ? ` This is the key you hear with the capo on fret ${sheet.capo}.` : ''}
+            {key.mode === 'mixolydian' ? ' Mixolydian is a major key with a lowered 7th, which is why the ♭VII chord fits.' : ''}
+            {key.mode === 'dorian' ? ' Dorian is a minor key with a raised 6th, which is why the IV chord is major.' : ''}
+            {key.blues ? ' The minor pentatonic over these major-type chords is the classic blues sound.' : ''}
+            {byShape ? ' This is the key you actually hear, not the shape names.' : ''}
             {keys[1] && keys[1].score > key.score - 0.2 ? ` It could also be ${pretty(keys[1].root)} ${keys[1].mode}: the two share most of their chords.` : ''}
           </p>
           <h3>Solo with</h3>
@@ -366,7 +382,7 @@ export function Chords() {
             {key.family
               .filter((f) => !sheet.chords.some((c) => pc(parseChord(heard(c.symbol)).root) === pc(parseChord(f).root)))
               .map((f) => (
-                <button key={f} className="btn small" title="Add to the sheet" onClick={() => add([byShape ? transpose(f, -sheet.capo, prefersFlats(parseChord(f).root)) : f])}>
+                <button key={f} className="btn small" title="Add to the sheet" onClick={() => add([byShape ? transpose(f, -shift, prefersFlats(parseChord(f).root)) : f])}>
                   + {pretty(f)}
                 </button>
               ))}
@@ -377,6 +393,7 @@ export function Chords() {
       <NameChord
         open={open}
         capo={sheet.capo}
+        shift={shift}
         byShape={byShape}
         leftHanded={profile.leftHanded}
         onAdd={(symbol, custom) => save({ chords: [...sheet.chords, { id: newId(), symbol, variant: 0, custom }] })}
@@ -389,12 +406,15 @@ export function Chords() {
 function NameChord({
   open,
   capo,
+  shift,
   byShape,
   leftHanded,
   onAdd,
 }: {
   open: number[]
   capo: number
+  /** semitones between shape names and what is heard */
+  shift: number
   byShape: boolean
   leftHanded: boolean
   onAdd: (symbol: string, frets: number[]) => void
@@ -402,18 +422,16 @@ function NameChord({
   // one fret per string, low string first; -1 = not played
   const [frets, setFrets] = useState<number[]>([-1, -1, -1, -1, -1, -1])
   const notes = frets.map((f, i) => (f < 0 ? -1 : open[i] + f)).filter((n) => n >= 0)
-  const flats = useMemo(() => {
-    const blacks = [1, 3, 6, 8, 10]
-    return notes.some((n) => blacks.includes(mod(n, 12))) && prefersFlats(pcName(Math.min(...notes), true))
-  }, [notes.join()]) // eslint-disable-line react-hooks/exhaustive-deps
-  const names = identifyChord(notes, flats)
+  const names = identifyChord(notes)
   const best = names[0]
   const rootPc = best ? pc(best.root) : -1
+  // Spell each note the way the chord spells it (B♭ in C9, F♯ in D); otherwise plain sharps.
+  const noteName = (n: number) => pretty(best?.spelled[mod(n, 12)] ?? pcName(n))
   const marks: Mark[] = frets.flatMap((f, i) =>
-    f < 0 ? [] : [{ string: 6 - i, fret: f, label: pretty(pcName(open[i] + f, flats)), kind: mod(open[i] + f, 12) === rootPc ? ('root' as const) : ('tone' as const) }],
+    f < 0 ? [] : [{ string: 6 - i, fret: f, label: noteName(open[i] + f), kind: mod(open[i] + f, 12) === rootPc ? ('root' as const) : ('tone' as const) }],
   )
   const muted = frets.flatMap((f, i) => (f < 0 ? [6 - i] : []))
-  const shapeName = (symbol: string) => (byShape ? transpose(symbol, -capo, prefersFlats(parseChord(symbol).root)) : symbol)
+  const shapeName = (symbol: string) => (byShape ? transpose(symbol, -shift, prefersFlats(parseChord(symbol).root)) : symbol)
 
   return (
     <section className="card" data-named={best?.name ?? ''}>
@@ -444,7 +462,7 @@ function NameChord({
           <p className="muted">Nothing tapped yet.</p>
         ) : !best ? (
           <p>
-            <strong>{[...new Set(notes.map((n) => pretty(pcName(n, flats))))].join(' ')}</strong>
+            <strong>{[...new Set(notes.map(noteName))].join(' ')}</strong>
             <span className="muted"> {new Set(notes.map((n) => mod(n, 12))).size < 2 ? 'One note so far: a chord needs at least two different notes.' : 'These notes do not make a chord the app knows.'}</span>
           </p>
         ) : (
@@ -452,7 +470,7 @@ function NameChord({
             <div>
               <strong className="named-big">{pretty(byShape ? shapeName(best.symbol) : best.name)}</strong>
               <p className="muted tight">
-                Notes: {[...new Set(notes.map((n) => pretty(pcName(n, flats))))].join(' ')}
+                Notes: {[...new Set(notes.map(noteName))].join(' ')}
                 {byShape ? ` · sounds as ${pretty(best.name)}` : ''}
                 {!best.complete ? ' · the fifth is left out' : ''}
                 {names.length > 1 ? ` · also: ${names.slice(1, 3).map((n) => pretty(n.name)).join(', ')}` : ''}

@@ -25,7 +25,7 @@ export const theory: Track = {
           steps: [
             text(
               'Seven letters, twelve notes',
-              'Music uses seven letter names: **A B C D E F G**, then they repeat. The distance from one note to the next one with the same name is an **octave**.\n\nBetween most letters there is an extra note, named with a **sharp (♯, one step higher)** or a **flat (♭, one step lower)**. C♯ and D♭ are the same pitch with two names. There is **no extra note between B and C or between E and F**. That gives twelve notes in total.',
+              'Music uses seven letter names: **A B C D E F G**, then they repeat. The distance from one note to the next one with the same name is an **octave**.\n\nBetween most letters there is an extra note, named with a **sharp (♯, one half step higher)** or a **flat (♭, one half step lower)**. C♯ and D♭ are the same pitch with two names. There is **no extra note between B and C or between E and F**. That gives twelve notes in total.',
             ),
             {
               t: 'keyboard',
@@ -56,7 +56,7 @@ export const theory: Track = {
               'Play this on the keyboard or the guitar (start on the 5th string, 3rd fret). Say the names as you go.',
             ),
             quiz('Which two pairs of letters have no sharp/flat between them?', ['A–B and C–D', 'B–C and E–F', 'D–E and G–A', 'F–G and A–B'], 1),
-            quiz('How many frets make a whole step?', ['1', '2', '3', '12'], 1),
+            quiz('How many frets (or keys, counting black and white) make a whole step?', ['1', '2', '3', '12'], 1),
           ],
         },
         {
@@ -146,7 +146,7 @@ export const theory: Track = {
               marks: fm('*6/5=1 5/3=m3 5/4=M3 5/5=4 5/7=5 *4/7=8'),
               from: 2,
               to: 8,
-              caption: 'From the root on the 6th string. These shapes are the same from any fret.',
+              caption: 'From a root on the 6th string up to the 5th and 4th strings. The same shapes work from any fret on these strings.',
             },
             text(
               'Train your ear',
@@ -188,7 +188,7 @@ export const theory: Track = {
           steps: [
             text(
               'What "in the key of" means',
-              'A piece **in the key of G major** mostly uses the notes of the G major scale and feels at rest on G. Instead of writing ♯ next to every F, the sharps or flats are written once at the start of each line: the **key signature**.',
+              'A piece **in the key of G major** mostly uses the notes of the G major scale and feels at rest on G. Instead of writing ♯ next to every F, the sharps or flats are written once at the start of each line: the **key signature**. (The scores in this app write the sharp or flat next to each note instead, so you always see exactly which note is changed.)',
             ),
             {
               t: 'circle',
@@ -243,7 +243,7 @@ export const theory: Track = {
               keys('[C4 E4 G4]:w | [F4 A4 C5]:w | [G4 B4 D5]:w | [C4 E4 G4]:w'),
               60,
               96,
-              'On guitar, strum open C, F, G and C chords instead (the microphone accepts any chord tone).',
+              'On guitar, strum C, F, G and C chords instead (the microphone accepts any chord tone).',
             ),
             quiz('Which notes make an A minor triad?', ['A C♯ E', 'A C E', 'A D E', 'A C E♭'], 1),
             quiz('What turns a major triad into a minor one?', ['Lower the root', 'Lower the 3rd a half step', 'Raise the 5th', 'Add a 7th'], 1),

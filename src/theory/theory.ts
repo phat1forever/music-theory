@@ -52,6 +52,8 @@ export interface Formula {
   /** degree labels such as "b3" */
   labels: string[]
   about?: string
+  /** spell awkward notes the simple way (A, not B double-flat) */
+  plain?: boolean
 }
 
 function f(name: string, spec: string, about?: string): Formula {
@@ -75,7 +77,7 @@ export const SCALES: Record<string, Formula> = {
   minor: f('Natural minor', '1 2 b3 4 5 b6 b7', 'Darker and more serious than major.'),
   minorPent: f('Minor pentatonic', '1 b3 4 5 b7', 'Five notes, no clashes. The first soloing scale for rock and blues.'),
   majorPent: f('Major pentatonic', '1 2 3 5 6', 'Sweet and open. Country, pop and southern rock leads.'),
-  blues: f('Blues', '1 b3 4 b5 5 b7', 'Minor pentatonic plus the "blue note" (b5).'),
+  blues: { ...f('Blues', '1 b3 4 b5 5 b7', 'Minor pentatonic plus the "blue note" (♭5).'), plain: true },
   dorian: f('Dorian', '1 2 b3 4 5 6 b7', 'Minor with a brighter 6th. Funk, Santana-style rock.'),
   mixolydian: f('Mixolydian', '1 2 3 4 5 6 b7', 'Major with a flat 7th. Blues-rock and classic rock.'),
   harmonicMinor: f('Harmonic minor', '1 2 b3 4 5 b6 7', 'Minor with a raised 7th. Classical and neo-classical colour.'),
@@ -97,7 +99,8 @@ export const CHORDS: Record<string, Formula & { suffix: string }> = {
   m6: { ...f('Minor 6th', '1 b3 5 6'), suffix: 'm6' },
   add9: { ...f('Add 9', '1 3 5 9'), suffix: 'add9' },
   '9': { ...f('Dominant 9th', '1 3 5 b7 9'), suffix: '9' },
-  dim7: { ...f('Diminished 7th', '1 b3 b5 6'), suffix: 'dim7' },
+  dim7: { ...f('Diminished 7th', '1 b3 b5 bb7'), suffix: 'dim7' },
+  '7#9': { ...f('Dominant 7 sharp 9', '1 3 5 b7 #9'), suffix: '7#9' },
 }
 
 /** Spell the notes of a formula from a root, with correct letter names (e.g. F major has Bb, not A#). */
@@ -108,6 +111,9 @@ export function spell(root: string, formula: Formula): string[] {
     const letter = (rootLetter + formula.degrees[i] - 1) % 7
     let diff = mod(rootPc + s - LETTER_PC[letter], 12)
     if (diff > 6) diff -= 12
+    // Blues players read the blue note as E, not F flat, and A, not B double-flat.
+    const odd = Math.abs(diff) > 1 || ['Cb', 'Fb', 'E#', 'B#'].includes(LETTERS[letter] + (diff > 0 ? '#' : diff < 0 ? 'b' : ''))
+    if (formula.plain && odd) return pcName(rootPc + s, true)
     return LETTERS[letter] + (diff > 0 ? '#'.repeat(diff) : 'b'.repeat(-diff))
   })
 }
@@ -317,4 +323,27 @@ export function chordMidi(symbol: string, octave = 3): number[] {
   const { root, quality } = parseChord(symbol)
   const base = pc(root) + (octave + 1) * 12
   return CHORDS[quality].steps.map((s) => base + s)
+}
+
+/** Show accidentals with proper symbols: "F#m7b5" -> "F♯m7♭5", "bb7" -> "♭♭7". */
+export function pretty(name: string): string {
+  return name
+    .replace(/#/g, '♯')
+    .replace(/([A-G])(b+)/g, (_m, l: string, b: string) => l + '♭'.repeat(b.length))
+    .replace(/b(?=\d)/g, '♭')
+}
+
+const MINORISH = ['minor', 'minorPent', 'blues', 'dorian', 'harmonicMinor', 'min', 'm7', 'm6', 'dim', 'm7b5', 'dim7']
+
+/** Is this scale or chord type built on a minor third? */
+export const isMinorish = (key: string) => MINORISH.includes(key)
+
+/**
+ * The usual name for a root: minor keys on the black keys are written with sharps where that is
+ * simpler (C♯ minor, not D♭ minor), major keys with flats (D♭ major, not C♯ major).
+ */
+export function keyRoot(root: string, minorish: boolean): string {
+  const p = pc(root)
+  if (minorish) return p === 1 ? 'C#' : p === 8 ? 'G#' : root
+  return p === 1 ? 'Db' : p === 8 ? 'Ab' : root
 }

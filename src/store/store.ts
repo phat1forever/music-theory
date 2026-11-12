@@ -129,6 +129,10 @@ export const actions = {
       days: withToday(p.days),
     }))
   },
+  /** Count today as a practice day without changing any exercise's tempo record or review date. */
+  touch() {
+    patchProfile((p) => ({ ...p, days: withToday(p.days) }))
+  },
   setInput(input: InputMode) {
     patchProfile((p) => ({ ...p, input }))
   },

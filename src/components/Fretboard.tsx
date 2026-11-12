@@ -3,7 +3,7 @@ import { fretMidi, type FretPos } from '../theory/theory'
 export interface Mark extends FretPos {
   label?: string
   /** root = tonic, chord = chord tone, tone = scale note, active = play this now, ghost = faded */
-  kind?: 'root' | 'chord' | 'tone' | 'active' | 'ghost' | 'blue'
+  kind?: 'root' | 'chord' | 'tone' | 'active' | 'ghost' | 'blue' | 'outside'
 }
 
 interface Props {
