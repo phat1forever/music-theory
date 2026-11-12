@@ -223,6 +223,7 @@ export const keyboard: Track = {
               marks: km('G4=1 A4=2 B4=3 *C5=1 D5=2 E5=3 F#5=4 G5=5'),
               from: 65,
               to: 81,
+              caption: 'The orange key is where the thumb tucks under. Finger 4 plays the black key, F♯.',
             },
             exercise(
               'k-gscale',
@@ -230,6 +231,7 @@ export const keyboard: Track = {
               keys('G4.1 A4.2 B4.3 C5.1 | D5.2 E5.3 F#5.4 G5.5 | G5.5 F#5.4 E5.3 D5.2 | C5.1 B4.3 A4.2 G4.1', undefined, { key: 'G' }),
               60,
               108,
+              'The ♯ at the start of each line is the key signature: every F is F♯, the black key just to the right of F.',
             ),
             {
               t: 'keyboard',
@@ -237,6 +239,7 @@ export const keyboard: Track = {
               marks: km('F4=1 G4=2 A4=3 Bb4=4 *C5=1 D5=2 E5=3 F5=4'),
               from: 62,
               to: 79,
+              caption: 'The orange key is where the thumb tucks under. Finger 4 plays the black key, B♭.',
             },
             exercise(
               'k-fscale',
@@ -244,8 +247,7 @@ export const keyboard: Track = {
               keys('F4.1 G4.2 A4.3 Bb4.4 | C5.1 D5.2 E5.3 F5.4 | F5.4 E5.3 D5.2 C5.1 | Bb4.4 A4.3 G4.2 F4.1', undefined, { key: 'F' }),
               60,
               108,
-              undefined,
-              true,
+              'The ♭ at the start of each line is the key signature: every B is B♭, the black key just to the left of B.',
             ),
             exercise(
               'k-gscale-lh',
@@ -253,6 +255,7 @@ export const keyboard: Track = {
               lh('G2.5 A2.4 B2.3 C3.2 | D3.1 E3.3 F#3.2 G3.1 | G3.1 F#3.2 E3.3 D3.1 | C3.2 B2.3 A2.4 G2.5', 4, { key: 'G' }),
               60,
               108,
+              'Key signature of one sharp: finger 2 plays F♯, a black key.',
             ),
             exercise(
               'k-fscale-lh',
@@ -260,8 +263,7 @@ export const keyboard: Track = {
               lh('F2.5 G2.4 A2.3 Bb2.2 | C3.1 D3.3 E3.2 F3.1 | F3.1 E3.2 D3.3 C3.1 | Bb2.2 A2.3 G2.4 F2.5', 4, { key: 'F' }),
               60,
               108,
-              undefined,
-              true,
+              'Key signature of one flat: finger 2 plays B♭, a black key.',
             ),
             quiz('Why does F major use the fingering 1 2 3 4 – 1 2 3 4?', ['It is faster', 'To keep the thumb off the black key', 'It has more notes', 'There is no reason'], 1),
           ],
@@ -274,7 +276,7 @@ export const keyboard: Track = {
           steps: [
             text(
               'The other half of the keys',
-              '**A minor** uses only white keys, like C major, but starts and ends on A. The fingering is the same pattern as C major: right hand **1 2 3 – 1 2 3 4 5**, left hand **5 4 3 2 1 – 3 2 1**.\n\n**D minor** has one flat, B♭, the same key signature as F major. Its right-hand fingering is again 1 2 3 – 1 2 3 4 5, with the thumb tucking under to G after finger 3 plays F, so **finger 3 lands on B♭** the second time round.\n\nIn minor keys the 7th note is often raised a half step when the music heads for the V chord (G♯ in A minor). You will see it written in as an accidental.',
+              '**A minor** uses only white keys, like C major, but starts and ends on A. The fingering is the same pattern as C major: right hand **1 2 3 – 1 2 3 4 5**, left hand **5 4 3 2 1 – 3 2 1**.\n\n**D minor** has one flat, B♭, the same key signature as F major. Its right-hand fingering is again 1 2 3 – 1 2 3 4 5, with the thumb tucking under to G after finger 3 plays F. Counting up from there, the thumb takes G, finger 2 takes A and **finger 3 takes B♭**.\n\nThe A minor exercises start on the A **below** middle C, so move your hand a little to the left of C position.\n\nIn minor keys the 7th note is often raised a half step when the music heads for the V chord (G♯ in A minor). You will see it written in as an accidental.',
             ),
             { t: 'keyboard', title: 'A minor, right hand', marks: km('A3=1 B3=2 C4=3 *D4=1 E4=2 F4=3 G4=4 A4=5'), from: 55, to: 71, caption: 'The orange key is where the thumb tucks under.' },
             exercise(
@@ -291,7 +293,7 @@ export const keyboard: Track = {
               60,
               108,
             ),
-            { t: 'keyboard', title: 'D minor, right hand', marks: km('D4=1 E4=2 F4=3 *G4=1 A4=2 Bb4=3 C5=4 D5=5'), from: 60, to: 76 },
+            { t: 'keyboard', title: 'D minor, right hand', marks: km('D4=1 E4=2 F4=3 *G4=1 A4=2 Bb4=3 C5=4 D5=5'), from: 60, to: 76, caption: 'The orange key is where the thumb tucks under. Finger 3 plays the black key, B♭.' },
             exercise(
               'k-dmin-rh',
               'D minor, right hand',
@@ -299,6 +301,13 @@ export const keyboard: Track = {
               60,
               108,
               'One flat in the key signature: every B is B♭.',
+            ),
+            exercise(
+              'k-dmin-lh',
+              'D minor, left hand',
+              lh('D3.5 E3.4 F3.3 G3.2 | A3.1 Bb3.3 C4.2 D4.1 | D4.1 C4.2 Bb3.3 A3.1 | G3.2 F3.3 E3.4 D3.5', 4, { key: 'Dm' }),
+              60,
+              108,
             ),
             exercise(
               'k-amin-chords',
@@ -527,7 +536,7 @@ export const keyboard: Track = {
               keys(
                 'E4.3 G4.5 G4.5 | E4.3 G4.5 G4.5 | F4.4 E4.3 D4.2 | E4.3:hd | D4.2 F4.4 F4.4 | D4.2 F4.4 F4.4 | D4.2 E4.3 D4.2 | C4.1:hd',
                 'C3.5:hd | C3.5:hd | G3.1:hd | C3.5:hd | G3.1:hd | G3.1:hd | G3.1:hd | C3.5:hd',
-                { meter: 3, chords: 'C . G C G . . C' },
+                { meter: 3, chords: 'C . G7 C G7 . . C' },
               ),
               72,
               120,
@@ -538,7 +547,7 @@ export const keyboard: Track = {
               keys(
                 'E4.3 G4.5 G4.5 | E4.3 G4.5 G4.5 | F4.4 E4.3 D4.2 | E4.3:hd | D4.2 F4.4 F4.4 | D4.2 F4.4 F4.4 | D4.2 E4.3 D4.2 | C4.1:hd',
                 'C3.5 [E3 G3].31 [E3 G3].31 | C3.5 [E3 G3].31 [E3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | C3.5 [E3 G3].31 [E3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | C3.5:hd',
-                { meter: 3, chords: 'C . G C G . . C' },
+                { meter: 3, chords: 'C . G7 C G7 . . C' },
               ),
               60,
               108,
@@ -555,7 +564,7 @@ export const keyboard: Track = {
           steps: [
             text(
               'Three chords, small moves',
-              'The right hand stays in C position throughout. The left hand uses three chords chosen so the hand hardly moves:\n\n- **C**: C – E – G (5 – 3 – 1)\n- **F**: C – F – A (5 – 2 – 1). The little finger stays on C.\n- **G**: B – D – G (5 – 3 – 1). The thumb stays on G.\n\nWatch the rhythm in bars 3 and 5: a **dotted quarter note** followed by an **eighth**. Count "1, 2, 3 (and) **and** 4".',
+              'The right hand stays in C position throughout. The left hand uses three chords chosen so the hand hardly moves:\n\n- **C**: C – E – G (5 – 3 – 1)\n- **F**: C – F – A (5 – 2 – 1). The little finger stays on C.\n- **G**: B – D – G (5 – 3 – 1). The thumb stays on G.\n\nWatch the rhythm in bars 3 and 5: a **dotted quarter note** followed by an **eighth**. The long note starts on beat 3 and lasts through beat 4; the short note comes on the "and" after 4. Count "1, 2, **3** (and 4) **and**".',
             ),
             { t: 'keyboard', title: 'Left hand: F with C on the bottom', marks: km('_C3=5 _F3=2 _A3=1'), from: 43, to: 60 },
             exercise(
@@ -580,7 +589,7 @@ export const keyboard: Track = {
           steps: [
             text(
               'Hold on',
-              'A **tie** joins two notes of the same pitch into one longer sound: play the first, keep the key down, and do not play the second.\n\nThe hard part is not the tied hand but the other one. In this piece the left hand often plays a new bass note **while the right hand is still holding**. Keep the right-hand finger down and let it sing through the change.\n\nThink of each two-bar group as one **phrase**, like a line of a song: lift gently and "breathe" at the end of each.',
+              'A **tie** joins two notes of the same pitch into one longer sound: play the first, keep the key down, and do not play the second.\n\nThe hard part is not the tied hand but the other one. In this piece the left hand plays its bass note again at the start of each bar **while the right hand is still holding** a tied note. Keep the right-hand finger down and let it sing through the change.\n\nThink of each two-bar group as one **phrase**, like a line of a song: lift gently and "breathe" at the end of each.',
             ),
             exercise(
               'k-tide',
@@ -605,7 +614,7 @@ export const keyboard: Track = {
           steps: [
             text(
               'One sharp, two positions',
-              'The key signature has one sharp: **every F is F♯**, even though nothing is written next to the note.\n\nBars 1–4 sit in **G position**: right thumb on G, fingers 1–5 covering G A B C D.\n\nIn bar 5 the melody reaches down to F♯, so the whole hand **shifts down one key**: the thumb now plays F♯ and finger 2 takes over G. The finger numbers show the change. Move the hand as a unit during the long note that ends bar 4; do not stretch.\n\nThe left hand plays just two notes, G and D: the roots of the I and V chords.',
+              'The key signature has one sharp: **every F is F♯**, even though nothing is written next to the note.\n\nBars 1–4 sit in **G position**: right thumb on G, fingers 1–5 covering G A B C D.\n\nIn bar 5 the melody reaches down to F♯, so the whole hand **shifts down one key**: the thumb now plays F♯ and finger 2 takes over G. The finger numbers show the change. Let the long note that ends bar 4 sound for its full length, then lift and move the whole hand as a unit before bar 5, as if taking a breath; do not stretch.\n\nEarlier you learned to keep the thumb off black keys **in scales**, where it has to pass under the hand. Here the hand simply sits in a new position, and a thumb on F♯ is the most comfortable way to reach the notes.\n\nThe left hand plays just two notes, G and D: the roots of the I and V chords.',
             ),
             { t: 'keyboard', title: 'Bars 1–4: G position', marks: km('G4=1 A4=2 B4=3 C5=4 D5=5'), from: 62, to: 76 },
             { t: 'keyboard', title: 'Bars 5–8: thumb on F♯', marks: km('*F#4=1 G4=2 A4=3 B4=4'), from: 62, to: 76, caption: 'The whole hand has moved one key to the left.' },
@@ -615,7 +624,7 @@ export const keyboard: Track = {
               keys(
                 'G4.1 B4.3 D5.5 B4.3 | C5.4 B4.3 A4.2:h | B4.3 A4.2 G4.1 A4.2 | G4.1:w | G4.2 F#4.1 G4.2 A4.3 | B4.4 A4.3 G4.2:h | A4.3 G4.2 F#4.1 A4.3 | G4.2:w',
                 'G2.5:w | D3.1:w | G2.5:h D3.1:h | G2.5:w | G2.5:w | G2.5:w | D3.1:w | G2.5:w',
-                { key: 'G', chords: 'G D G . G . D G' },
+                { key: 'G', chords: 'G D7 G . G . D7 G' },
               ),
               60,
               104,

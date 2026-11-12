@@ -37,6 +37,7 @@ interface Props {
 const SHARP = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
 const FLAT = ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b']
 const HOT = '#d9480f'
+const LEFT = '#2563eb'
 const GOOD = '#0f8a5f'
 const BAD = '#b3261e'
 
@@ -116,15 +117,18 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
 
     const density = Math.max(...top.map((m) => m.length), ...(bottom ?? []).map((m) => m.length))
     const want = Math.max(170, density * 38 + 50)
-    const perLine = Math.max(1, Math.min(top.length, Math.floor((width - 70) / want)))
-    const lines = Math.ceil(top.length / perLine)
+    const fit = Math.max(1, Math.min(top.length, Math.floor((width - 70) / want)))
+    const lines = Math.ceil(top.length / fit)
+    // Spread the bars evenly over the lines instead of leaving one bar alone on the last line.
+    const perLine = Math.ceil(top.length / lines)
     const lineH = (hasLower ? (guitar ? 250 : 230) : 130) + chordPad
     const renderer = new Renderer(el, Renderer.Backends.SVG)
     renderer.resize(width, lines * lineH + 10)
     const ctx = renderer.getContext()
 
-    const colour = (beat: number) =>
-      cursor === beat ? HOT : good?.includes(beat) ? GOOD : bad?.includes(beat) ? BAD : null
+    // The note to play now is orange for the right hand (and guitar) and blue for the left, matching the keyboard.
+    const colour = (beat: number, left = false) =>
+      cursor === beat ? (left ? LEFT : HOT) : good?.includes(beat) ? GOOD : bad?.includes(beat) ? BAD : null
 
     const staveNotes = (ms: Timed[], clef: 'treble' | 'bass', below: boolean) => {
       return ms.map((e) => {
@@ -146,7 +150,8 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
           auto_stem: true,
         })
         if (e.dur === 'hd' || e.dur === 'qd') Dot.buildAndAttach([note], { all: true })
-        const label = e.fingers?.length ? e.fingers.join(' ') : !guitar ? e.text : undefined
+        // A note held over by a tie is not played again, so it carries no finger number.
+        const label = e.held ? undefined : e.fingers?.length ? e.fingers.join(' ') : !guitar ? e.text : undefined
         if (label)
           note.addModifier(
             new Annotation(label)
@@ -156,7 +161,7 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
               ),
             0,
           )
-        const c = colour(e.beat)
+        const c = colour(e.beat, clef === 'bass' && !guitar)
         if (c) note.setStyle({ fillStyle: c, strokeStyle: c })
         return note
       })

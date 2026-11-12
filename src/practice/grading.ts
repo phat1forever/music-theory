@@ -13,19 +13,23 @@ export interface Played {
 const nearOctave = (a: number, b: number) => a === b || Math.abs(a - b) === 12
 
 /**
- * Does a played note count toward a step?
- * A microphone can hear a note an octave off, so mic input also accepts the octave above or below.
+ * Which required part of a step a played note satisfies, or null if it does not belong.
+ * MIDI and on-screen taps must hit each exact note. A microphone follows one pitch at a time and can land an
+ * octave out, so there one note per hand is enough: the part is the hand, not the individual note.
  */
-export function noteMatches(step: Step, played: number, source: Source): boolean {
-  return source === 'mic' ? step.midi.some((m) => nearOctave(m, played)) : step.midi.includes(played)
+export function matchKey(step: Step, played: number, source: Source): number | null {
+  if (source !== 'mic') return step.midi.includes(played) ? played : null
+  const hand = step.groups.findIndex((g) => g.some((m) => nearOctave(m, played)))
+  return hand < 0 ? null : hand
 }
 
-/**
- * How many distinct notes are needed to complete a step.
- * A microphone can only follow one pitch at a time, so one chord tone is enough there.
- */
+export function noteMatches(step: Step, played: number, source: Source): boolean {
+  return matchKey(step, played, source) !== null
+}
+
+/** How many distinct parts are needed to complete a step: every note, or with a microphone one note per hand. */
 export function notesNeeded(step: Step, source: Source): number {
-  return source === 'mic' ? 1 : new Set(step.midi).size
+  return source === 'mic' ? step.groups.length : new Set(step.midi).size
 }
 
 /** How close to the beat a note must land: about a third of a beat, and never more than 0.2 s. */
@@ -54,30 +58,45 @@ export function gradeTimed(
   source: Source,
   tol = timingWindow(secPerBeat),
 ): TimedResult {
+  const got = steps.map(() => new Set<number>())
+  const firstOffset: (number | null)[] = steps.map(() => null)
+  const times = steps.map((st) => st.at * secPerBeat)
   const used = new Set<number>()
-  let offsetSum = 0
-  let hits = 0
-  const outcome = steps.map((step) => {
-    const t = step.at * secPerBeat
-    const got = new Set<number>()
-    let firstOffset: number | null = null
-    played.forEach((p, i) => {
-      if (used.has(i) || Math.abs(p.time - t) > tol || !noteMatches(step, p.midi, source)) return
-      const key = source === 'mic' ? 0 : p.midi
-      if (got.has(key)) return
-      got.add(key)
-      used.add(i)
-      firstOffset ??= p.time - t
+  // Each played note goes to the nearest step it fits, so a late note is not charged to its neighbour.
+  played.forEach((p, i) => {
+    let best = -1
+    let bestKey = 0
+    steps.forEach((step, s) => {
+      const dt = Math.abs(p.time - times[s])
+      if (dt > tol || (best >= 0 && dt >= Math.abs(p.time - times[best]))) return
+      const key = matchKey(step, p.midi, source)
+      if (key === null || got[s].has(key)) return
+      best = s
+      bestKey = key
     })
-    const ok = got.size >= notesNeeded(step, source)
-    if (ok) {
-      hits++
-      offsetSum += firstOffset ?? 0
-    }
-    return ok
+    if (best < 0) return
+    got[best].add(bestKey)
+    used.add(i)
+    firstOffset[best] ??= p.time - times[best]
   })
-  // Wrong or extra notes cost half a note each, so hitting everything at once does not pass.
-  const extra = source === 'mic' ? 0 : played.length - used.size
+  const outcome = steps.map((step, s) => got[s].size >= notesNeeded(step, source))
+  const hits = outcome.filter(Boolean).length
+  const offsetSum = outcome.reduce((sum, ok, s) => sum + (ok ? (firstOffset[s] ?? 0) : 0), 0)
+  // Wrong or extra notes cost half a note each, so hitting everything at once does not pass. Not counted:
+  // the microphone's stray sounds, notes outside the piece (during the count-in or after the end), and right
+  // notes that were merely early or late, which already cost a missed step.
+  const start = (times[0] ?? 0) - secPerBeat
+  const end = (times[times.length - 1] ?? 0) + secPerBeat
+  const extra =
+    source === 'mic'
+      ? 0
+      : played.filter(
+          (p, i) =>
+            !used.has(i) &&
+            p.time >= start &&
+            p.time <= end &&
+            !steps.some((step, s) => Math.abs(p.time - times[s]) <= tol * 2.5 && noteMatches(step, p.midi, source)),
+        ).length
   return {
     hits,
     total: steps.length,

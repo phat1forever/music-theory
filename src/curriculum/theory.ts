@@ -53,7 +53,7 @@ export const theory: Track = {
               keys('C4 D4 E4 F4 | G4 A4 B4 C5 | C5 B4 A4 G4 | F4 E4 D4 C4'),
               60,
               100,
-              'Play this on the keyboard or the guitar (start on the 5th string, 3rd fret). Say the names as you go.',
+              'On keyboard, start on middle C and use any fingers for now. On guitar, start on the 5th string, 3rd fret. Say the names as you go.',
             ),
             quiz('Which two pairs of letters have no sharp/flat between them?', ['A–B and C–D', 'B–C and E–F', 'D–E and G–A', 'F–G and A–B'], 1),
             quiz('How many frets (or keys, counting black and white) make a whole step?', ['1', '2', '3', '12'], 1),
@@ -103,7 +103,7 @@ export const theory: Track = {
               keys('C4:w | C4:h C4:h | C4 C4 C4 C4 | C4:8 C4:8 C4:8 C4:8 C4:8 C4:8 C4:8 C4:8 | C4:hd C4 | C4:w'),
               60,
               100,
-              'One note, six rhythms. Count out loud; any C on either instrument works (guitar: 5th string, 3rd fret).',
+              'One note, six rhythms. Count out loud; any C works (keyboard: middle C; guitar: 5th string, 3rd fret).',
             ),
             quiz('In 4/4, how many eighth notes fit in one bar?', ['4', '6', '8', '16'], 2),
             quiz('What does a dot after a note do?', ['Doubles its length', 'Adds half its length', 'Halves its length', 'Makes it louder'], 1),
@@ -119,6 +119,11 @@ export const theory: Track = {
               'Silence is counted too',
               'Every note value has a matching **rest** of the same length: a whole rest hangs below a line, a half rest sits on top of one, a quarter rest looks like a squiggle and an eighth rest like a small 7.\n\nA rest is not a pause in the counting. Keep counting through it at the same speed and simply do not play. On guitar, stop the string ringing with either hand; on keyboard, lift your finger.',
             ),
+            {
+              t: 'score',
+              piece: keys('r:w | r:h r:h | r r r r | r:8 r:8 r:8 r:8 r:8 r:8 r:8 r:8'),
+              caption: 'One bar of each: a whole rest (4 beats), two half rests, four quarter rests, eight eighth rests.',
+            },
             exercise(
               'th-rests1',
               'Counting rests',
@@ -406,7 +411,7 @@ export const theory: Track = {
             ),
             text(
               'In practice',
-              'Songs in minor keys mix both: natural minor most of the time, and the raised 7th whenever the V chord arrives. When soloing, the minor pentatonic avoids the question entirely, since it contains neither version of the 7th\'s neighbour. The "Spanish cadence" style in Jam is built to practise this.',
+              'Songs in minor keys mix both: natural minor most of the time, and the raised 7th whenever the V chord arrives. When soloing, the minor pentatonic is still the safe choice for most of the song. It does contain the unraised 7th (G in A minor), so over the major V chord that one note rubs against the chord\'s G♯: bend or slide it up a fret, or play around it. The "Spanish cadence" style in Jam is built to practise this.',
             ),
             quiz('Which note is raised to turn A natural minor into A harmonic minor?', ['C', 'D', 'F', 'G'], 3),
             quiz('Why is the V chord usually major in a minor key?', ['It is easier to play', 'Its 3rd pulls a half step up to the tonic', 'It has fewer notes', 'To make the key major'], 1),

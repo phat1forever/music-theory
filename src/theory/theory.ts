@@ -101,6 +101,7 @@ export const CHORDS: Record<string, Formula & { suffix: string }> = {
   '9': { ...f('Dominant 9th', '1 3 5 b7 9'), suffix: '9' },
   dim7: { ...f('Diminished 7th', '1 b3 b5 bb7'), suffix: 'dim7' },
   '7#9': { ...f('Dominant 7 sharp 9', '1 3 5 b7 #9'), suffix: '7#9' },
+  '7b9': { ...f('Dominant 7 flat 9', '1 3 5 b7 b9'), suffix: '7b9' },
 }
 
 /** Spell the notes of a formula from a root, with correct letter names (e.g. F major has Bb, not A#). */
@@ -246,6 +247,8 @@ export function pentatonicBox(
   root: string,
   box: number,
   kind: 'minorPent' | 'majorPent' | 'blues' = 'minorPent',
+  /** lowest fret the box may start at, to pick the higher octave of a box (E minor box 1 at fret 12, not the nut) */
+  minStart = 0,
 ): FretPos[] {
   // A major pentatonic shares its notes with the minor pentatonic three semitones lower.
   const minorRoot = kind === 'majorPent' ? mod(pc(root) - 3, 12) : pc(root)
@@ -255,6 +258,7 @@ export function pentatonicBox(
   let start = mod(minorRoot + SCALES.minorPent.steps[box - 1] - 4, 12)
   if (start < first) start += 12
   if (start > 12) start -= 12
+  while (start < minStart) start += 12
   const blue = mod(minorRoot + 6, 12)
   const out: FretPos[] = []
   for (let s = 6; s >= 1; s--) {
@@ -330,7 +334,7 @@ export function pretty(name: string): string {
   return name
     .replace(/#/g, '♯')
     .replace(/([A-G])(b+)/g, (_m, l: string, b: string) => l + '♭'.repeat(b.length))
-    .replace(/b(?=\d)/g, '♭')
+    .replace(/b+(?=\d)/g, (b) => '♭'.repeat(b.length))
 }
 
 const MINORISH = ['minor', 'minorPent', 'blues', 'dorian', 'harmonicMinor', 'min', 'm7', 'm6', 'dim', 'm7b5', 'dim7']

@@ -6,9 +6,10 @@ type Triad = 'maj' | 'min' | 'dim' | 'aug' | 'open'
 /** Reduce any chord quality to its basic triad type ("open" = no third: power and sus chords). */
 function triad(quality: string): Triad {
   const steps = CHORDS[quality].steps.map((s) => mod(s, 12))
-  if (!steps.includes(3) && !steps.includes(4)) return 'open'
+  // Check the major 3rd first: a 7#9 chord has both a major 3rd and a note a minor 3rd above the root.
+  if (steps.includes(4)) return steps.includes(8) && !steps.includes(7) ? 'aug' : 'maj'
   if (steps.includes(3)) return steps.includes(6) ? 'dim' : 'min'
-  return steps.includes(8) && !steps.includes(7) ? 'aug' : 'maj'
+  return 'open'
 }
 
 const DEGREE = ['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII']
@@ -37,6 +38,8 @@ export interface KeyGuess {
   family: string[]
   /** all three main chords are dominant 7ths: a blues */
   blues: boolean
+  /** a minor key whose V chord is major, so the 7th of the scale is raised over that chord */
+  majorV: boolean
   /** scales to solo with, best first: [root, scale key] */
   scales: { root: string; scale: string }[]
 }
@@ -45,7 +48,7 @@ function roman(offset: number, quality: string): string {
   const t = triad(quality)
   const base = t === 'min' || t === 'dim' ? DEGREE[offset].toLowerCase() : DEGREE[offset]
   const suffix = CHORDS[quality].suffix
-  const tail = t === 'dim' ? (suffix === 'm7b5' ? 'ø7' : suffix === 'dim7' ? '°7' : '°') : t === 'aug' ? '+' : suffix.replace(/^m(?!aj)/, '')
+  const tail = (t === 'dim' ? (suffix === 'm7b5' ? 'ø7' : suffix === 'dim7' ? '°7' : '°') : t === 'aug' ? '+' : suffix.replace(/^m(?!aj)/, '')).replace('#', '♯').replace(/b(?=\d)/, '♭')
   return base + tail
 }
 
@@ -79,7 +82,7 @@ export function findKeys(symbols: string[]): KeyGuess[] {
       // A dominant 7th chord almost always sits on the fifth of the key.
       if ((mode === 'major' || mode === 'minor') && chords.some((c, i) => offs[i] === 7 && (c.quality === '7' || c.quality === '9'))) score += 0.3
       // Plain major and minor are far more common than the modes, so the modes must earn it.
-      if (mode === 'mixolydian' || mode === 'dorian') score -= 0.1
+      if (mode === 'mixolydian' || mode === 'dorian') score -= 0.2
       if (offs.some((o, i) => o === 7 && fits[i] > 0)) score += 0.1
       if (offs.some((o, i) => o === 5 && fits[i] > 0)) score += 0.05
 
@@ -90,6 +93,7 @@ export function findKeys(symbols: string[]): KeyGuess[] {
       const root = named ?? pcName(tonic, flats)
       const blues = mode === 'major' && [0, 5, 7].every((o) => chords.some((c) => mod(pc(c.root) - tonic, 12) === o && c.quality === '7'))
       const rel = pcName(minorish ? tonic + 3 : tonic + 9, flats)
+      const majorV = mode === 'minor' && chords.some((c, i) => offs[i] === 7 && triad(c.quality) === 'maj')
       guesses.push({
         root,
         mode,
@@ -99,6 +103,7 @@ export function findKeys(symbols: string[]): KeyGuess[] {
         outside: fits.map((f) => f === 0),
         family: spell(root, SCALES[mode]).map((n, i) => n + (kinds[i] === 'min' ? 'm' : kinds[i] === 'dim' ? 'dim' : '')),
         blues,
+        majorV,
         scales: blues
           ? [
               { root, scale: 'minorPent' },
@@ -122,11 +127,17 @@ export function findKeys(symbols: string[]): KeyGuess[] {
                     { root, scale: 'minorPent' },
                     { root, scale: 'dorian' },
                   ]
-                : [
-                    { root, scale: 'minorPent' },
-                    { root, scale: 'minor' },
-                    { root: rel, scale: 'majorPent' },
-                  ],
+                : majorV
+                  ? [
+                      { root, scale: 'minorPent' },
+                      { root, scale: 'harmonicMinor' },
+                      { root, scale: 'minor' },
+                    ]
+                  : [
+                      { root, scale: 'minorPent' },
+                      { root, scale: 'minor' },
+                      { root: rel, scale: 'majorPent' },
+                    ],
       })
     }
   return guesses.sort((a, b) => b.score - a.score)
@@ -146,7 +157,7 @@ export interface ChordName {
 }
 
 // Simpler names first: when two names fit the same notes, the earlier quality wins.
-const ORDER = ['maj', 'min', '5', '7', 'm7', 'maj7', 'sus4', 'sus2', '6', 'm6', 'dim', 'aug', 'add9', '9', 'm7b5', 'dim7', '7#9']
+const ORDER = ['maj', 'min', '5', '7', 'm7', 'maj7', 'sus4', 'sus2', '6', 'm6', 'dim', 'aug', 'add9', '9', 'm7b5', 'dim7', '7#9', '7b9']
 
 // The usual spelling of each root: chords on a minor third lean to sharps (C#m, F#m, G#m), major ones to flats.
 const MINOR_ROOTS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B']

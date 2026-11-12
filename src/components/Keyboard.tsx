@@ -14,6 +14,8 @@ interface Props {
   onPick?: (midi: number) => void
   /** print note names on the white keys */
   names?: boolean
+  /** name highlighted black keys with flats (B♭) instead of sharps (A♯) */
+  flats?: boolean
 }
 
 const BLACK = [1, 3, 6, 8, 10]
@@ -21,7 +23,10 @@ const isBlack = (m: number) => BLACK.includes(mod(m, 12))
 const WHITE_NAMES: Record<number, string> = { 0: 'C', 2: 'D', 4: 'E', 5: 'F', 7: 'G', 9: 'A', 11: 'B' }
 
 /** Piano keyboard with highlighted keys; labels are usually note names or finger numbers. */
-export function Keyboard({ marks, from = 48, to = 84, onPick, names = true }: Props) {
+const BLACK_SHARP: Record<number, string> = { 1: 'C♯', 3: 'D♯', 6: 'F♯', 8: 'G♯', 10: 'A♯' }
+const BLACK_FLAT: Record<number, string> = { 1: 'D♭', 3: 'E♭', 6: 'G♭', 8: 'A♭', 10: 'B♭' }
+
+export function Keyboard({ marks, from = 48, to = 84, onPick, names = true, flats }: Props) {
   let lo = from
   let hi = to
   if (isBlack(lo)) lo--
@@ -82,6 +87,12 @@ export function Keyboard({ marks, from = 48, to = 84, onPick, names = true }: Pr
             <rect x={x} y={1} width={bw} height={bh} rx={2} className="kb-black" />
             {mark && (
               <g className={`kb-mark kb-${mark.kind ?? 'tone'}`}>
+                {/* When the label is a finger number, also say which black key this is. */}
+                {names && /^\d*$/.test(mark.label ?? '') && (
+                  <text x={x + bw / 2} y={14} textAnchor="middle" fontSize={8.5} className="kb-blackname">
+                    {(flats ? BLACK_FLAT : BLACK_SHARP)[mod(m, 12)]}
+                  </text>
+                )}
                 <circle cx={x + bw / 2} cy={bh - 16} r={9.5} />
                 <text x={x + bw / 2} y={bh - 12.5} textAnchor="middle" fontSize={9.5}>
                   {mark.label}

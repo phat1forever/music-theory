@@ -1489,3 +1489,8 @@ input[type='range'] {
   max-width: 420px;
   text-align: right;
 }
+.kb-blackname {
+  fill: #fff;
+  font-weight: 700;
+  font-family: inherit;
+}

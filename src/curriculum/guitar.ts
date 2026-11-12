@@ -611,7 +611,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Same notes, new sounds',
-              'Every box holds the same five notes, but each one puts different notes under your strongest fingers, so each has its own character and its own classic moves. Learn one lick per box. A lick you can actually play is worth more than a pattern you can only run up and down.\n\nEach lick below ends on **A**, the root. Find that A before you start: it is your landing point.',
+              'Every box holds the same five notes, but each one puts different notes under your strongest fingers, so each has its own character and its own classic moves. Learn one lick per box. A lick you can actually play is worth more than a pattern you can only run up and down.\n\nEach box lick below ends on **A**, the root. Find that A before you start: it is your landing point. The run at the end of the lesson climbs through three boxes and stops high on E, the 5th, ready for whatever you play next.',
             ),
             { t: 'box', root: 'A', box: 2, kind: 'minorPent', caption: 'Box 2 (frets 7–10).' },
             exercise(
@@ -735,7 +735,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Long–short',
-              'Most blues is not played with even eighth notes. In a **shuffle**, each beat is split into three, and the pair of eighths takes the first and last thirds: **long–short, long–short**. Say "**DOO**-ba **DOO**-ba" or think of a heartbeat.\n\nIt is written as ordinary eighth notes with the word *shuffle* or *swing* at the top. In this app those exercises carry a **Shuffle feel** badge, and Listen plays them swung.\n\nThe pattern below is the most used rhythm guitar part in blues and early rock and roll: the root and 5th together, with the upper note stepping up two frets on beats 2 and 4. Pick every stroke **down** and rest your palm lightly on the strings near the bridge.',
+              'Most blues is not played with even eighth notes. In a **shuffle**, each beat is split into three: the first eighth note lasts **two thirds** of the beat and the second only **one third**. **Long–short, long–short.** Say "**DOO**-ba **DOO**-ba" or think of a heartbeat.\n\nIt is written as ordinary eighth notes with the word *shuffle* or *swing* at the top. In this app those exercises carry a **Shuffle feel** badge, and Listen plays them swung.\n\nThe pattern below is the most used rhythm guitar part in blues and early rock and roll: the root and 5th together, with the upper note stepping up two frets on beats 2 and 4. Pick every stroke **down** and rest your palm lightly on the strings near the bridge.',
             ),
             exercise(
               'g-shuffle1',
@@ -796,7 +796,7 @@ export const guitar: Track = {
               gtr('4/7:h 4/7 3/5 | 3/7:h 3/7 3/5 | 4/7:h 3/5 3/7 | 2/5:w', { chords: 'A7 D7 A7 E7' }),
               66,
               110,
-              'The last note of each bar is a neighbour of the root that follows: C leads up to D, C leads down to A, D leads up to E.',
+              'The last note of each bar is the scale note next to the root that follows: C steps up to D, C drops to A (the next scale note down), D steps up to E.',
             ),
             quiz('When the band moves to the IV chord (D7 in A), the strongest note to land on is…', ['A', 'D', 'G', 'C'], 1),
           ],
@@ -838,7 +838,7 @@ export const guitar: Track = {
           steps: [
             text(
               'Putting it together',
-              'This 12-bar solo in A uses only box 1 and everything from this unit: phrases that **breathe**, **repetition**, and **chord roots on the changes** (D in bar 5, E in bar 9, A in bar 11). The last bar is the turnaround over E7, so the solo finishes on **E**, which pulls you back to the top for another chorus.\n\nLearn it four bars at a time: set **Bars** to 1–4 and tick **Loop when listening**. The chords are printed above the staff and **Backing chords** plays them under you, so you can hear each phrase against its chord. When you can play it at 90 bpm, open **Jam** and improvise over the same progression: start by stealing these phrases, then change one thing at a time.',
+              'This 12-bar solo in A uses only box 1 and everything from this unit: phrases that **breathe**, **repetition**, and **chord roots on the changes** (D in bar 5, E in bar 9, and bar 11 comes to rest on A). The last bar is the turnaround over E7, so the solo finishes on **E**, which pulls you back to the top for another chorus.\n\nLearn it four bars at a time: set **Bars** to 1–4 and tick **Loop when listening**. The chords are printed above the staff and **Backing chords** plays them under you, so you can hear each phrase against its chord. When you can play it at 90 bpm, open **Jam** and improvise over the same progression: start by stealing these phrases, then change one thing at a time.',
             ),
             exercise(
               'g-solo12',
@@ -870,7 +870,7 @@ export const guitar: Track = {
               'New key, same shapes',
               'Everything you know in A moves to any key by sliding the boxes. **E minor pentatonic box 1 sits at the 12th fret**, where the neck\'s double dots are. The three chord roots keep their places inside the box: E (I) where A was, A (IV) where D was, B (V) where E was.\n\nThis solo is a **shuffle**, so swing the eighths. It also uses the lead techniques from unit 4:\n\n- Bar 2 opens with a **full bend** from D up to E (2nd string, fret 15). Use finger 3 backed by 1 and 2.\n- Bar 7 has a **slide** down the 3rd string.\n- Long notes get **vibrato**.\n\nBars 1 and 3 begin with a rest: starting a phrase *after* beat 1 is one of the easiest ways to sound less mechanical.',
             ),
-            { t: 'box', root: 'E', box: 1, kind: 'minorPent', caption: 'E minor pentatonic, box 1 at the 12th fret.' },
+            { t: 'box', root: 'E', box: 1, kind: 'minorPent', minFret: 12, caption: 'E minor pentatonic, box 1 at the 12th fret. The same shape also sits at the nut, an octave lower.' },
             {
               t: 'fretboard',
               title: 'Chord roots in this box',
@@ -884,13 +884,13 @@ export const guitar: Track = {
               '12-bar shuffle solo in E',
               gtr(
                 'r 3/12:8 3/14:8 2/12:h | 2/15:8~full 2/12:8 3/14 4/14:h | r 3/12:8 3/14:8 2/12 2/15 | 1/12:hd~vib r | ' +
-                  '3/14:h 2/12:8 3/14:8 3/12 | 3/14:8 3/12:8 4/14 3/14:h | 1/15:8 1/12:8 2/15:8 2/12:8 3/14~sl 3/12 | 4/14:h~vib r:h | ' +
+                  '3/14:h 2/12:8 3/14:8 3/12 | 3/14:8 3/12:8 4/14 3/14:h | 1/15:8 1/12:8 2/15:8 2/12:8 3/14 3/12~sl | 4/14:h~vib r:h | ' +
                   '2/12:h 2/15 2/12 | 3/14:h 3/12 3/14 | 3/12:8 3/14:8~H 2/12 3/14:8 3/12:8 4/14 | 2/12:w~vib',
                 { swing: true, chords: 'E7 . . . A7 . E7 . B7 A7 E7 B7' },
               ),
               60,
               96,
-              'Bar 5 lands on A, bar 9 on B, bar 11 on E; the last bar holds B over the turnaround.',
+              'Bar 5 lands on A, bar 9 on B, bar 11 ends on E; the last bar holds B over the turnaround.',
             ),
             text(
               'Make it yours',

@@ -21,6 +21,9 @@ interface Style {
 
 const c = (step: number, q: string, roman: string) => ({ step, q, roman })
 
+/** Guitarists read a blues in a flat key with plain note names: E and B, not F♭ and C♭. */
+const plain = (n: string) => ({ Cb: 'B', Fb: 'E', 'E#': 'F', 'B#': 'C' })[n] ?? n
+
 const STYLES: Record<string, Style> = {
   blues: {
     name: '12-bar blues',
@@ -92,7 +95,7 @@ const STYLES: Record<string, Style> = {
   },
   jazz: {
     name: 'ii–V–I',
-    about: 'The core movement of jazz, swung. One major scale covers all three chords; the ringed notes show what changes from chord to chord.',
+    about: 'The core movement of jazz, swung. One major scale covers all three chords; switch to the major pentatonic and the ringed notes show the chord tones that scale leaves out.',
     bars: [c(2, 'm7', 'ii7'), c(7, '7', 'V7'), c(0, 'maj7', 'Imaj7'), c(0, 'maj7', 'Imaj7')],
     scales: ['major', 'majorPent'],
     minor: false,
@@ -174,19 +177,24 @@ export function Jam() {
 
   // Chord tones that are not in the scale (the 3rds over a blues, for example) are shown ringed.
   const outsidePcs = chordPcs.filter((p) => !scalePcs.includes(p))
-  const chordSpelling = current ? spell(pcName(pc(root) + current.step, flats), CHORDS[current.q]) : []
+  // Chord roots are named from the key, so the ♭VI of E♭ minor is C♭, not B.
+  const degreeName = (step: number) => {
+    const n = nameIn(pc(root) + step, root, style.minor && !style.blues ? SCALES.minor : SCALES.major, style.minor ? 'minor' : 'major')
+    return style.blues ? plain(n) : n
+  }
+  const chordSpelling = current ? spell(degreeName(current.step), CHORDS[current.q]) : []
   const outsideName = (m: number) => pretty(chordSpelling[chordPcs.indexOf(mod(m, 12))] ?? pcName(m, flats))
   const fretMarks: Mark[] = useMemo(() => {
     const pos = canBox && box > 0 ? pentatonicBox(root, box, scaleKey as 'minorPent' | 'majorPent' | 'blues') : positions(scalePcs, 0, 15)
     const frets = pos.map((p) => p.fret)
     const lo = canBox && box > 0 ? Math.max(0, Math.min(...frets) - 1) : 0
     const hi = canBox && box > 0 ? Math.max(...frets) + 1 : 15
-    const extra: Mark[] = positions(outsidePcs, lo, hi).map((p) => ({ ...p, label: outsideName(fretMidi(p.string, p.fret)), kind: 'outside' as const }))
+    const extra: Mark[] = positions(outsidePcs, lo, hi).map((p) => ({ ...p, label: outsideName(fretMidi(p.string, p.fret)), kind: mod(fretMidi(p.string, p.fret), 12) === chordRootPc ? ('root' as const) : ('outside' as const) }))
     return [
       ...extra,
       ...pos.map((p) => {
         const m = fretMidi(p.string, p.fret)
-        return { ...p, label: pretty(nameIn(m, root, scale, scaleKey)), kind: kindOf(m) }
+        return { ...p, label: pretty(style.blues ? plain(nameIn(m, root, scale, scaleKey)) : nameIn(m, root, scale, scaleKey)), kind: kindOf(m) }
       }),
     ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,17 +204,17 @@ export function Jam() {
   for (let m = 55; m <= 84; m++)
     if (scalePcs.includes(mod(m, 12))) {
       const k = kindOf(m)
-      keyMarks.push({ midi: m, label: pretty(nameIn(m, root, scale, scaleKey)), kind: k as KeyMark['kind'] })
-    } else if (outsidePcs.includes(mod(m, 12))) keyMarks.push({ midi: m, label: outsideName(m), kind: 'outside' })
+      keyMarks.push({ midi: m, label: pretty(style.blues ? plain(nameIn(m, root, scale, scaleKey)) : nameIn(m, root, scale, scaleKey)), kind: k as KeyMark['kind'] })
+    } else if (outsidePcs.includes(mod(m, 12))) keyMarks.push({ midi: m, label: outsideName(m), kind: mod(m, 12) === chordRootPc ? 'root' : 'outside' })
 
-  const chordName = (b: Style['bars'][number]) => pretty(pcName(pc(root) + b.step, flats)) + CHORDS[b.q].suffix
+  const chordName = (b: Style['bars'][number]) => pretty(degreeName(b.step)) + CHORDS[b.q].suffix
 
   if (!profile.jamUnlocked && !profile.lessons['g-pent1'] && !profile.lessons['k-cscale'])
     return (
       <div className="stack">
         <h1>Jam</h1>
         <section className="card">
-          <div className="eyebrow">Unlocks with the pentatonic lessons</div>
+          <div className="eyebrow">Unlocks with your first scale lesson</div>
           <h2>Improvise over a backing track</h2>
           <p>
             Jam mode loops a chord progression while the fretboard and keyboard show the scale to use and light up the notes of the chord being played. It opens

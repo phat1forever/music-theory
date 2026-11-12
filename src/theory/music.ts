@@ -120,6 +120,8 @@ export interface Step {
   /** length in beats */
   len: number
   midi: number[]
+  /** the same notes split by hand (one group for guitar or a single hand) */
+  groups: number[][]
 }
 
 export interface Onset {
@@ -167,7 +169,8 @@ export function timeline(piece: Piece): Step[] {
     if (last && last.beat === o.beat) {
       last.len = Math.max(last.len, o.len)
       last.midi = [...last.midi, ...o.ev.midi]
-    } else out.push({ beat: o.beat, at: soundingBeat(o.beat, piece.swing), len: o.len, midi: [...o.ev.midi] })
+      last.groups.push([...o.ev.midi])
+    } else out.push({ beat: o.beat, at: soundingBeat(o.beat, piece.swing), len: o.len, midi: [...o.ev.midi], groups: [[...o.ev.midi]] })
   }
   return out
 }

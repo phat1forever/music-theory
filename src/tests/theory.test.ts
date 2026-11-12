@@ -144,6 +144,13 @@ describe('grading', () => {
       { midi: 64, time: 2 },
     ]
     expect(gradeTimed(steps, sloppy, 1, 'midi').hits).toBe(1)
+    // a right chord played late is a missed step, but its notes are not also counted as wrong notes
+    const late = [60, 62].map((midi, i) => ({ midi, time: i })).concat([60, 64, 67].map((midi) => ({ midi, time: 2.3 })))
+    expect(gradeTimed(steps, late, 1, 'midi')).toMatchObject({ hits: 2, extra: 0 })
+    // with a microphone, a two-hand piece needs a note from each hand
+    const both = timeline(keys('E4 G4', 'C3:h'))
+    expect(gradeTimed(both, [{ midi: 64, time: 0 }, { midi: 67, time: 1 }], 1, 'mic').hits).toBe(1)
+    expect(gradeTimed(both, [{ midi: 64, time: 0 }, { midi: 48, time: 0.05 }, { midi: 67, time: 1 }], 1, 'mic').hits).toBe(2)
     // mashing every key on every beat no longer passes
     const mash = [0, 1, 2].flatMap((t) => [60, 62, 64, 65, 67, 69, 71].map((midi) => ({ midi, time: t })))
     expect(gradeTimed(steps, mash, 1, 'midi').accuracy).toBeLessThan(0.5)
@@ -246,6 +253,12 @@ describe('key finder', () => {
     expect(key('Dm7 G')).toBe('D dorian')
     expect(key('Dm7 G7 Cmaj7')).toBe('C major')
     expect(key('Am G F E')).toBe('A minor')
+    expect(findKeys(['Am', 'G', 'F', 'E'])[0].scales.map((x) => x.scale)).toContain('harmonicMinor')
+    expect(key('Em G D A')).toBe('D major')
+    // a 7#9 chord is a major-type chord
+    expect(findKeys(['E7#9', 'A7', 'B7'])[0].numerals[0]).toBe('I7♯9')
+    expect(pretty('bb7')).toBe('♭♭7')
+    expect(pentatonicBox('E', 1, 'minorPent', 12)[0]).toEqual({ string: 6, fret: 12 })
     expect(findKeys(['E', 'G', 'A', 'E'])[0].outside).toContain(true)
   })
 })

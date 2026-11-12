@@ -169,7 +169,7 @@ export function StepView({ step, leftHanded }: { step: StepDef; leftHanded: bool
         </figure>
       )
     case 'box': {
-      const box = pentatonicBox(step.root, step.box, step.kind)
+      const box = pentatonicBox(step.root, step.box, step.kind, step.minFret)
       const frets = box.map((p) => p.fret)
       const scale = SCALES[step.kind]
       const marks: Mark[] = box.map((p) => {

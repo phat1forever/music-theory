@@ -9,7 +9,7 @@ import { shapeFromFrets, soundingMidi, transpose, TUNINGS, voicings } from '../t
 
 const SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 const FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
-const QUALITIES = ['maj', 'min', '7', 'm7', 'maj7', '5', 'sus4', 'sus2', '6', 'm6', 'add9', '9', '7#9', 'dim', 'dim7', 'm7b5', 'aug']
+const QUALITIES = ['maj', 'min', '7', 'm7', 'maj7', '5', 'sus4', 'sus2', '6', 'm6', 'add9', '9', '7#9', '7b9', 'dim', 'dim7', 'm7b5', 'aug']
 
 const blank = (): Sheet => ({
   id: newId(),
@@ -365,6 +365,7 @@ export function Chords() {
             {key.mode === 'mixolydian' ? ' Mixolydian is a major key with a lowered 7th, which is why the ♭VII chord fits.' : ''}
             {key.mode === 'dorian' ? ' Dorian is a minor key with a raised 6th, which is why the IV chord is major.' : ''}
             {key.blues ? ' The minor pentatonic over these major-type chords is the classic blues sound.' : ''}
+            {key.majorV ? ' The V chord is major, which is borrowed from the harmonic minor scale: over that chord, raise the 7th note of the scale by one fret.' : ''}
             {byShape ? ' This is the key you actually hear, not the shape names.' : ''}
             {keys[1] && keys[1].score > key.score - 0.2 ? ` It could also be ${pretty(keys[1].root)} ${keys[1].mode}: the two share most of their chords.` : ''}
           </p>

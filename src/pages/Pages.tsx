@@ -182,8 +182,8 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
           {i === 0
             ? 'Nothing was skipped.'
             : `${Math.min(i, last)} earlier unit${Math.min(i, last) > 1 ? 's' : ''} marked as known. Those lessons stay open, so you can go back to any of them.`}
-          {i > last ? ' You answered everything correctly, so you start at the final unit; skim it, or use it as a check.' : ''} A few questions cannot measure
-          everything: if a skipped unit holds something new, just open it.
+          {i > last ? ' You answered everything correctly, so you start at the final unit; skim it, or use it as a check.' : ''}
+          {i > 0 ? ' A few questions cannot measure everything: if a skipped unit holds something new, just open it. Its exercises are in Practice under "from lessons you skipped".' : ''}
         </p>
         <button className="btn primary" onClick={onClose}>
           Done

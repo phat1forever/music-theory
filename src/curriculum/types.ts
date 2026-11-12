@@ -24,7 +24,7 @@ export interface Quiz {
 export type StepDef =
   | { t: 'text'; title?: string; body: string }
   | { t: 'fretboard'; title?: string; marks: Mark[]; from?: number; to?: number; muted?: number[]; caption?: string }
-  | { t: 'box'; root: string; box: number; kind: 'minorPent' | 'majorPent' | 'blues'; caption?: string }
+  | { t: 'box'; root: string; box: number; kind: 'minorPent' | 'majorPent' | 'blues'; caption?: string; minFret?: number }
   | { t: 'scale'; root: string; scale: string; on: 'guitar' | 'keys' | 'both'; from?: number; to?: number; caption?: string }
   | { t: 'keyboard'; title?: string; marks: KeyMark[]; from?: number; to?: number; caption?: string }
   | { t: 'chords'; names: string[]; caption?: string }

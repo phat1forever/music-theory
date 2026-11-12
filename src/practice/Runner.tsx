@@ -11,6 +11,7 @@ import { barBeats, barChords, barCount, onsetEvents, sliceBars, timeline, totalB
 import { chordMidi, midiName, mod, parseChord, pc, pretty } from '../theory/theory'
 import {
   gradeTimed,
+  matchKey,
   noteMatches,
   notesNeeded,
   PASS,
@@ -54,10 +55,11 @@ export async function playPiece(
       if (chord) {
         const root = pc(parseChord(chord).root)
         if (inBar === 0) play('pad', chordMidi(chord, 3), spb * (per / 2) * 0.95, when)
-        if (inBar === 0 || inBar === 4) play('bass', [36 + root], spb * 0.9, when)
-        if (inBar === 4 || (per === 6 && inBar === 2)) drum('snare', when)
+        // 4/4: bass on beats 1 and 3 with a backbeat. 3/4: one bass note, then two light beats.
+        if (inBar === 0 || (per === 8 && inBar === 4)) play('bass', [36 + root], spb * 0.9, when)
+        if (per === 8 && inBar === 4) drum('snare', when)
         if (inBar === 0) drum('kick', when)
-        drum('hat', when)
+        if (per === 8 || inBar % 2 === 0) drum('hat', when)
       }
       const s = steps.get(pos)
       if (s && opts.sound !== false) play(voice, s.midi, Math.max(0.25, s.len * spb * 0.95), when)
@@ -100,6 +102,8 @@ export function Runner({ ex, onAttempt }: Props) {
   const hasChords = !!ex.piece.chords?.some(Boolean)
   const [got, setGot] = useState<number[]>([])
   const [wrong, setWrong] = useState<string | null>(null)
+  // Name black keys the way the piece's key signature does (B♭ in F major and D minor, not A♯).
+  const flat = ex.flats ?? ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Dm', 'Gm', 'Cm', 'Fm'].includes(ex.piece.key ?? '')
   const ticker = useRef<Ticker | null>(null)
   const paper = useRef<HTMLDivElement>(null)
   /** On a phone, bring the score to the top of the screen so it and the diagram are both visible while playing. */
@@ -185,7 +189,7 @@ export function Runner({ ex, onAttempt }: Props) {
       const step = steps[st.index]
       if (!step) return
       if (noteMatches(step, e.midi, e.source)) {
-        st.got.add(e.source === 'mic' ? 0 : e.midi)
+        st.got.add(matchKey(step, e.midi, e.source)!)
         setWrong(null)
         setGot(e.source === 'mic' ? [] : [...st.got])
         if (st.got.size >= notesNeeded(step, e.source)) {
@@ -202,9 +206,12 @@ export function Runner({ ex, onAttempt }: Props) {
         // A microphone keeps hearing the previous note ring on; don't count that as a mistake.
         const prev = steps[st.index - 1]
         if (e.source === 'mic' && prev && noteMatches(prev, e.midi, 'mic')) return
+        // A bend sweeps up through the next pitches on its way to the target: not a wrong note.
+        const from = [...step.midi, ...(prev?.midi ?? [])]
+        if (e.source === 'mic' && ex.piece.instrument === 'guitar' && from.some((m) => e.midi - m === 1 || e.midi - m === 2)) return
         st.mistakes++
-        const want = [...new Set(step.midi)].map((m) => pretty(midiName(m, ex.flats))).join(' + ')
-        setWrong(`That was ${pretty(midiName(e.midi, ex.flats))}. Look for ${want}.`)
+        const want = [...new Set(step.midi)].filter((m) => e.source === 'mic' || !st.got.has(m)).map((m) => pretty(midiName(m, flat))).join(' + ')
+        setWrong(`That was ${pretty(midiName(e.midi, flat))}. Look for ${want}.`)
       }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -340,7 +347,7 @@ export function Runner({ ex, onAttempt }: Props) {
       </div>
 
       {twoHands && (
-        <div className="seg hand-seg" role="group" aria-label="Which hand to practise">
+        <div className="seg wrap hand-seg" role="group" aria-label="Which hand to practise">
           {(
             [
               ['both', 'Both hands'],
@@ -425,7 +432,7 @@ export function Runner({ ex, onAttempt }: Props) {
             onPick={pick}
           />
         ) : (
-          <Keyboard marks={keyMarks} from={diagram.from} to={diagram.to} onPick={pick} />
+          <Keyboard marks={keyMarks} from={diagram.from} to={diagram.to} onPick={pick} flats={flat} />
         )}
         {count !== null && mode === 'tempo' && <div className="countin">{count}</div>}
       </div>
