@@ -26,6 +26,7 @@ feedback, and tools for exploring scales and chords on the fretboard, the keyboa
 - Several players can keep separate progress. Everything is saved in the browser (localStorage).
 
 Not built yet: turning an audio recording into tab (the "Tabs from audio" page describes the plan).
+Ideas for what to add next are collected in [IDEAS.md](IDEAS.md).
 
 ## Run it
 
