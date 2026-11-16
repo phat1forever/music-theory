@@ -17,7 +17,7 @@ export function practiceLesson(instrument: 'guitar' | 'keys'): Lesson {
       ),
       text(
         'A 20-minute session',
-        `- **Warm up (3 minutes).** ${guitar ? 'Slow chord changes or an easy scale, to loosen your hands.' : 'A slow five-finger pattern or a scale, hands relaxed.'}\n- **Review (5 minutes).** Open **Practice**: exercises marked *due* come back for review, a little faster each time.\n- **New material (8 minutes).** The next lesson's exercise. Find the hardest bar and loop just that (use **Bars X to Y**).\n- **Play (4 minutes).** Something you enjoy: a piece you know, or **Jam**. Finish on a good note.`,
+        `- **Warm up (3 minutes).** ${guitar ? 'Slow chord changes or an easy scale, to loosen your hands.' : 'A slow five-finger pattern or a scale, hands relaxed.'}\n- **Review (5 minutes).** Open **Practice**: exercises marked *due* come back for review, a little faster each time.\n- **New material (7 minutes).** The next lesson's exercise. Find the hardest bar and loop just that (use **Bars X to Y**).\n- **Ear (2 minutes).** Ten questions in [Ear training](#/ear). Small and daily is what works.\n- **Play (3 minutes).** Something you enjoy: a piece you know, or **Jam**. Finish on a good note.\n\nThe Home page lays this session out for you every day.`,
       ),
       text(
         'Slow is fast',

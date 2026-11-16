@@ -1,7 +1,8 @@
 import { guitar } from './guitar'
 import { keyboard } from './keys'
 import { theory } from './theory'
-import type { Exercise, Lesson, Track, Unit } from './types'
+import { skillOf } from './skillmap'
+import type { Exercise, Lesson, Skill, Track, Unit } from './types'
 import type { Profile } from '../store/store'
 
 export const TRACKS: Track[] = [theory, guitar, keyboard]
@@ -31,19 +32,40 @@ export function trackLessons(trackId: string): LessonRef[] {
   return LESSONS.filter((r) => r.track.id === trackId)
 }
 
-/** First lesson of a track that is neither done nor skipped. */
+/** The step-by-step units of a track (everything except the open studio units). */
+export const coreUnits = (track: Track): Unit[] => track.units.filter((u) => !u.free)
+export const studioUnits = (track: Track): Unit[] => track.units.filter((u) => u.free)
+
+export const lessonSkill = (ref: LessonRef): Skill => skillOf(ref.unit, ref.lesson)
+
+/** First lesson of a track's step-by-step path that is neither done nor skipped. */
 export function nextLesson(trackId: string, p: Profile): LessonRef | undefined {
-  return trackLessons(trackId).find((r) => !p.lessons[r.lesson.id])
+  return trackLessons(trackId).find((r) => !r.unit.free && !p.lessons[r.lesson.id])
 }
 
-/** A lesson is open once every earlier lesson in its track is done or skipped. Finished lessons stay open. */
+/**
+ * Is a lesson open?
+ * - Studio lessons always are.
+ * - On the step-by-step path, a lesson opens once every earlier one is done or skipped; finished lessons stay open.
+ * - The skill map lets skills advance separately. Rating a skill at all opens the next lesson of that skill, so a
+ *   player can work on a weak area without first finishing everything that comes before it on the path. Rating it
+ *   "comfortable" or "strong" opens all of that skill's lessons.
+ */
 export function isOpen(ref: LessonRef, p: Profile): boolean {
-  if (p.lessons[ref.lesson.id]) return true
+  if (ref.unit.free || p.lessons[ref.lesson.id]) return true
+  const skill = lessonSkill(ref)
+  const rating = p.skillSelf[`${ref.track.id}:${skill}`]
+  if (rating !== undefined) {
+    if (rating >= 2) return true
+    const nextInSkill = trackLessons(ref.track.id).find((r) => !r.unit.free && lessonSkill(r) === skill && !p.lessons[r.lesson.id])
+    if (nextInSkill?.lesson.id === ref.lesson.id) return true
+  }
   return nextLesson(ref.track.id, p)?.lesson.id === ref.lesson.id
 }
 
+/** Progress along a track's step-by-step path. */
 export function trackProgress(trackId: string, p: Profile): { done: number; skipped: number; total: number } {
-  const all = trackLessons(trackId)
+  const all = trackLessons(trackId).filter((r) => !r.unit.free)
   return {
     done: all.filter((r) => p.lessons[r.lesson.id] === 'done').length,
     skipped: all.filter((r) => p.lessons[r.lesson.id] === 'skipped').length,
@@ -59,7 +81,12 @@ export function pendingCheckpoints(trackId: string, p: Profile): { track: Track;
     .map((unit) => ({ track, unit }))
 }
 
-/** Exercises whose lesson has been reached (done, skipped or currently open). */
+/**
+ * Exercises to list in Practice: those whose lesson has been reached on the step-by-step path, and studio exercises
+ * once their lesson has been started (so a beginner's list is not filled with intermediate material).
+ */
 export function unlockedExercises(p: Profile): ExerciseRef[] {
-  return EXERCISES.filter((r) => isOpen(r, p))
+  const started = (r: ExerciseRef) =>
+    !!p.lessons[r.lesson.id] || r.lesson.steps.some((s) => s.t === 'exercise' && (p.tried.includes(s.ex.id) || !!p.exercises[s.ex.id]))
+  return EXERCISES.filter((r) => (r.unit.free ? started(r) : isOpen(r, p)))
 }

@@ -1,8 +1,8 @@
 // Note sequences: a small text notation for writing exercises, plus the timeline used for playback and grading.
 import { CHORD_SHAPES, fretMidi, midi, type FretPos } from './theory'
 
-export type Dur = 'w' | 'hd' | 'h' | 'qd' | 'q' | '8'
-export const BEATS: Record<Dur, number> = { w: 4, hd: 3, h: 2, qd: 1.5, q: 1, '8': 0.5 }
+export type Dur = 'w' | 'hd' | 'h' | 'qd' | 'q' | '8d' | '8' | '16'
+export const BEATS: Record<Dur, number> = { w: 4, hd: 3, h: 2, qd: 1.5, q: 1, '8d': 0.75, '8': 0.5, '16': 0.25 }
 
 export interface Ev {
   /** sounding MIDI notes; empty = rest */
@@ -65,7 +65,7 @@ function tokens(src: string): string[] {
 }
 
 function split(tok: string): { body: string; dur: Dur; text?: string; tie?: boolean } {
-  const m = /^(.*?)(?::(w|hd|h|qd|q|8))?(-)?(?:~(.+))?$/.exec(tok)!
+  const m = /^(.*?)(?::(w|hd|h|qd|q|8d|8|16))?(-)?(?:~(.+))?$/.exec(tok)!
   return { body: m[1], dur: (m[2] as Dur) ?? 'q', tie: m[3] ? true : undefined, text: m[4]?.replace(/_/g, ' ') }
 }
 
@@ -75,6 +75,8 @@ function split(tok: string): { body: string; dur: Dur; text?: string; tie?: bool
  * `{Chord}` expands an open chord shape.
  */
 export function gtr(src: string, opts?: PieceOpts): Piece {
+  // A chord's name is printed when it changes, not on every strum.
+  let lastChord = ''
   const rh = tokens(src).map((tok): Ev => {
     const { body, dur, text, tie } = split(tok)
     if (body === 'r') return { midi: [], dur }
@@ -85,7 +87,10 @@ export function gtr(src: string, opts?: PieceOpts): Piece {
       const tab = shape.frets
         .map((fret, i) => ({ string: 6 - i, fret }))
         .filter((p) => p.fret >= 0)
-      return { midi: tab.map((p) => fretMidi(p.string, p.fret)), dur, tab, text: text ?? chord[1] }
+      const name = shape.label ?? chord[1]
+      const label = text ?? (name === lastChord ? undefined : name)
+      lastChord = name
+      return { midi: tab.map((p) => fretMidi(p.string, p.fret)), dur, tab, text: label, tie }
     }
     const tab = body
       .replace(/[[\]]/g, '')

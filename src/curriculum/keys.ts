@@ -1,5 +1,6 @@
 import { keys, type PieceOpts } from '../theory/music'
 import { practiceLesson } from './shared'
+import { keysStudio } from './studio'
 import { exercise, km, quiz, text, type Track } from './types'
 
 /** A left-hand-only piece: the right hand rests for the given number of bars. */
@@ -1010,12 +1011,13 @@ export const keyboard: Track = {
             ),
             text(
               'Your next steps',
-              '- **Follow a graded syllabus** (ABRSM, Trinity or RCM) or a **method book** for adults, such as *Alfred\'s Adult All-in-One Course* or *Faber Adult Piano Adventures*, alongside this app. They add repertoire, sight-reading and exams.\n- **Play real music from every period.** Public-domain pieces that suit this level include the Minuet in G (Petzold, once attributed to Bach), easy sonatinas by Clementi and Kuhlau, Burgmüller\'s *25 Easy Studies*, and Schumann\'s *Album for the Young*.\n- **Sight-read every day**: five minutes, new music, easier than your pieces, no stopping.\n- **Add keys and technique**: harmonic and melodic minors, scales in more keys, arpeggios in all of them, then two octaves hands together.\n- **Learn pieces from lead sheets**, and use **Jam** to improvise a right-hand melody over a backing track.',
+              '- **Use the studio.** Below the step-by-step path on the Lessons page is the **studio**: intermediate lessons on technique, accompaniment and pieces (including the Minuet in G), all open in any order. The [skill map](#/skills/keys) shows which of your skills is furthest behind and what to take next.\n- **Train your ear** a little every day in [Ear training](#/ear).\n- **Follow a graded syllabus** (ABRSM, Trinity or RCM) or a **method book** for adults, such as *Alfred\'s Adult All-in-One Course* or *Faber Adult Piano Adventures*, alongside this app. They add repertoire, sight-reading and exams.\n- **Play real music from every period.** Public-domain pieces that suit this level include the Minuet in G (Petzold, once attributed to Bach), easy sonatinas by Clementi and Kuhlau, Burgmüller\'s *25 Easy Studies*, and Schumann\'s *Album for the Young*.\n- **Sight-read every day**: five minutes, new music, easier than your pieces, no stopping.\n- **Add keys and technique**: harmonic and melodic minors, scales in more keys, arpeggios in all of them, then two octaves hands together.\n- **Learn pieces from lead sheets**, and use **Jam** to improvise a right-hand melody over a backing track.',
             ),
             quiz('Which of these can an app NOT judge reliably?', ['Whether you pressed the right notes', 'Touch, tone and posture', 'Whether you kept time', 'Which piece you played'], 1),
           ],
         },
       ],
     },
+    ...keysStudio,
   ],
 }

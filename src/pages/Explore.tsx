@@ -12,7 +12,6 @@ import {
   CHORDS,
   diatonicChords,
   fretMidi,
-  INTERVALS,
   isMinorish,
   keyRoot,
   pretty,
@@ -257,74 +256,15 @@ function ExploreBody({ picked, root, setRoot, kind, setKind, scale, setScale, ch
           />
         </section>
         <section className="card">
-          <h2>Interval trainer</h2>
-          <IntervalTrainer />
+          <h2>Ear training</h2>
+          <p className="muted">Intervals, chords, scales, progressions, rhythm, and playing back what you hear: six drills that keep score.</p>
+          <a className="btn" href="#/ear">
+            Open Ear training
+          </a>
           <h2 style={{ marginTop: 28 }}>Tuner</h2>
           <Tuner />
         </section>
       </div>
-    </div>
-  )
-}
-
-const EASY = [3, 4, 5, 7, 12]
-
-function IntervalTrainer() {
-  const [all, setAll] = useState(false)
-  const [q, setQ] = useState<{ low: number; semis: number; pool: number[] } | null>(null)
-  const [picked, setPicked] = useState<number | null>(null)
-  const [score, setScore] = useState({ right: 0, total: 0 })
-  const pool = all ? INTERVALS.filter((i) => i.semis > 0).map((i) => i.semis) : EASY
-
-  const sound = (low: number, semis: number) => {
-    play('keys', [low], 0.7)
-    window.setTimeout(() => play('keys', [low + semis], 0.9), 650)
-  }
-  const ask = () => {
-    const next = { low: 55 + Math.floor(Math.random() * 10), semis: pool[Math.floor(Math.random() * pool.length)], pool }
-    setQ(next)
-    setPicked(null)
-    sound(next.low, next.semis)
-  }
-
-  return (
-    <div className="trainer">
-      <p className="muted">Two notes play, low then high. Name the distance between them.</p>
-      <div className="btns">
-        <button className="btn primary" onClick={ask}>
-          {q ? 'Next interval' : 'Start'}
-        </button>
-        {q && (
-          <button className="btn" onClick={() => sound(q.low, q.semis)}>
-            Hear again
-          </button>
-        )}
-        <label className="check">
-          <input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} /> All 12 intervals
-        </label>
-      </div>
-      {q && (
-        <div className="quiz-opts two">
-          {INTERVALS.filter((i) => q.pool.includes(i.semis)).map((i) => (
-            <button
-              key={i.semis}
-              disabled={picked !== null}
-              className={picked === null ? '' : i.semis === q.semis ? 'right' : i.semis === picked ? 'wrong' : ''}
-              onClick={() => {
-                setPicked(i.semis)
-                setScore((s) => ({ right: s.right + (i.semis === q.semis ? 1 : 0), total: s.total + 1 }))
-              }}
-            >
-              {i.name}
-            </button>
-          ))}
-        </div>
-      )}
-      {score.total > 0 && (
-        <p className="muted">
-          Score: {score.right} of {score.total}
-        </p>
-      )}
     </div>
   )
 }

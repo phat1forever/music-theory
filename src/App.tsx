@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Chords } from './pages/Chords'
+import { Ear } from './pages/Ear'
 import { Explore } from './pages/Explore'
 import { Jam } from './pages/Jam'
 import { LessonView } from './pages/LessonView'
 import { Home, Lessons, Practice, Progress, Transcribe } from './pages/Pages'
+import { Skills } from './pages/Skills'
 import { useProfile, useStore } from './store/store'
 
 const NAV = [
   ['', 'Home'],
   ['lessons', 'Lessons'],
   ['practice', 'Practice'],
+  ['ear', 'Ear'],
+  ['skills', 'Skills'],
   ['explore', 'Explore'],
   ['chords', 'Chords'],
   ['jam', 'Jam'],
@@ -79,6 +83,8 @@ export default function App() {
         {page === 'lessons' && <Lessons trackId={arg} />}
         {page === 'lesson' && <LessonView key={arg} id={arg} />}
         {page === 'practice' && <Practice exerciseId={arg} />}
+        {page === 'ear' && <Ear key={arg ?? 'menu'} drill={arg} />}
+        {page === 'skills' && <Skills instrument={arg} />}
         {page === 'explore' && <Explore key={route.join('/')} init={route.slice(1)} />}
         {page === 'chords' && <Chords />}
         {page === 'jam' && <Jam />}

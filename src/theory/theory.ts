@@ -281,6 +281,8 @@ export interface ChordShape {
   frets: number[]
   fingers: number[]
   barre?: { fret: number; from: number; to: number }
+  /** the chord's real name, when the table key had to differ (two shapes for one chord) */
+  label?: string
 }
 
 export const CHORD_SHAPES: Record<string, ChordShape> = {
@@ -304,6 +306,20 @@ export const CHORD_SHAPES: Record<string, ChordShape> = {
   Am7: { frets: [-1, 0, 2, 0, 1, 0], fingers: [0, 0, 2, 0, 1, 0] },
   Fmaj7: { frets: [-1, -1, 3, 2, 1, 0], fingers: [0, 0, 3, 2, 1, 0] },
   Cmaj7: { frets: [-1, 3, 2, 0, 0, 0], fingers: [0, 3, 2, 0, 0, 0] },
+  // Barre shapes. Where a chord already has an open shape, the key carries a suffix and `label` gives the real name.
+  Fsmall: { frets: [-1, -1, 3, 2, 1, 1], fingers: [0, 0, 3, 2, 1, 1], barre: { fret: 1, from: 2, to: 1 }, label: 'F' },
+  F7: { frets: [1, 3, 1, 2, 1, 1], fingers: [1, 3, 1, 2, 1, 1], barre: { fret: 1, from: 6, to: 1 } },
+  Fm7: { frets: [1, 3, 1, 1, 1, 1], fingers: [1, 3, 1, 1, 1, 1], barre: { fret: 1, from: 6, to: 1 } },
+  Gbarre: { frets: [3, 5, 5, 4, 3, 3], fingers: [1, 3, 4, 2, 1, 1], barre: { fret: 3, from: 6, to: 1 }, label: 'G' },
+  Gm: { frets: [3, 5, 5, 3, 3, 3], fingers: [1, 3, 4, 1, 1, 1], barre: { fret: 3, from: 6, to: 1 } },
+  Abarre: { frets: [5, 7, 7, 6, 5, 5], fingers: [1, 3, 4, 2, 1, 1], barre: { fret: 5, from: 6, to: 1 }, label: 'A' },
+  Ambarre: { frets: [5, 7, 7, 5, 5, 5], fingers: [1, 3, 4, 1, 1, 1], barre: { fret: 5, from: 6, to: 1 }, label: 'Am' },
+  Bb: { frets: [-1, 1, 3, 3, 3, 1], fingers: [0, 1, 2, 3, 4, 1], barre: { fret: 1, from: 5, to: 1 } },
+  Cbarre: { frets: [-1, 3, 5, 5, 5, 3], fingers: [0, 1, 2, 3, 4, 1], barre: { fret: 3, from: 5, to: 1 }, label: 'C' },
+  Cm: { frets: [-1, 3, 5, 5, 4, 3], fingers: [0, 1, 3, 4, 2, 1], barre: { fret: 3, from: 5, to: 1 } },
+  Dbarre: { frets: [-1, 5, 7, 7, 7, 5], fingers: [0, 1, 2, 3, 4, 1], barre: { fret: 5, from: 5, to: 1 }, label: 'D' },
+  Dmbarre: { frets: [-1, 5, 7, 7, 6, 5], fingers: [0, 1, 3, 4, 2, 1], barre: { fret: 5, from: 5, to: 1 }, label: 'Dm' },
+  Embarre: { frets: [-1, 7, 9, 9, 8, 7], fingers: [0, 1, 3, 4, 2, 1], barre: { fret: 7, from: 5, to: 1 }, label: 'Em' },
   A7: { frets: [-1, 0, 2, 0, 2, 0], fingers: [0, 0, 2, 0, 3, 0] },
   D7: { frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3] },
   B7: { frets: [-1, 2, 1, 2, 0, 2], fingers: [0, 2, 1, 3, 0, 4] },

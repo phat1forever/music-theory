@@ -35,10 +35,11 @@ export async function playPiece(
   onBeat: (beat: number | null) => void,
   opts: { countIn?: boolean; metronome?: boolean; sound?: boolean; backing?: boolean; loop?: boolean; pedal?: boolean } = {},
 ): Promise<Ticker> {
-  const steps = new Map(timeline(piece).map((s) => [Math.round(s.beat * 2), s]))
-  const per = barBeats(piece) * 2 // eighth-note ticks per bar
+  const D = 4 // ticks per beat: sixteenth-note resolution
+  const steps = new Map(timeline(piece).map((s) => [Math.round(s.beat * D), s]))
+  const per = barBeats(piece) * D // ticks per bar
   const lead = opts.countIn ? per : 0
-  const length = Math.round(totalBeats(piece) * 2)
+  const length = Math.round(totalBeats(piece) * D)
   const spb = 60 / bpm
   const voice = piece.instrument === 'guitar' ? 'guitar' : 'keys'
   const chords = barChords(piece)
@@ -48,34 +49,38 @@ export async function playPiece(
       if (!opts.loop && i >= length + lead) return
       const pos = i < lead ? i - lead : (i - lead) % length
       const inBar = mod(pos, per)
+      const onBeat8 = inBar % 2 === 0 // on an eighth-note position
+      const eighth = inBar / 2
       // Swung off-beat eighths arrive on the last third of the beat.
-      const when = piece.swing && inBar % 2 === 1 ? t + spb / 6 : t
-      if ((opts.metronome || i < lead) && inBar % 2 === 0) click(inBar === 0, t)
+      const when = piece.swing && inBar % D === 2 ? t + spb / 6 : t
+      if ((opts.metronome || i < lead) && inBar % D === 0) click(inBar === 0, t)
       if (pos < 0) return
       const chord = opts.backing ? chords[Math.floor(pos / per)] : ''
-      if (chord) {
+      if (chord && onBeat8) {
+        const four = barBeats(piece) === 4
         const root = pc(parseChord(chord).root)
-        if (inBar === 0) play('pad', chordMidi(chord, 3), spb * (per / 2) * 0.95, when)
+        if (eighth === 0) play('pad', chordMidi(chord, 3), spb * barBeats(piece) * 0.95, when)
         // 4/4: bass on beats 1 and 3 with a backbeat. 3/4: one bass note, then two light beats.
-        if (inBar === 0 || (per === 8 && inBar === 4)) play('bass', [36 + root], spb * 0.9, when)
-        if (per === 8 && inBar === 4) drum('snare', when)
-        if (inBar === 0) drum('kick', when)
-        if (per === 8 || inBar % 2 === 0) drum('hat', when)
+        if (eighth === 0 || (four && eighth === 4)) play('bass', [36 + root], spb * 0.9, when)
+        if (four && eighth === 4) drum('snare', when)
+        if (eighth === 0) drum('kick', when)
+        if (four || eighth % 2 === 0) drum('hat', when)
       }
       const s = steps.get(pos)
       if (s && opts.sound !== false) {
         // With the sustain pedal down, notes ring on until the pedal lifts.
-        const lift = opts.pedal === false ? undefined : pedalLiftBeat(piece, pos / 2)
-        const len = lift === undefined ? s.len : Math.max(s.len, lift - pos / 2)
-        play(voice, s.midi, Math.max(0.25, len * spb * (lift === undefined ? 0.95 : 1.02)), when)
+        const lift = opts.pedal === false ? undefined : pedalLiftBeat(piece, pos / D)
+        const len = lift === undefined ? s.len : Math.max(s.len, lift - pos / D)
+        play(voice, s.midi, Math.max(0.2, len * spb * (lift === undefined ? 0.95 : 1.02)), when)
       }
     },
     (i) => {
       if (!opts.loop && i >= length + lead) {
         ticker.stop()
         onBeat(null)
-      } else if (i >= lead && steps.has((i - lead) % length)) onBeat(((i - lead) % length) / 2)
+      } else if (i >= lead && steps.has((i - lead) % length)) onBeat(((i - lead) % length) / D)
     },
+    D,
   )
   return ticker
 }

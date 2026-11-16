@@ -34,6 +34,9 @@ export type StepDef =
   | { t: 'exercise'; ex: Exercise }
   | ({ t: 'quiz' } & Quiz)
 
+/** The areas a player develops, often unevenly. Each instrument uses a subset. */
+export type Skill = 'rhythm' | 'chords' | 'fingerstyle' | 'lead' | 'reading' | 'technique' | 'hands' | 'expression' | 'theory' | 'ear'
+
 export interface Lesson {
   id: string
   title: string
@@ -41,6 +44,8 @@ export interface Lesson {
   minutes: number
   /** ids of theory lessons that help with this one, shown as "Helpful to know first" */
   related?: string[]
+  /** the skill this lesson builds, when it differs from its unit's */
+  skill?: Skill
   steps: StepDef[]
 }
 
@@ -50,8 +55,15 @@ export interface Unit {
   level: 'Beginner' | 'Late beginner' | 'Early intermediate' | 'Intermediate' | 'Advancing'
   about: string
   lessons: Lesson[]
-  /** answer this correctly in the placement check to skip the unit */
-  placement: Quiz
+  /**
+   * A studio unit: outside the step-by-step path. Every lesson in it is open from the start, so players whose skills
+   * are uneven can go straight to what they need. Studio units have no placement questions.
+   */
+  free?: boolean
+  /** the skill this unit builds (lessons can override it) */
+  skill?: Skill
+  /** answer this correctly in the placement check to skip the unit (core units only) */
+  placement?: Quiz
   /** a second question, for units with nothing to play (the theory track) */
   placement2?: Quiz
   /**

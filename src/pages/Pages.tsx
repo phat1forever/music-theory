@@ -4,6 +4,8 @@ import {
   EXERCISES,
   findExercise,
   isOpen,
+  coreUnits,
+  studioUnits,
   nextLesson,
   pendingCheckpoints,
   TRACKS,
@@ -12,6 +14,8 @@ import {
   unlockedExercises,
 } from '../curriculum'
 import type { Track, Unit } from '../curriculum/types'
+import { focusSkills, type Instrument } from '../curriculum/skills'
+import { DRILLS } from '../practice/ear'
 import { CHECK_PASS, mastery, streak } from '../practice/grading'
 import { Runner } from '../practice/Runner'
 import { actions, today, useProfile, useStore, type Profile } from '../store/store'
@@ -32,6 +36,12 @@ const dueExercises = (p: Profile) =>
 
 // ---------- Home ----------
 
+/** Suggest the ear drill with the fewest answers so far, so all six get attention. */
+function earTip(p: Profile): string {
+  const least = [...DRILLS].sort((a, b) => (p.ear[a.id]?.total ?? 0) - (p.ear[b.id]?.total ?? 0))[0]
+  return `try "${least.name}" today.`
+}
+
 /** A short session plan built from the "how to practise" routine: warm up, review what is due, learn, consolidate, play. */
 function Today({ p }: { p: Profile }) {
   const due = dueExercises(p)
@@ -40,6 +50,14 @@ function Today({ p }: { p: Profile }) {
   const next = active.flatMap((t) => {
     const n = nextLesson(t.id, p)
     return n ? [n] : []
+  })
+  // A weak spot from the skill map: shown once the player has rated skills, or has finished a step-by-step path.
+  const instruments = active.filter((t) => t.id !== 'theory').map((t) => t.id as Instrument)
+  const focus = instruments.flatMap((inst) => {
+    const wanted = Object.keys(p.skillSelf).some((k) => k.startsWith(`${inst}:`)) || !nextLesson(inst, p)
+    const f = wanted ? focusSkills(inst, p, 1)[0] : undefined
+    const lesson = f?.lessons.find((r) => isOpen(r, p) && !next.some((n) => n.lesson.id === r.lesson.id))
+    return f && lesson ? [{ skill: f.state.info.name, lesson, inst }] : []
   })
   return (
     <section className="card today" data-today>
@@ -78,10 +96,26 @@ function Today({ p }: { p: Profile }) {
           )}
         </li>
         <li>
-          <strong>New</strong> <small className="muted">8 min</small>
-          {next.length === 0 ? (
-            <span className="muted"> You have taken every lesson in your tracks. Spend this time on review and Jam.</span>
-          ) : (
+          <strong>New</strong> <small className="muted">7 min</small>
+          {next.length === 0 && focus.length === 0 && <span className="muted"> You have taken every lesson on your paths. Pick something from the studio, or spend this time on review.</span>}
+          {focus.length > 0 && (
+            <ul className="rows" data-today-focus>
+              {focus.map((f) => (
+                <li key={f.lesson.lesson.id}>
+                  <a href={`#/lesson/${f.lesson.lesson.id}`}>
+                    <span>
+                      <strong>{f.lesson.lesson.title}</strong>
+                      <small>
+                        From your skill map · focus: {f.skill}
+                      </small>
+                    </span>
+                    <span className="chev">Start →</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+          {next.length === 0 ? null : (
             <ul className="rows">
               {next.map((n) => (
                 <li key={n.lesson.id}>
@@ -119,7 +153,14 @@ function Today({ p }: { p: Profile }) {
           </li>
         )}
         <li>
-          <strong>Play</strong> <small className="muted">4 min</small>
+          <strong>Ear</strong> <small className="muted">2 min</small>
+          <span className="muted">
+            {' '}
+            Ten questions in <a href="#/ear">Ear training</a>: {earTip(p)}
+          </span>
+        </li>
+        <li>
+          <strong>Play</strong> <small className="muted">3 min</small>
           <span className="muted">
             {' '}
             Something you enjoy: a piece you know, or <a href="#/jam">Jam</a>. Finish on a good note.
@@ -171,7 +212,8 @@ export function Home() {
   const p = useProfile()
   const days = streak(p.days, today())
   // Someone who has practised something is past the first-run screen, even before finishing a lesson.
-  const started = Object.keys(p.lessons).length > 0 || p.tried.length > 0 || Object.keys(p.exercises).length > 0
+  const started =
+    Object.keys(p.lessons).length > 0 || p.tried.length > 0 || Object.keys(p.exercises).length > 0 || Object.keys(p.ear).length > 0 || Object.keys(p.skillSelf).length > 0
   return (
     <div className="stack">
       <header className="hero">
@@ -282,6 +324,8 @@ type Phase = 'quiz' | 'quiz2' | 'play'
  * piece in time. A unit is skipped only if everything is right. The first miss ends the check and starts you there.
  */
 function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
+  // Placement covers the step-by-step path only; studio units are always open.
+  const units = coreUnits(track)
   const [i, setI] = useState(0)
   const [phase, setPhase] = useState<Phase>('quiz')
   const [stopped, setStopped] = useState<string | null>(null)
@@ -292,13 +336,13 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
   const [playTried, setPlayTried] = useState(false)
   // Nothing is saved until the check ends, so Cancel really cancels.
   const committed = useRef(false)
-  const unit = track.units[i]
-  const last = track.units.length - 1
+  const unit = units[i]
+  const last = units.length - 1
 
   const finish = (count: number) => {
     // Never skip the final unit: even a perfect score starts you there.
     count = Math.min(count, last)
-    actions.skipLessons(track.units.slice(0, count).flatMap((u) => u.lessons.map((l) => l.id)))
+    actions.skipLessons(units.slice(0, count).flatMap((u) => u.lessons.map((l) => l.id)))
     if (track.id === 'guitar' && count >= 4) actions.unlockJam()
   }
   const commit = (count: number) => {
@@ -312,7 +356,7 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
   }
   const pass = (byQuestionsOnly = false) => {
     if (byQuestionsOnly) setQuestionsOnly((q) => [...q, unit.title])
-    if (i + 1 >= track.units.length) commit(i + 1)
+    if (i + 1 >= units.length) commit(i + 1)
     setI(i + 1)
     setPhase('quiz')
     setAnswered(false)
@@ -329,8 +373,8 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
     } else pass()
   }
 
-  if (stopped !== null || i >= track.units.length) {
-    const startAt = track.units[Math.min(i, last)]
+  if (stopped !== null || i >= units.length) {
+    const startAt = units[Math.min(i, last)]
     return (
       <div className="card">
         <div className="eyebrow">Placement result</div>
@@ -360,7 +404,7 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
   return (
     <div className="card placement-check">
       <div className="eyebrow">
-        Placement check · unit {i + 1} of {track.units.length} · {steps}
+        Placement check · unit {i + 1} of {units.length} · {steps}
       </div>
       <h3>{unit.title}</h3>
 
@@ -368,7 +412,7 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
         <>
           <QuizStep
             key={`${i}-${phase}`}
-            quiz={phase === 'quiz2' ? unit.placement2! : unit.placement}
+            quiz={phase === 'quiz2' ? unit.placement2! : unit.placement!}
             onAnswered={(right) => {
               setAnswered(true)
               if (!right) stop('A question was missed.')
@@ -377,7 +421,7 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
           <div className="btns">
             {answered && stopped === null && (
               <button className="btn primary" onClick={afterQuestions}>
-                {phase === 'quiz' && unit.placement2 ? 'Next question' : unit.check ? 'Now play it' : i + 1 < track.units.length ? 'Next unit' : 'See result'}
+                {phase === 'quiz' && unit.placement2 ? 'Next question' : unit.check ? 'Now play it' : i + 1 < units.length ? 'Next unit' : 'See result'}
               </button>
             )}
             {!answered && (
@@ -419,7 +463,7 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
             <div className="btns" style={{ marginTop: 12 }}>
               {score >= CHECK_PASS ? (
                 <button className="btn primary" onClick={() => pass()}>
-                  {i + 1 < track.units.length ? 'Next unit' : 'See result'}
+                  {i + 1 < units.length ? 'Next unit' : 'See result'}
                 </button>
               ) : (
                 <button className="btn primary" onClick={() => stop('The playing check was not clean enough yet.')}>
@@ -464,13 +508,20 @@ export function Lessons({ trackId }: { trackId?: string }) {
       <div className="split-head">
         <p className="muted">{track.blurb}</p>
         {!placing && (
-          <button className="btn small" onClick={() => setPlacing(true)}>
-            Already play? Take the placement check
-          </button>
+          <span className="btns">
+            {track.id !== 'theory' && (
+              <a className="btn small" href={`#/skills/${track.id}`}>
+                Skill map
+              </a>
+            )}
+            <button className="btn small" onClick={() => setPlacing(true)}>
+              Already play? Take the placement check
+            </button>
+          </span>
         )}
       </div>
       {placing && <Placement key={track.id} track={track} onClose={() => setPlacing(false)} />}
-      {track.units.map((u, ui) => {
+      {coreUnits(track).map((u, ui) => {
         const done = u.lessons.filter((l) => p.lessons[l.id] === 'done').length
         const untouched = u.lessons.every((l) => !p.lessons[l.id])
         const locked = !u.lessons.some((l) => isOpen({ track, unit: u, lesson: l }, p))
@@ -509,7 +560,7 @@ export function Lessons({ trackId }: { trackId?: string }) {
                 const isNext = next?.lesson.id === l.id
                 const inner = (
                   <>
-                    <span className={`tick ${status ?? (isNext ? 'next' : 'locked')}`} aria-hidden="true">
+                    <span className={`tick ${status ?? (isNext || open ? 'next' : 'locked')}`} aria-hidden="true">
                       {status === 'done' ? '✓' : status === 'skipped' ? '–' : isNext ? '▶' : ''}
                     </span>
                     <span>
@@ -517,7 +568,7 @@ export function Lessons({ trackId }: { trackId?: string }) {
                       <small>{l.goal}</small>
                     </span>
                     <span className="chev">
-                      {status === 'done' ? 'Done' : status === 'skipped' ? 'Skipped' : isNext ? 'Start →' : 'Locked'} · {l.minutes} min
+                      {status === 'done' ? 'Done' : status === 'skipped' ? 'Skipped' : isNext ? 'Start →' : open ? 'Open →' : 'Locked'} · {l.minutes} min
                     </span>
                   </>
                 )
@@ -538,6 +589,55 @@ export function Lessons({ trackId }: { trackId?: string }) {
           </section>
         )
       })}
+
+      {studioUnits(track).length > 0 && (
+        <div className="studio-head" data-studio>
+          <h2>The studio: pick what you need</h2>
+          <p className="muted">
+            Beyond the step-by-step path, skills grow at different speeds. Every lesson below is <strong>open now</strong>, in any order.
+            {track.id !== 'theory' && (
+              <>
+                {' '}
+                Not sure where to start? The <a href={`#/skills/${track.id}`}>skill map</a> finds your weakest areas and points you to the right lessons.
+              </>
+            )}
+          </p>
+        </div>
+      )}
+      {studioUnits(track).map((u) => (
+        <section className="card unit" key={u.id}>
+          <div className="unit-head">
+            <div>
+              <div className="eyebrow">Studio · {u.level}</div>
+              <h2>{u.title.replace(/^Studio: /, '').replace(/^./, (c) => c.toUpperCase())}</h2>
+              <p className="muted">{u.about}</p>
+            </div>
+            <div className="unit-side">
+              <small className="muted">
+                {u.lessons.filter((l) => p.lessons[l.id] === 'done').length}/{u.lessons.length}
+              </small>
+            </div>
+          </div>
+          <ol className="rows">
+            {u.lessons.map((l) => (
+              <li key={l.id}>
+                <a href={`#/lesson/${l.id}`}>
+                  <span className={`tick ${p.lessons[l.id] ?? 'next'}`} aria-hidden="true">
+                    {p.lessons[l.id] === 'done' ? '✓' : p.lessons[l.id] === 'skipped' ? '–' : ''}
+                  </span>
+                  <span>
+                    <strong>{l.title}</strong>
+                    <small>{l.goal}</small>
+                  </span>
+                  <span className="chev">
+                    {p.lessons[l.id] === 'done' ? 'Done' : 'Open →'} · {l.minutes} min
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
     </div>
   )
 }

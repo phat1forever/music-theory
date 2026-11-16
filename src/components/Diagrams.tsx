@@ -1,4 +1,4 @@
-import { CHORD_SHAPES, CIRCLE, shapeMidi, type ChordShape } from '../theory/theory'
+import { CHORD_SHAPES, CIRCLE, pretty, shapeMidi, type ChordShape } from '../theory/theory'
 import { strum } from '../audio/audio'
 
 /** Vertical chord box, the way chord charts print them: nut at the top, low E on the left. */
@@ -20,6 +20,7 @@ export function ChordDiagram({
 }) {
   const s = shape ?? CHORD_SHAPES[name]
   if (!s) return null
+  const title = pretty(s.label ?? name)
   const fretted = s.frets.filter((f) => f > 0)
   const max = Math.max(...fretted, 0)
   const base = max > 4 ? Math.min(...fretted) : 1
@@ -36,11 +37,11 @@ export function ChordDiagram({
       type="button"
       className="chord"
       onClick={() => strum('guitar', sound ?? shapeMidi(s))}
-      title={`Hear ${name}`}
+      title={`Hear ${title}`}
     >
-      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={`${name} chord diagram`} data-nut={nut}>
+      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={`${title} chord diagram`} data-nut={nut}>
         <text x={W / 2} y={16} textAnchor="middle" className="chord-name">
-          {name}
+          {title}
         </text>
         {[0, 1, 2, 3, 4].map((r) => (
           <line key={r} x1={x0} x2={x0 + 5 * gx} y1={y0 + r * gy} y2={y0 + r * gy} className="fb-fret" />

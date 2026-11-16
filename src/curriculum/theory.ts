@@ -1,3 +1,4 @@
+import { earUnit } from './studio'
 import { keys } from '../theory/music'
 import { exercise, fm, km, quiz, text, type Track } from './types'
 
@@ -484,5 +485,6 @@ export const theory: Track = {
         },
       ],
     },
+    earUnit,
   ],
 }

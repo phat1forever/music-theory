@@ -1563,3 +1563,96 @@ input[type='range'] {
 .foot a {
   color: var(--muted);
 }
+
+/* ---------- ear training and skill map ---------- */
+.ear-level {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.ear-score {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-left: auto;
+}
+.ear-drill > * + * {
+  margin-top: 12px;
+}
+.rhythm-opts {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.rhythm-opts button {
+  appearance: none;
+  padding: 0;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+}
+.rhythm-opts button .paper {
+  margin: 0;
+  border: 0;
+  pointer-events: none;
+}
+.rhythm-opts button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.rhythm-opts button.right {
+  border-color: var(--good);
+  border-width: 3px;
+}
+.rhythm-opts button.wrong {
+  border-color: var(--bad);
+  border-width: 3px;
+}
+.skill-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+.skill-head h3 {
+  margin-top: 0;
+}
+.skill-meter {
+  width: 170px;
+  flex: none;
+  text-align: right;
+}
+.skill-rate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin-top: 12px;
+}
+.skill .rows {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.focus-skill h3 {
+  margin-top: 6px;
+}
+.studio-head {
+  margin-top: 30px;
+}
+@media (max-width: 560px) {
+  .skill-head {
+    flex-direction: column;
+  }
+  .skill-meter {
+    width: 100%;
+    text-align: left;
+  }
+  .ear-score {
+    margin-left: 0;
+  }
+}

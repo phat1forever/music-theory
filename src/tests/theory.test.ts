@@ -63,7 +63,7 @@ describe('guitar shapes', () => {
   })
   it('has chord shapes that contain only chord tones', () => {
     for (const [name, shape] of Object.entries(CHORD_SHAPES)) {
-      const { root, quality } = parseChord(name)
+      const { root, quality } = parseChord(shape.label ?? name)
       const allowed = CHORDS[quality].steps.map((s) => mod(pc(root) + s, 12))
       for (const m of shapeMidi(shape)) expect(allowed, `${name} contains ${midiName(m)}`).toContain(mod(m, 12))
       expect(mod(shapeMidi(shape)[0], 12), `${name} bass note`).toBe(pc(root))
@@ -78,6 +78,8 @@ describe('note sequences', () => {
     expect(g.rh.map((e) => e.dur)).toEqual(['q', 'h', 'w', 'q', 'hd'])
     expect(g.rh[1].midi).toEqual([43])
     expect(g.rh[4].text).toBe('Em')
+    // a repeated chord is named once
+    expect(gtr('{G}:h {G}:h {C}:h {G}:h').rh.map((e) => e.text)).toEqual(['G', undefined, 'C', 'G'])
     expect(g.rh[4].midi).toHaveLength(6)
     const k = keys('C4.1 [C4 E4 G4].135:h r', 'C3:w')
     expect(k.rh[0].fingers).toEqual([1])
@@ -337,12 +339,13 @@ describe('pedal, placement checks and hands-together scales', () => {
   })
   it('gives every instrument unit a question and a piece to play, and every theory unit two questions', () => {
     for (const t of TRACKS) {
-      for (const u of t.units) {
-        expect(u.placement.options.length, `${u.id} question`).toBeGreaterThan(1)
+      // the step-by-step units; studio units are always open and have no placement
+      for (const u of t.units.filter((x) => !x.free)) {
+        expect(u.placement!.options.length, `${u.id} question`).toBeGreaterThan(1)
         // every unit asks two questions, and the instrument units also have a piece to play
         expect(u.placement2, `${u.id} second question`).toBeTruthy()
         expect(u.placement2!.answer).toBeLessThan(u.placement2!.options.length)
-        expect(u.placement.answer).toBeLessThan(u.placement.options.length)
+        expect(u.placement!.answer).toBeLessThan(u.placement!.options.length)
         if (t.id !== 'theory') {
           expect(u.check, `${u.id} playing check`).toBeTruthy()
           const per = u.check!.piece.meter ?? 4
@@ -373,7 +376,8 @@ describe('curriculum links', () => {
   it('has a "where to go next" lesson at the end of each instrument track and a practice lesson in the first unit', () => {
     for (const t of ['guitar', 'keys']) {
       const track = TRACKS.find((x) => x.id === t)!
-      const last = track.units[track.units.length - 1].lessons.at(-1)!
+      const core = track.units.filter((u) => !u.free)
+      const last = core[core.length - 1].lessons.at(-1)!
       expect(last.id).toMatch(/-next$/)
       expect(track.units[0].lessons.some((l) => l.id.endsWith('-practice'))).toBe(true)
     }
@@ -382,5 +386,105 @@ describe('curriculum links', () => {
     const find = (id: string) => EXERCISES.find((e) => e.ex.id === id)!.ex.piece
     expect(find('k-arp-rh').rh.slice(0, 4).map((e) => e.fingers![0]).join('')).toBe('1235')
     expect(find('k-arp-lh').lh!.slice(0, 4).map((e) => e.fingers![0]).join('')).toBe('5421')
+  })
+})
+
+import { coreUnits, isOpen, lessonSkill, nextLesson, studioUnits } from '../curriculum'
+import { focusSkills, SKILLS, skillLessons, skillStates } from '../curriculum/skills'
+import type { Profile } from '../store/store'
+
+describe('studio units and the skill map', () => {
+  const blank = (): Profile => ({
+    id: 'x', name: 'x', lessons: {}, exercises: {}, days: [], input: 'self', leftHanded: false, jamUnlocked: false,
+    checkpoints: {}, tried: [], ear: {}, skillSelf: {}, sheets: [], sheet: null,
+  })
+  it('tags every instrument lesson with a skill that instrument has', () => {
+    for (const r of LESSONS.filter((l) => l.track.id !== 'theory')) {
+      const ids = SKILLS[r.track.id as 'guitar' | 'keys'].map((s) => s.id)
+      expect(ids, `${r.lesson.id} -> ${lessonSkill(r)}`).toContain(lessonSkill(r))
+    }
+    for (const inst of ['guitar', 'keys'] as const) for (const s of SKILLS[inst]) expect(skillLessons(inst, s.id).length, `${inst} ${s.id}`).toBeGreaterThan(0)
+  })
+  it('keeps studio lessons open and off the step-by-step path', () => {
+    const p = blank()
+    for (const t of TRACKS) {
+      expect(studioUnits(t).length, t.id).toBeGreaterThan(0)
+      for (const u of studioUnits(t)) for (const l of u.lessons) expect(isOpen({ track: t, unit: u, lesson: l }, p)).toBe(true)
+      expect(nextLesson(t.id, p)!.lesson.id).toBe(coreUnits(t)[0].lessons[0].id)
+    }
+    // finishing the whole core path leaves nothing "next", even though studio lessons remain
+    const g = TRACKS.find((t) => t.id === 'guitar')!
+    for (const u of coreUnits(g)) for (const l of u.lessons) p.lessons[l.id] = 'done'
+    expect(nextLesson('guitar', p)).toBeUndefined()
+  })
+  it('opens a skill\'s lessons when the player rates it comfortable', () => {
+    const p = blank()
+    const barre = LESSONS.find((r) => r.lesson.id === 'g-barre-e')!
+    expect(isOpen(barre, p)).toBe(false)
+    p.skillSelf['guitar:chords'] = 2
+    expect(isOpen(barre, p)).toBe(true)
+    expect(isOpen(LESSONS.find((r) => r.lesson.id === 'g-pent1')!, p)).toBe(false)
+    // any rating opens the next lesson of that skill, and only that one
+    p.skillSelf['guitar:fingerstyle'] = 0
+    expect(isOpen(LESSONS.find((r) => r.lesson.id === 'g-fp-basics')!, p)).toBe(true)
+    expect(isOpen(LESSONS.find((r) => r.lesson.id === 'g-fp-arps')!, p)).toBe(false)
+    p.lessons['g-fp-basics'] = 'done'
+    expect(isOpen(LESSONS.find((r) => r.lesson.id === 'g-fp-arps')!, p)).toBe(true)
+  })
+  it('points at the weakest skills, and at studio lessons for skills rated comfortable', () => {
+    const p = blank()
+    p.skillSelf = { 'guitar:rhythm': 3, 'guitar:chords': 3, 'guitar:lead': 2, 'guitar:theory': 3, 'guitar:ear': 3, 'guitar:fingerstyle': 0 }
+    const focus = focusSkills('guitar', p)
+    expect(focus[0].state.info.id).toBe('fingerstyle')
+    expect(focus[0].lessons[0].lesson.id).toBe('g-fp-basics')
+    const lead = focusSkills('guitar', p, 6).find((f) => f.state.info.id === 'lead')!
+    expect(lead.lessons[0].unit.free).toBe(true)
+    expect(skillStates('keys', p).every((s) => s.level === 0)).toBe(true)
+  })
+})
+
+import { chordNotes, DRILLS, echoQuestion, intervalQuestion, PROGRESSIONS, progressionQuestion, rhythmPiece, rhythmQuestion, RHYTHMS } from '../practice/ear'
+import { earAccuracy, earEvidence } from '../curriculum/skills'
+
+describe('ear training', () => {
+  it('writes every rhythm as exactly one bar of 4/4, with no duplicates in a level', () => {
+    for (const [level, pool] of Object.entries(RHYTHMS)) {
+      expect(new Set(pool).size, `level ${level}`).toBe(pool.length)
+      for (const pattern of pool) expect(totalBeats(rhythmPiece(pattern)), pattern).toBe(4)
+    }
+    for (let i = 0; i < 30; i++) {
+      const q = rhythmQuestion(1 + (i % 3))
+      expect(new Set(q.options).size).toBe(3)
+      expect(q.answer).toBeGreaterThanOrEqual(0)
+    }
+  })
+  it('asks questions that fit their level', () => {
+    for (let i = 0; i < 50; i++) {
+      expect([3, 4, 5, 7, 12]).toContain(intervalQuestion(1).semis)
+      expect(intervalQuestion(2).how).toBe('up')
+      const p = progressionQuestion(1)
+      expect(PROGRESSIONS[1]).toContain(p.answer)
+      expect(p.options).toContain(progressionQuestion(3).options[0])
+      for (const level of [1, 2, 3]) {
+        const e = echoQuestion(level)
+        expect(e.notes).toHaveLength(level + 2)
+        const scale = (e.minor ? SCALES.minor : SCALES.major).steps
+        for (const n of e.notes) expect(scale, `level ${level}`).toContain(mod(n - e.tonic, 12))
+        e.notes.slice(1).forEach((n, k) => expect(n).not.toBe(e.notes[k]))
+      }
+      expect(echoQuestion(1).notes[0]).toBe(60)
+    }
+    expect(DRILLS.map((d) => d.id)).toEqual(['intervals', 'chords', 'scales', 'progressions', 'echo', 'rhythm'])
+  })
+  it('voices progression chords from the right notes', () => {
+    const c = chordNotes(0, 7, 'maj') // V in C: G major
+    expect(mod(c.bass, 12)).toBe(7)
+    expect(c.notes.map((n) => mod(n, 12)).sort((a, b) => a - b)).toEqual([2, 7, 11])
+  })
+  it('turns answers into an accuracy and a level of evidence', () => {
+    expect(earAccuracy(undefined, 1)).toBeNull()
+    expect(earAccuracy({ level: 1, recent: { 1: [1, 1, 0, 1, 1] }, total: 5, right: 4 }, 1)).toBeCloseTo(0.8)
+    const p = { ear: { intervals: { level: 3, recent: { 3: Array(10).fill(1) }, total: 10, right: 10 } } } as unknown as Profile
+    expect(earEvidence(p)).toBeCloseTo(3 / 18)
   })
 })

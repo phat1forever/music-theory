@@ -1,4 +1,5 @@
 import { gtr } from '../theory/music'
+import { barreA, barreE, barrePartial, bmExercise, fingerpicking, guitarStudio } from './guitar2'
 import { practiceLesson } from './shared'
 import { exercise, fm, quiz, text, type Track } from './types'
 
@@ -512,11 +513,12 @@ export const guitar: Track = {
         },
       ],
     },
+    fingerpicking,
     {
       id: 'g3',
       title: 'Barre chords',
       level: 'Late beginner',
-      about: 'The F and B minor shapes, and how one shape moves anywhere on the neck. Give these weeks, not days.',
+      about: 'From a two-string barre to both movable shapes, in major, minor and seventh forms. Give these weeks, not days.',
       placement: {
         q: 'You play the F barre shape with the barre on the 5th fret. Which chord is it?',
         options: ['G', 'A', 'B', 'C'],
@@ -529,6 +531,7 @@ export const guitar: Track = {
         answer: 1,
       },
       lessons: [
+        barrePartial,
         {
           id: 'g-barre',
           title: 'Your first barre chords: F and Bm',
@@ -552,9 +555,12 @@ export const guitar: Track = {
               96,
               'Barre chords take weeks to sound clean. A few minutes every day works better than one long session.',
             ),
+            bmExercise,
             quiz('You play the F barre shape with the barre on the 5th fret. Which chord is it?', ['G', 'A', 'B', 'C'], 1, 'The root on the 6th string at fret 5 is A.'),
           ],
         },
+        barreE,
+        barreA,
       ],
     },
     {
@@ -1050,12 +1056,13 @@ export const guitar: Track = {
             ),
             text(
               'Your next steps',
-              '- **Learn songs.** One new song a week from chord charts is the best motivation there is, and it builds rhythm playing fast.\n- **Go deeper on rhythm.** Barre chords need weeks of daily practice. Add **fingerpicking** (arpeggios, then Travis picking), **palm muting** and more strumming patterns.\n- **Learn the major scale across the neck**, then the modes you have met (Dorian, Mixolydian) over backing tracks in **Jam**.\n- **Move your licks to other keys and positions**, and learn to connect all five boxes.\n- **Learn from recordings by ear.** Slow a solo down and work out a phrase note by note.\n- Practise most days for 20 minutes, using the routine from the lesson "How to practise".',
+              '- **Use the studio.** Below the step-by-step path on the Lessons page is the **studio**: intermediate lessons on rhythm, chords up the neck and lead playing, all open in any order. The [skill map](#/skills/guitar) shows which of your skills is furthest behind and what to take next.\n- **Train your ear** a little every day in [Ear training](#/ear).\n- **Learn songs.** One new song a week from chord charts is the best motivation there is, and it builds rhythm playing fast.\n- **Go deeper on rhythm.** Barre chords need weeks of daily practice. Add **fingerpicking** (arpeggios, then Travis picking), **palm muting** and more strumming patterns.\n- **Learn the major scale across the neck**, then the modes you have met (Dorian, Mixolydian) over backing tracks in **Jam**.\n- **Move your licks to other keys and positions**, and learn to connect all five boxes.\n- **Learn from recordings by ear.** Slow a solo down and work out a phrase note by note.\n- Practise most days for 20 minutes, using the routine from the lesson "How to practise".',
             ),
             quiz('Which of these can an app NOT judge reliably?', ['Whether a note sounded', 'Tone, muting and tension', 'Whether you kept time', 'Which exercise you played'], 1),
           ],
         },
       ],
     },
+    ...guitarStudio,
   ],
 }

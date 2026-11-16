@@ -27,8 +27,12 @@ import {
 /** Minimal rich text: blank-line paragraphs, "- " bullet lists, **bold**, *italic*. */
 export function Rich({ body }: { body: string }) {
   const inline = (s: string): ReactNode[] =>
-    s.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/).map((part, i) =>
-      part.startsWith('**') ? (
+    s.split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\(#[^)]+\))/).map((part, i) =>
+      /^\[[^\]]+\]\(#[^)]+\)$/.test(part) ? (
+        <a key={i} href={part.slice(part.indexOf('(') + 1, -1)}>
+          {part.slice(1, part.indexOf(']'))}
+        </a>
+      ) : part.startsWith('**') ? (
         <strong key={i}>{part.slice(2, -2)}</strong>
       ) : part.startsWith('*') && part.length > 2 ? (
         <em key={i}>{part.slice(1, -1)}</em>

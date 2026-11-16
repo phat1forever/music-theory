@@ -107,16 +107,18 @@ export interface Ticker {
 }
 
 /**
- * Calls `onTick(index, audioTime)` for every eighth note, slightly ahead of time so sounds can be
+ * Calls `onTick(index, audioTime)` for every eighth note (or sixteenth, with `div` 4), slightly ahead of time so sounds can be
  * scheduled precisely. `onUi` fires at the moment the tick is actually heard.
  */
 export async function startTicker(
   bpm: number,
   onTick: (i: number, time: number) => void,
   onUi?: (i: number) => void,
+  /** ticks per beat: 2 = eighth notes (default), 4 = sixteenths */
+  div = 2,
 ): Promise<Ticker> {
   await ensureAudio()
-  const step = 60 / bpm / 2
+  const step = 60 / bpm / div
   const startTime = Tone.now() + 0.12
   let next = 0
   const timers = new Set<number>()

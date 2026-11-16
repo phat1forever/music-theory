@@ -73,7 +73,7 @@ function keySpelling(key: string): string[] {
 }
 
 function vexDur(e: Ev): string {
-  const base = { w: 'w', hd: 'hd', h: 'h', qd: 'qd', q: 'q', '8': '8' }[e.dur]
+  const base = { w: 'w', hd: 'hd', h: 'h', qd: 'qd', q: 'q', '8d': '8d', '8': '8', '16': '16' }[e.dur]
   return e.midi.length ? base : base + 'r'
 }
 
@@ -153,7 +153,7 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
           clef,
           auto_stem: true,
         })
-        if (e.dur === 'hd' || e.dur === 'qd') Dot.buildAndAttach([note], { all: true })
+        if (e.dur === 'hd' || e.dur === 'qd' || e.dur === '8d') Dot.buildAndAttach([note], { all: true })
         // A chord with a fingering gets one number beside each notehead (lowest note first), the way
         // printed music shows it. A note held over by a tie is not played again, so it carries none.
         const stacked = !e.held && shown.length > 1 && (e.fingers?.filter(Boolean).length ?? 0) === shown.length
@@ -278,9 +278,8 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
         const formatter = new Formatter()
         voices.forEach((v) => formatter.joinVoices([v]))
         formatter.format(voices, Math.max(60, upper.getNoteEndX() - upper.getNoteStartX() - 16))
-        const beams = beamGroups.flatMap((g) =>
-          Beam.generateBeams(g.filter((n) => !n.isRest())),
-        )
+        // Rests are passed in too, so that a beam stops at a rest instead of bridging it.
+        const beams = beamGroups.flatMap((g) => Beam.generateBeams(g))
         voices[0].draw(ctx, upper)
         if (lower && voices[1]) voices[1].draw(ctx, lower)
         beams.forEach((b) => b.setContext(ctx).draw())

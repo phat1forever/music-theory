@@ -5,13 +5,20 @@ feedback, and tools for exploring scales and chords on the fretboard, the keyboa
 
 ## What is in it
 
-- **Lessons** in three tracks (70 lessons): music theory, guitar (first notes through to a full
+- **Lessons** in three tracks (96 lessons): music theory, guitar (first notes through to a full
   12-bar solo) and keyboard (finger numbers through to playing hands together). Each lesson has a
   goal, explanations with diagrams, something to play and a quick check; a lesson counts as done
   once every question is answered and every exercise tried. An optional placement check (two
   questions plus a short piece to play, per unit) lets you skip what you already know, and a unit
   checkpoint asks you to play that piece once you have finished the unit's lessons. Home builds a
   twenty-minute session each day: warm up, review, new lesson, consolidate, play.
+- **The studio and the skill map**: beyond the step-by-step path, each track has open "studio"
+  lessons for intermediate players (rhythm guitar, chords up the neck, lead playing; keyboard
+  technique, accompaniment and pieces). The skill map lets you rate each area of your playing,
+  combines that with what you have done, and points you at the weakest ones. Rating a skill opens
+  its lessons, so being behind in one area never holds you back in another.
+- **Ear training**: six drills with three levels each and saved scores: intervals, chords, scales,
+  progressions, rhythm, and playing a heard phrase back on your instrument.
 - **Practice**: every exercise is shown as sheet music with guitar tab or a grand staff, plus a
   fretboard or keyboard diagram of what to play. Listen to it, step through it note by note, or
   play in time with a metronome. Playing is checked by microphone, MIDI keyboard, or yourself.

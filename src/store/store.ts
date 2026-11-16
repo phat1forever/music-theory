@@ -28,6 +28,15 @@ export interface Sheet {
 
 export const newId = () => Math.random().toString(36).slice(2, 10)
 
+export interface EarStat {
+  /** level the player last chose (1-3) */
+  level: number
+  /** most recent answers at each level, newest last (1 = right), up to 20 */
+  recent: Record<number, number[]>
+  total: number
+  right: number
+}
+
 export interface Profile {
   id: string
   name: string
@@ -42,6 +51,10 @@ export interface Profile {
   checkpoints: Record<string, string>
   /** exercises tried at least once in any mode (step-by-step, one hand, a section, or in time) */
   tried: string[]
+  /** ear-training results, by drill id */
+  ear: Record<string, EarStat>
+  /** self-ratings on the skill map, by "instrument:skill": 0 new, 1 developing, 2 comfortable, 3 strong */
+  skillSelf: Record<string, number>
   sheets: Sheet[]
   sheet: string | null
 }
@@ -66,6 +79,8 @@ function newProfile(name: string): Profile {
     jamUnlocked: false,
     checkpoints: {},
     tried: [],
+    ear: {},
+    skillSelf: {},
     sheets: [],
     sheet: null,
   }
@@ -152,6 +167,24 @@ export const actions = {
   },
   setLeftHanded(leftHanded: boolean) {
     patchProfile((p) => ({ ...p, leftHanded }))
+  },
+  earAnswer(drill: string, level: number, right: boolean) {
+    patchProfile((p) => {
+      const prev = p.ear[drill] ?? { level, recent: {}, total: 0, right: 0 }
+      const recent = { ...prev.recent, [level]: [...(prev.recent[level] ?? []), right ? 1 : 0].slice(-20) }
+      return { ...p, days: withToday(p.days), ear: { ...p.ear, [drill]: { level, recent, total: prev.total + 1, right: prev.right + (right ? 1 : 0) } } }
+    })
+  },
+  setEarLevel(drill: string, level: number) {
+    patchProfile((p) => ({ ...p, ear: { ...p.ear, [drill]: { ...(p.ear[drill] ?? { recent: {}, total: 0, right: 0 }), level } } }))
+  },
+  setSkillSelf(key: string, rating: number | null) {
+    patchProfile((p) => {
+      const skillSelf = { ...p.skillSelf }
+      if (rating === null) delete skillSelf[key]
+      else skillSelf[key] = rating
+      return { ...p, skillSelf }
+    })
   },
   unlockJam() {
     patchProfile((p) => ({ ...p, jamUnlocked: true }))
