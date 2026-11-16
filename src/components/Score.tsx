@@ -5,6 +5,8 @@ import {
   Beam,
   Dot,
   Formatter,
+  FretHandFinger,
+  Modifier,
   GhostNote,
   Renderer,
   Stave,
@@ -16,7 +18,7 @@ import {
   Voice,
   type StemmableNote,
 } from 'vexflow'
-import { barBeats, BEATS, type Ev, type Piece } from '../theory/music'
+import { barBeats, BEATS, pedalSpans, type Ev, type Piece } from '../theory/music'
 import { mod, pc, pretty, SCALES, spell } from '../theory/theory'
 
 interface Props {
@@ -121,7 +123,8 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
     const lines = Math.ceil(top.length / fit)
     // Spread the bars evenly over the lines instead of leaving one bar alone on the last line.
     const perLine = Math.ceil(top.length / lines)
-    const lineH = (hasLower ? (guitar ? 250 : 230) : 130) + chordPad
+    const pedalPad = !guitar && piece.pedal?.some((t) => t !== '-') ? 40 : 0
+    const lineH = (hasLower ? (guitar ? 250 : 230) : 130) + chordPad + pedalPad
     const renderer = new Renderer(el, Renderer.Backends.SVG)
     renderer.resize(width, lines * lineH + 10)
     const ctx = renderer.getContext()
@@ -150,8 +153,18 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
           auto_stem: true,
         })
         if (e.dur === 'hd' || e.dur === 'qd') Dot.buildAndAttach([note], { all: true })
-        // A note held over by a tie is not played again, so it carries no finger number.
-        const label = e.held ? undefined : e.fingers?.length ? e.fingers.join(' ') : !guitar ? e.text : undefined
+        // A chord with a fingering gets one number beside each notehead (lowest note first), the way
+        // printed music shows it. A note held over by a tie is not played again, so it carries none.
+        const stacked = !e.held && shown.length > 1 && (e.fingers?.filter(Boolean).length ?? 0) === shown.length
+        if (stacked) {
+          const byPitch = new Map<number, number>()
+          e.midi.forEach((m, i) => e.fingers![i] && byPitch.set(m, e.fingers![i]))
+          shown.forEach((m, i) => {
+            const f = byPitch.get(m - (guitar ? 12 : 0))
+            if (f) note.addModifier(new FretHandFinger(String(f)).setPosition(Modifier.Position.LEFT), i)
+          })
+        }
+        const label = e.held || stacked ? undefined : e.fingers?.length ? e.fingers.join(' ') : !guitar ? e.text : undefined
         if (label)
           note.addModifier(
             new Annotation(label)
@@ -282,6 +295,36 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
           tie(null, b.note)
         }
       })
+    // Sustain pedal: "Ped." where it goes down, a line while it is held, and a hook where it lifts, under the lowest staff.
+    // (Drawn by hand: VexFlow's own marking treats every note as a separate press and lift.)
+    const pedalPart = bassOnly || !bottom ? drawn.upper : drawn.lower
+    for (const sp of pedalSpans(piece)) {
+      const byLine = new Map<number, { first: StaveNote; last: StaveNote; firstBar: number; lastBar: number }>()
+      for (const a of pedalPart) {
+        const bar = Math.floor(a.ev.beat / per)
+        if (bar < sp.from || bar > sp.to) continue
+        const g = byLine.get(a.line)
+        if (g) Object.assign(g, { last: a.note, lastBar: bar })
+        else byLine.set(a.line, { first: a.note, last: a.note, firstBar: bar, lastBar: bar })
+      }
+      byLine.forEach((g) => {
+        const y = g.first.getStave()!.getYForBottomText(5)
+        const x0 = g.first.getAbsoluteX() - 5
+        const x1 = g.last.getStave()!.getNoteEndX() - 5
+        const starts = g.firstBar === sp.from
+        const ends = g.lastBar === sp.to
+        ctx.save()
+        ctx.setFont('Times New Roman', 13, 'bold', 'italic')
+        if (starts) ctx.fillText('Ped.', x0, y + 4)
+        ctx.setLineWidth(1.3)
+        ctx.beginPath()
+        ctx.moveTo(starts ? x0 + 29 : x0, y)
+        ctx.lineTo(x1, y)
+        if (ends) ctx.lineTo(x1, y - 8)
+        ctx.stroke()
+        ctx.restore()
+      })
+    }
     // On a small screen a long score is shown in a short scrolling box: keep the current line visible.
     const box = el.parentElement
     if (follow && cursor != null && box && box.scrollHeight > box.clientHeight + 4)

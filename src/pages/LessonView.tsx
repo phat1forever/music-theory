@@ -97,8 +97,17 @@ function ScoreStep({ piece, tempo, flats }: { piece: Piece; tempo?: number; flat
   )
 }
 
-export function QuizStep({ quiz, onAnswered }: { quiz: Quiz; onAnswered?: (right: boolean) => void }) {
-  const [picked, setPicked] = useState<number | null>(null)
+export function QuizStep({
+  quiz,
+  onAnswered,
+  initial = null,
+}: {
+  quiz: Quiz
+  onAnswered?: (right: boolean, pick: number) => void
+  /** an answer already given (when the player comes back to this question) */
+  initial?: number | null
+}) {
+  const [picked, setPicked] = useState<number | null>(initial)
   return (
     <div className="quiz">
       <p className="quiz-q">{quiz.q}</p>
@@ -110,7 +119,7 @@ export function QuizStep({ quiz, onAnswered }: { quiz: Quiz; onAnswered?: (right
             className={picked === null ? '' : i === quiz.answer ? 'right' : i === picked ? 'wrong' : ''}
             onClick={() => {
               setPicked(i)
-              onAnswered?.(i === quiz.answer)
+              onAnswered?.(i === quiz.answer, i)
             }}
           >
             {o}
@@ -150,7 +159,18 @@ function scaleKeys(root: string, scaleKey: string): KeyMark[] {
   }))
 }
 
-export function StepView({ step, leftHanded }: { step: StepDef; leftHanded: boolean }) {
+export function StepView({
+  step,
+  leftHanded,
+  pick,
+  onPick,
+}: {
+  step: StepDef
+  leftHanded: boolean
+  /** the player's answer to a quiz step, once given */
+  pick?: number
+  onPick?: (pick: number) => void
+}) {
   switch (step.t) {
     case 'text':
       return <Rich body={step.body} />
@@ -257,7 +277,7 @@ export function StepView({ step, leftHanded }: { step: StepDef; leftHanded: bool
     case 'exercise':
       return <Runner ex={step.ex} />
     case 'quiz':
-      return <QuizStep quiz={step} />
+      return <QuizStep quiz={step} initial={pick ?? null} onAnswered={(_right, p) => onPick?.(p)} />
   }
 }
 
@@ -280,6 +300,10 @@ export function LessonView({ id }: { id: string }) {
   const ref = findLesson(id)
   const [i, setI] = useState(0)
   const [finished, setFinished] = useState(false)
+  // Answers given to this lesson's quick checks, by step number.
+  const [picks, setPicks] = useState<Record<number, number>>({})
+  // Was this lesson already finished when it was opened? Then it can be revisited freely; otherwise quizzes and exercises gate it.
+  const [reviewing] = useState(() => profile.lessons[id] === 'done')
 
   if (!ref) return <p>Lesson not found.</p>
   const { lesson, track, unit } = ref
@@ -301,7 +325,14 @@ export function LessonView({ id }: { id: string }) {
       </div>
     )
 
-  const untried = lesson.steps.flatMap((st) => (st.t === 'exercise' && !profile.tried.includes(st.ex.id) && !profile.exercises[st.ex.id] ? [st.ex] : []))
+  const isTried = (exId: string) => profile.tried.includes(exId) || !!profile.exercises[exId]
+  const untried = lesson.steps.flatMap((st) => (st.t === 'exercise' && !isTried(st.ex.id) ? [st.ex] : []))
+  // A lesson counts as done once every quick check has been answered and every exercise tried (a finished lesson can be revisited freely).
+  const unansweredAt = reviewing ? [] : lesson.steps.flatMap((st, idx) => (st.t === 'quiz' && picks[idx] === undefined ? [idx] : []))
+  const untriedAt = reviewing ? [] : lesson.steps.flatMap((st, idx) => (st.t === 'exercise' && !isTried(st.ex.id) ? [idx] : []))
+  const firstOpen = Math.min(...unansweredAt, ...untriedAt)
+  const quizzes = lesson.steps.filter((st) => st.t === 'quiz').length
+  const quizRight = lesson.steps.filter((st, idx) => st.t === 'quiz' && picks[idx] === st.answer).length
   const all = trackLessons(track.id)
   const next = all[all.findIndex((r) => r.lesson.id === id) + 1]
 
@@ -313,6 +344,11 @@ export function LessonView({ id }: { id: string }) {
         <p>
           <strong>The goal was:</strong> {lesson.goal}
         </p>
+        {quizzes > 0 && !reviewing && (
+          <p className="muted">
+            Quick checks: <strong>{quizRight} of {quizzes}</strong> right.{quizRight < quizzes ? ' The questions you missed showed their answers; it is worth rereading those steps.' : ''}
+          </p>
+        )}
         {untried.length > 0 ? (
           <p className="notice">
             This lesson is marked as skipped because {untried.length === 1 ? 'its exercise has' : `${untried.length} of its exercises have`} not been played yet. Come back
@@ -362,20 +398,27 @@ export function LessonView({ id }: { id: string }) {
           {KIND[step.t]} · {i + 1} of {lesson.steps.length}
         </div>
         {title && <h2>{title}</h2>}
-        <StepView step={step} leftHanded={profile.leftHanded} />
+        <StepView step={step} leftHanded={profile.leftHanded} pick={picks[i]} onPick={(p) => setPicks((prev) => ({ ...prev, [i]: p }))} />
       </section>
       <div className="lesson-nav">
         <button className="btn" disabled={i === 0} onClick={() => setI(i - 1)}>
           Back
         </button>
-        {last && untried.length > 0 && profile.lessons[id] !== 'done' ? (
+        {last && unansweredAt.length + untriedAt.length > 0 ? (
           <div className="finish-gate">
             <small className="muted">
-              To complete this lesson, try {untried.length === 1 ? `the exercise "${untried[0].title}"` : `its ${untried.length} unplayed exercises`} at least once.
+              To complete this lesson,{' '}
+              {[
+                unansweredAt.length > 0 ? `answer ${unansweredAt.length === 1 ? 'the quick-check question' : `its ${unansweredAt.length} quick-check questions`}` : '',
+                untriedAt.length > 0 ? `try ${untriedAt.length === 1 ? 'the exercise' : `its ${untriedAt.length} unplayed exercises`} at least once` : '',
+              ]
+                .filter(Boolean)
+                .join(' and ')}
+              .
             </small>
             <div className="btns">
-              <button className="btn primary" onClick={() => setI(lesson.steps.findIndex((st) => st.t === 'exercise' && st.ex.id === untried[0].id))}>
-                Go to the exercise
+              <button className="btn primary" onClick={() => setI(firstOpen)}>
+                {unansweredAt.length > 0 && unansweredAt[0] === firstOpen ? 'Go to the question' : 'Go to the exercise'}
               </button>
               <button
                 className="btn"
@@ -407,6 +450,8 @@ export function LessonView({ id }: { id: string }) {
           <button
             className="btn primary"
             data-act="next"
+            disabled={step.t === 'quiz' && picks[i] === undefined && !reviewing}
+            title={step.t === 'quiz' && picks[i] === undefined && !reviewing ? 'Answer the question to continue' : undefined}
             onClick={() => {
               setI(i + 1)
               window.scrollTo(0, 0)

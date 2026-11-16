@@ -5,10 +5,11 @@ feedback, and tools for exploring scales and chords on the fretboard, the keyboa
 
 ## What is in it
 
-- **Lessons** in three tracks (56 lessons): music theory, guitar (first notes through to a full
+- **Lessons** in three tracks (58 lessons): music theory, guitar (first notes through to a full
   12-bar solo) and keyboard (finger numbers through to playing hands together). Each lesson has a
-  goal, explanations with diagrams, something to play and a quick check. An optional placement
-  check lets you skip what you already know.
+  goal, explanations with diagrams, something to play and a quick check; a lesson counts as done
+  once every question is answered and every exercise tried. An optional placement check (a question
+  plus a short piece to play for each unit) lets you skip what you already know.
 - **Practice**: every exercise is shown as sheet music with guitar tab or a grand staff, plus a
   fretboard or keyboard diagram of what to play. Listen to it, step through it note by note, or
   play in time with a metronome. Playing is checked by microphone, MIDI keyboard, or yourself.

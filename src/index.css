@@ -1498,3 +1498,14 @@ input[type='range'] {
   background: var(--accent-soft);
   transform: scale(0.94);
 }
+
+[hidden] {
+  display: none !important;
+}
+.placement-check .runner {
+  margin-top: 8px;
+}
+.place-ok {
+  color: var(--good);
+  font-weight: 700;
+}

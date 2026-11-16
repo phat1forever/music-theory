@@ -32,6 +32,8 @@ export interface Piece {
   swing?: boolean
   /** chord symbol for each bar ("" = no change), shown above the staff and used for backing */
   chords?: string[]
+  /** sustain pedal per bar: "p" press at the start of the bar, "c" keep it down from the bar before, "-" no pedal */
+  pedal?: ('p' | 'c' | '-')[]
 }
 
 export interface PieceOpts {
@@ -40,6 +42,8 @@ export interface PieceOpts {
   swing?: boolean
   /** one chord per bar, space separated; "." repeats the previous bar's chord without printing it again */
   chords?: string
+  /** sustain pedal, one token per bar: p = press (and lift at the end of the bar), c = still down from the bar before, - = none */
+  pedal?: string
 }
 
 function withOpts<T extends Piece>(piece: T, o?: PieceOpts): T {
@@ -50,6 +54,7 @@ function withOpts<T extends Piece>(piece: T, o?: PieceOpts): T {
     key: o.key,
     swing: o.swing,
     chords: o.chords?.split(/\s+/).map((c) => (c === '.' ? '' : c)),
+    pedal: o.pedal?.split(/\s+/) as Piece['pedal'],
   }
 }
 
@@ -200,7 +205,9 @@ export function sliceBars(piece: Piece, from: number, to: number): Piece {
     if (out.length && out[out.length - 1].tie) out[out.length - 1] = { ...out[out.length - 1], tie: undefined }
     return out
   }
-  return { ...piece, rh: cut(piece.rh), lh: piece.lh ? cut(piece.lh) : undefined, chords: carryChords(piece.chords, from, to) }
+  // A section that starts in the middle of a held pedal starts with a fresh press.
+  const pedal = piece.pedal?.slice(from - 1, to).map((t, i) => (i === 0 && t === 'c' ? 'p' : t)) as Piece['pedal']
+  return { ...piece, rh: cut(piece.rh), lh: piece.lh ? cut(piece.lh) : undefined, chords: carryChords(piece.chords, from, to), pedal }
 }
 
 function carryChords(chords: string[] | undefined, from: number, to: number): string[] | undefined {
@@ -215,4 +222,26 @@ function carryChords(chords: string[] | undefined, from: number, to: number): st
 export function barChords(piece: Piece): string[] {
   let last = ''
   return Array.from({ length: barCount(piece) }, (_, i) => (last = piece.chords?.[i] || last))
+}
+
+/** Stretches of bars (0-based, inclusive) over which the sustain pedal stays down. */
+export function pedalSpans(piece: Piece): { from: number; to: number }[] {
+  const out: { from: number; to: number }[] = []
+  let open: { from: number; to: number } | null = null
+  piece.pedal?.forEach((t, i) => {
+    if (t === 'p' || (t === 'c' && !open)) {
+      open = { from: i, to: i }
+      out.push(open)
+    } else if (t === 'c' && open) open.to = i
+    else open = null
+  })
+  return out
+}
+
+/** Beat at which the pedal lifts for a note struck at `beat` (undefined when no pedal is down there). */
+export function pedalLiftBeat(piece: Piece, beat: number): number | undefined {
+  const per = barBeats(piece)
+  const bar = Math.floor(beat / per)
+  const span = pedalSpans(piece).find((sp) => bar >= sp.from && bar <= sp.to)
+  return span ? (span.to + 1) * per : undefined
 }

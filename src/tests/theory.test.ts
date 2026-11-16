@@ -314,3 +314,46 @@ describe('ties, swing, sections', () => {
     expect(barChords(p)).toEqual(['A7', 'A7', 'D7', 'D7'])
   })
 })
+
+import { pedalLiftBeat, pedalSpans } from '../theory/music'
+
+describe('pedal, placement checks and hands-together scales', () => {
+  it('groups pedal bars into spans and finds when the pedal lifts', () => {
+    const p = keys('r:w | r:w | r:w | r:w | r:w', 'C3:w | C3:w | G2:w | C3:w | C3:w', { pedal: 'p c p - p' })
+    expect(pedalSpans(p)).toEqual([{ from: 0, to: 1 }, { from: 2, to: 2 }, { from: 4, to: 4 }])
+    expect(pedalLiftBeat(p, 0)).toBe(8)
+    expect(pedalLiftBeat(p, 5)).toBe(8)
+    expect(pedalLiftBeat(p, 9)).toBe(12)
+    expect(pedalLiftBeat(p, 13)).toBeUndefined()
+    // a section that starts inside a held pedal starts with a fresh press
+    expect(sliceBars(p, 2, 3).pedal).toEqual(['p', 'p'])
+  })
+  it('gives every instrument unit a question and a piece to play, and every theory unit two questions', () => {
+    for (const t of TRACKS) {
+      for (const u of t.units) {
+        expect(u.placement.options.length, `${u.id} question`).toBeGreaterThan(1)
+        if (t.id === 'theory') {
+          expect(u.placement2, `${u.id} second question`).toBeTruthy()
+          expect(u.placement2!.answer).toBeLessThan(u.placement2!.options.length)
+        } else {
+          expect(u.check, `${u.id} playing check`).toBeTruthy()
+          const per = u.check!.piece.meter ?? 4
+          const beats = totalBeats(u.check!.piece)
+          expect(beats % per, `${u.id} check is whole bars`).toBe(0)
+          expect(u.check!.tempo).toBeGreaterThanOrEqual(50)
+        }
+      }
+    }
+  })
+  it('keeps the contrary-motion scales mirrored and parallel scales an octave apart', () => {
+    const find = (id: string) => EXERCISES.find((e) => e.ex.id === id)!.ex.piece
+    const con = find('k-scale-con')
+    expect(con.rh.map((e) => e.fingers![0])).toEqual(con.lh!.map((e) => e.fingers![0]))
+    const par = find('k-scale-par')
+    par.rh.forEach((e, i) => expect(e.midi[0] - par.lh![i].midi[0]).toBe(12))
+    const two = find('k-scale-2oct')
+    expect(two.rh.map((e) => e.fingers![0]).join('')).toBe('123123412312345')
+    expect(two.lh!.map((e) => e.fingers![0]).join('')).toBe('543213214321321')
+    expect(two.rh.length).toBe(15)
+  })
+})

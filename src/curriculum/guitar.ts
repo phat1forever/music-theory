@@ -33,6 +33,7 @@ export const guitar: Track = {
         ],
         answer: 1,
       },
+      check: { title: 'Low-string walk', piece: gtr('6/0 6/1 6/3 6/1 | 5/0 5/2 5/3 5/2'), tempo: 60 },
       lessons: [
         {
           id: 'g-setup',
@@ -197,6 +198,7 @@ export const guitar: Track = {
         options: ['Down, down-up, up-down-up', 'Only upstrokes', 'Down on beat 1 only', 'Up, up, up, up'],
         answer: 0,
       },
+      check: { title: 'Four chords', piece: gtr('{G}:h {C}:h | {D}:h {G}:h'), tempo: 60 },
       lessons: [
         {
           id: 'g-chords-1',
@@ -366,6 +368,7 @@ export const guitar: Track = {
         options: ['G', 'A', 'B', 'C'],
         answer: 1,
       },
+      check: { title: 'Barre chords', piece: gtr('{F}:h {Bm}:h | {F}:h {Bm}:h'), tempo: 56 },
       lessons: [
         {
           id: 'g-fretmap',
@@ -446,6 +449,7 @@ export const guitar: Track = {
         options: ['D♯', 'E', 'F', 'G'],
         answer: 1,
       },
+      check: { title: 'Minor pentatonic, box 1', piece: gtr('6/5 6/8 5/5 5/7 | 4/5 4/7 3/5 3/7 | 2/5 2/8 1/5 1/8 | 1/8 1/5 2/8 2/5'), tempo: 80 },
       lessons: [
         {
           id: 'g-pent1',
@@ -704,6 +708,7 @@ export const guitar: Track = {
         options: ['A7', 'D7', 'E7', 'B7'],
         answer: 1,
       },
+      check: { title: 'A lick over the blues', piece: gtr('2/8:8 2/5:8 3/7:8 3/5:8 4/7:h | 1/5:8 2/8:8 2/5:8 3/7:8 3/5 4/7', { chords: 'A7 A7' }), tempo: 80 },
       lessons: [
         {
           id: 'g-12bar',

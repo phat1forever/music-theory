@@ -7,10 +7,11 @@ import { Score } from '../components/Score'
 import type { Exercise } from '../curriculum/types'
 import { emitNote, onNote } from '../input/input'
 import { actions, useProfile } from '../store/store'
-import { barBeats, barChords, barCount, onsetEvents, sliceBars, timeline, totalBeats, type Onset, type Piece } from '../theory/music'
+import { barBeats, barChords, barCount, onsetEvents, pedalLiftBeat, pedalSpans, sliceBars, timeline, totalBeats, type Onset, type Piece } from '../theory/music'
 import { chordMidi, midiName, mod, parseChord, pc, pretty } from '../theory/theory'
 import {
   gradeTimed,
+  CHECK_PASS,
   matchKey,
   noteMatches,
   notesNeeded,
@@ -32,7 +33,7 @@ export async function playPiece(
   piece: Piece,
   bpm: number,
   onBeat: (beat: number | null) => void,
-  opts: { countIn?: boolean; metronome?: boolean; sound?: boolean; backing?: boolean; loop?: boolean } = {},
+  opts: { countIn?: boolean; metronome?: boolean; sound?: boolean; backing?: boolean; loop?: boolean; pedal?: boolean } = {},
 ): Promise<Ticker> {
   const steps = new Map(timeline(piece).map((s) => [Math.round(s.beat * 2), s]))
   const per = barBeats(piece) * 2 // eighth-note ticks per bar
@@ -62,7 +63,12 @@ export async function playPiece(
         if (per === 8 || inBar % 2 === 0) drum('hat', when)
       }
       const s = steps.get(pos)
-      if (s && opts.sound !== false) play(voice, s.midi, Math.max(0.25, s.len * spb * 0.95), when)
+      if (s && opts.sound !== false) {
+        // With the sustain pedal down, notes ring on until the pedal lifts.
+        const lift = opts.pedal === false ? undefined : pedalLiftBeat(piece, pos / 2)
+        const len = lift === undefined ? s.len : Math.max(s.len, lift - pos / 2)
+        play(voice, s.midi, Math.max(0.25, len * spb * (lift === undefined ? 0.95 : 1.02)), when)
+      }
     },
     (i) => {
       if (!opts.loop && i >= length + lead) {
@@ -78,10 +84,15 @@ interface Props {
   ex: Exercise
   /** called after every graded attempt */
   onAttempt?: (accuracy: number) => void
+  /**
+   * Placement-check mode: a single "play it in time" test. Nothing is recorded (no tempo, review date or practice day),
+   * the tempo is fixed, and the result is reported through `onResult` (null when the player chooses to try again).
+   */
+  check?: { onResult: (accuracy: number | null) => void }
 }
 
 /** The practice screen for one exercise: listen, step through it, or play along in time and get graded. */
-export function Runner({ ex, onAttempt }: Props) {
+export function Runner({ ex, onAttempt, check }: Props) {
   const profile = useProfile()
   const progress = profile.exercises[ex.id]
   const [tempo, setTempo] = useState(() => suggestedTempo(ex.tempo, ex.target, progress))
@@ -100,6 +111,8 @@ export function Runner({ ex, onAttempt }: Props) {
   const [backing, setBacking] = useState(ex.piece.instrument === 'guitar')
   const whole = range[0] === 1 && range[1] === bars
   const hasChords = !!ex.piece.chords?.some(Boolean)
+  const hasPedal = pedalSpans(ex.piece).length > 0
+  const [pedalOn, setPedalOn] = useState(true)
   const [got, setGot] = useState<number[]>([])
   const [wrong, setWrong] = useState<string | null>(null)
   // Name black keys the way the piece's key signature does (B♭ in F major and D minor, not A♯).
@@ -149,7 +162,8 @@ export function Runner({ ex, onAttempt }: Props) {
 
   /** `counts` is false for run-throughs that should not move the tempo record: step-by-step and one hand alone. */
   function finish(accuracy: number, usedTempo: number, note: string, counts = true) {
-    if (counts && !partial) actions.attempt(ex.id, accuracy, usedTempo)
+    if (check) check.onResult(accuracy)
+    else if (counts && !partial) actions.attempt(ex.id, accuracy, usedTempo)
     else actions.touch(ex.id)
     setResult({ accuracy, note, counts: counts && !partial })
     setMode('done')
@@ -168,7 +182,7 @@ export function Runner({ ex, onAttempt }: Props) {
         setCursor(b)
         if (b === null) setMode('idle')
       },
-      { backing: backing && hasChords, loop },
+      { backing: backing && hasChords, loop, pedal: pedalOn },
     )
   }
 
@@ -340,7 +354,7 @@ export function Runner({ ex, onAttempt }: Props) {
   }
 
   const busy = mode === 'listen' || mode === 'step' || mode === 'tempo'
-  const passed = result && result.accuracy >= PASS
+  const passed = result && result.accuracy >= (check ? CHECK_PASS : PASS)
   const nextTempo = Math.min(ex.target, tempo + 8)
 
   return (
@@ -361,7 +375,7 @@ export function Runner({ ex, onAttempt }: Props) {
         </div>
       </div>
 
-      {twoHands && (
+      {twoHands && !check && (
         <div className="seg wrap hand-seg" role="group" aria-label="Which hand to practise">
           {(
             [
@@ -385,7 +399,7 @@ export function Runner({ ex, onAttempt }: Props) {
         </div>
       )}
 
-      {(bars > 2 || hasChords || ex.piece.swing) && (
+      {!check && (bars > 2 || hasChords || ex.piece.swing || hasPedal) && (
         <div className="runner-opts">
           {ex.piece.swing && <span className="badge" title="Play each pair of eighth notes long–short, like a heartbeat">Shuffle feel: long–short eighths</span>}
           {bars > 2 && (
@@ -425,6 +439,11 @@ export function Runner({ ex, onAttempt }: Props) {
           <label className="check" title="Listen repeats until you press Stop">
             <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} /> Loop when listening
           </label>
+          {hasPedal && (
+            <label className="check" title="Listen as written, with the sustain pedal, or without it to hear the difference">
+              <input type="checkbox" checked={pedalOn} onChange={(e) => setPedalOn(e.target.checked)} /> Hear the pedal
+            </label>
+          )}
           {hasChords && (
             <label className="check" title="A simple band plays the chords written above the staff">
               <input type="checkbox" checked={backing} onChange={(e) => setBacking(e.target.checked)} /> Backing chords
@@ -458,7 +477,7 @@ export function Runner({ ex, onAttempt }: Props) {
       )}
 
       <div className="runner-controls">
-        <label className="tempo">
+        <label className="tempo" hidden={!!check}>
           <span>
             Tempo <strong>{tempo}</strong> bpm
           </span>
@@ -482,9 +501,11 @@ export function Runner({ ex, onAttempt }: Props) {
               <button className="btn" onClick={listen} data-act="listen">
                 ▶ Listen
               </button>
-              <button className="btn" onClick={startStep} data-act="step" title="The app waits for each correct note">
-                Step by step
-              </button>
+              {!check && (
+                <button className="btn" onClick={startStep} data-act="step" title="The app waits for each correct note">
+                  Step by step
+                </button>
+              )}
               <button className="btn primary" onClick={startTempo} data-act="tempo" title="Play along with the metronome after a one-bar count-in">
                 Play in time
               </button>
@@ -493,7 +514,13 @@ export function Runner({ ex, onAttempt }: Props) {
         </div>
       </div>
 
-      {mode === 'idle' && !result && (
+      {mode === 'idle' && !result && check && (
+        <p className="howto muted">
+          Play this in time at <strong>{ex.tempo} bpm</strong>. <strong>Listen</strong> first if you want to hear it. <strong>Play in time</strong> counts you in, then you
+          play along with the metronome.
+        </p>
+      )}
+      {mode === 'idle' && !result && !check && (
         <p className="howto muted">
           <strong>Listen</strong> plays it for you. <strong>Step by step</strong> waits while you find each note, with no time pressure. <strong>Play in time</strong> counts
           you in, then you play along with the metronome and get a score.
@@ -502,7 +529,7 @@ export function Runner({ ex, onAttempt }: Props) {
 
       <div className="runner-foot">
         <InputBar />
-        <label className="check" title="Turn this off to practise reading the notes without being shown where they are">
+        <label className="check" hidden={!!check} title="Turn this off to practise reading the notes without being shown where they are">
           <input type="checkbox" checked={hints} onChange={(e) => setHints(e.target.checked)} /> Show {guitar ? 'frets' : 'keys'} to play
         </label>
         {profile.input !== 'mic' && (
@@ -553,11 +580,15 @@ export function Runner({ ex, onAttempt }: Props) {
           </div>
           <div>
             <strong>
-              {Math.round(result.accuracy * 100)}% {!result.counts ? '· notes checked' : passed ? '· passed' : '· keep going'}
+              {Math.round(result.accuracy * 100)}% {check ? (passed ? '· clean enough' : '· not quite yet') : !result.counts ? '· notes checked' : passed ? '· passed' : '· keep going'}
             </strong>
             <p className="muted">
               {result.note}{' '}
-              {!result.counts
+              {check
+                ? passed
+                  ? 'This is comfortably within what the unit teaches.'
+                  : 'That is a good sign the unit has something new for you. You can try again, or move on.'
+                : !result.counts
                 ? !whole
                   ? 'A section on its own is for fixing a hard spot. Play the whole piece in time to record a tempo.'
                   : hand !== 'both'
@@ -571,7 +602,7 @@ export function Runner({ ex, onAttempt }: Props) {
             </p>
           </div>
           <div className="btns">
-            {result.counts && passed && tempo < ex.target && (
+            {!check && result.counts && passed && tempo < ex.target && (
               <button
                 className="btn primary"
                 onClick={() => {
@@ -582,7 +613,13 @@ export function Runner({ ex, onAttempt }: Props) {
                 Try {nextTempo} bpm
               </button>
             )}
-            <button className="btn" onClick={reset}>
+            <button
+              className="btn"
+              onClick={() => {
+                reset()
+                check?.onResult(null)
+              }}
+            >
               Again
             </button>
           </div>

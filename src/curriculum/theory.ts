@@ -16,6 +16,11 @@ export const theory: Track = {
         options: ['2', '3', '4', '1½'],
         answer: 1,
       },
+      placement2: {
+        q: 'Which note is a half step above E?',
+        options: ['F', 'F♯', 'G', 'D'],
+        answer: 0,
+      },
       lessons: [
         {
           id: 'th-notes',
@@ -172,6 +177,11 @@ export const theory: Track = {
         options: ['W W H W W W H', 'W H W W H W W', 'W W W H W W H', 'H W W H W W W'],
         answer: 0,
       },
+      placement2: {
+        q: 'How many sharps does the key of D major have?',
+        options: ['1', '2', '3', '4'],
+        answer: 1,
+      },
       lessons: [
         {
           id: 'th-intervals',
@@ -270,6 +280,11 @@ export const theory: Track = {
         q: 'In the key of C major, which chord is the vi chord?',
         options: ['F major', 'G major', 'A minor', 'D minor'],
         answer: 2,
+      },
+      placement2: {
+        q: 'Which notes make a G7 chord?',
+        options: ['G B D F♯', 'G B D F', 'G B♭ D F', 'G B D E'],
+        answer: 1,
       },
       lessons: [
         {
@@ -427,6 +442,11 @@ export const theory: Track = {
       placement: {
         q: 'Which scale degrees make up the minor pentatonic scale?',
         options: ['1 2 3 5 6', '1 ♭3 4 5 ♭7', '1 2 ♭3 4 5', '1 3 4 5 7'],
+        answer: 1,
+      },
+      placement2: {
+        q: 'Mixolydian is a major scale with which change?',
+        options: ['Lowered 3rd', 'Lowered 7th', 'Raised 4th', 'Raised 6th'],
         answer: 1,
       },
       lessons: [

@@ -19,6 +19,7 @@ export const keyboard: Track = {
         options: ['On the bottom line', 'In the second space from the bottom', 'On a short ledger line just above the staff', 'On the middle line'],
         answer: 2,
       },
+      check: { title: 'Five-finger warm-up', piece: keys('C4.1 D4.2 E4.3 F4.4 | G4.5 F4.4 E4.3 D4.2'), tempo: 66 },
       lessons: [
         {
           id: 'k-posture',
@@ -130,6 +131,7 @@ export const keyboard: Track = {
         options: ['4 (ring finger)', '1 (thumb, tucked under)', '2 (index)', '5 (little finger)'],
         answer: 1,
       },
+      check: { title: 'C major scale, right hand', piece: keys('C4.1 D4.2 E4.3 F4.1 | G4.2 A4.3 B4.4 C5.5'), tempo: 72 },
       lessons: [
         {
           id: 'k-read',
@@ -332,6 +334,7 @@ export const keyboard: Track = {
         options: ['C E G', 'E G C', 'G C E', 'C F A'],
         answer: 1,
       },
+      check: { title: 'C – F – G – C, close position', piece: keys('[C4 E4 G4]:h [C4 F4 A4]:h | [B3 D4 G4]:h [C4 E4 G4]:h'), tempo: 60 },
       lessons: [
         {
           id: 'k-triads',
@@ -434,6 +437,7 @@ export const keyboard: Track = {
         ],
         answer: 1,
       },
+      check: { title: 'Melody over chords', piece: keys('E4.3 E4.3 F4.4 G4.5 | G4.5 F4.4 E4.3 D4.2', '[C3 E3 G3].531:w | [B2 D3 G3].531:w'), tempo: 66 },
       lessons: [
         {
           id: 'k-together',
@@ -468,6 +472,79 @@ export const keyboard: Track = {
               'The left hand only plays on beat 1 of each bar. Let it hold while the right hand moves.',
             ),
             quiz('On the grand staff, notes written directly above one another are…', ['Played one after the other', 'Played together', 'Optional', 'For the left hand only'], 1),
+          ],
+        },
+        {
+          id: 'k-scales-together',
+          title: 'Scales with both hands',
+          goal: 'Play the C and G major scales with both hands together, in parallel and contrary motion.',
+          minutes: 20,
+          steps: [
+            text(
+              'Two hands, one scale',
+              'You know the C major scale in each hand. Putting them together is where hand coordination becomes real, and it is how teachers build evenness, speed and control. There are two ways to do it:\n\n- **Parallel motion**: both hands travel the same way, an octave apart. Fingerings differ (the right hand uses 1 2 3 – 1 2 3 4 5, the left 5 4 3 2 1 – 3 2 1), so the thumbs do not tuck under at the same moment.\n- **Contrary motion**: the hands travel in opposite directions, apart and back together. Both thumbs start on the same key and **each finger plays at the same moment as the same finger of the other hand**: the fingering is a mirror image, which makes it feel easier.\n\n**How to practise it.** Hands separately from memory first. Then together at **half speed**, with a metronome. Listen for **even** notes: the usual flaw is a small bump on the note right after the thumb tucks under. If one note is uneven, stop and repeat just that note and its neighbours slowly. Speed comes last.',
+            ),
+            { t: 'keyboard', title: 'Parallel motion: where you start', marks: km('C4=1 _C3=5'), from: 45, to: 74, caption: 'Right thumb on middle C, left little finger on the C an octave below. Both hands move up together.' },
+            exercise(
+              'k-scale-par',
+              'C major, parallel motion',
+              keys(
+                'C4.1 D4.2 E4.3 F4.1 | G4.2 A4.3 B4.4 C5.5 | C5.5 B4.4 A4.3 G4.2 | F4.1 E4.3 D4.2 C4.1',
+                'C3.5 D3.4 E3.3 F3.2 | G3.1 A3.3 B3.2 C4.1 | C4.1 B3.2 A3.3 G3.1 | F3.2 E3.3 D3.4 C3.5',
+              ),
+              54,
+              96,
+              'Up one octave and back. The hands are exactly one octave apart on every beat. In "Both hands" step-by-step mode each step needs two keys, so go slowly.',
+            ),
+            text(
+              'Contrary motion',
+              'Put **both thumbs on middle C**. The right hand climbs while the left hand descends, and the fingers match, **1 2 3 1 2 3 4 5 in both hands**. Both thumbs tuck under at the same moment (the right on F, the left on G), the little fingers arrive on the top and bottom C together, and then the hands come back to the middle, finishing with both thumbs on middle C again.\n\nBecause the fingers are mirrored, the hands feel the same, which is why many teachers start hands-together scales this way. Watch for the two classic faults: one hand arriving a fraction early, and a squeezed, uneven thumb. Keep your elbows relaxed and your wrists level.',
+            ),
+            { t: 'keyboard', title: 'Contrary motion: both thumbs on middle C', marks: km('*C4=1'), from: 45, to: 74, caption: 'Both thumbs share this one key. The right hand goes up, the left hand goes down.' },
+            exercise(
+              'k-scale-con',
+              'C major, contrary motion',
+              keys(
+                'C4.1 D4.2 E4.3 F4.1 | G4.2 A4.3 B4.4 C5.5 | C5.5 B4.4 A4.3 G4.2 | F4.1 E4.3 D4.2 C4.1',
+                'C4.1 B3.2 A3.3 G3.1 | F3.2 E3.3 D3.4 C3.5 | C3.5 D3.4 E3.3 F3.2 | G3.1 A3.3 B3.2 C4.1',
+              ),
+              54,
+              96,
+              'Each finger number appears twice at the same moment: 1-1, 2-2, 3-3, then 1-1 as both thumbs tuck, 2-2, 3-3, 4-4, 5-5.',
+            ),
+            exercise(
+              'k-scale-con-g',
+              'G major, contrary motion',
+              keys(
+                'G4.1 A4.2 B4.3 C5.1 | D5.2 E5.3 F#5.4 G5.5 | G5.5 F#5.4 E5.3 D5.2 | C5.1 B4.3 A4.2 G4.1',
+                'G4.1 F#4.2 E4.3 D4.1 | C4.2 B3.3 A3.4 G3.5 | G3.5 A3.4 B3.3 C4.2 | D4.1 E4.3 F#4.2 G4.1',
+                { key: 'G' },
+              ),
+              54,
+              92,
+              'The same mirror pattern in a new key. The key signature has one sharp, so every F is F♯: the left hand reaches it with finger 2.',
+            ),
+            text(
+              'Stretch: two octaves',
+              'When one octave is steady, go up **two octaves in parallel motion**. The right hand repeats its pattern: **1 2 3 1 2 3 4 – 1 2 3 1 2 3 4 5**. The left hand: **5 4 3 2 1 3 2 1 – 4 3 2 1 3 2 1**. Learn each hand alone first, shift your whole arm smoothly rather than stretching, and keep the notes even over the thumb crossings. If this is too much today, return to it after a week.',
+            ),
+            exercise(
+              'k-scale-2oct',
+              'C major, two octaves (parallel, ascending)',
+              keys(
+                'C4.1 D4.2 E4.3 F4.1 | G4.2 A4.3 B4.4 C5.1 | D5.2 E5.3 F5.1 G5.2 | A5.3 B5.4 C6.5:h',
+                'C2.5 D2.4 E2.3 F2.2 | G2.1 A2.3 B2.2 C3.1 | D3.4 E3.3 F3.2 G3.1 | A3.3 B3.2 C4.1:h',
+              ),
+              50,
+              84,
+              'Both hands cover two octaves. Do not rush: a steady 50 is worth more than a wobbly 80.',
+            ),
+            text(
+              'Making it a daily habit',
+              'Five minutes of scales at the start of a session is the best warm-up there is. A good routine: C major in contrary motion, then parallel, then your newest scale hands separately. Add one new key a week (G, F, D, B♭…), always with the correct key signature. Scales are not an end in themselves: they are the vocabulary your pieces are made of.',
+            ),
+            quiz('In contrary motion, which fingers play at the same moment?', ['The same finger of each hand', 'Always finger 1 and finger 5', 'Different fingers in each hand', 'Only the thumbs'], 0),
+            quiz('Playing a scale hands together, where should you listen for unevenness?', ['On the longest note', 'On the note after the thumb tucks under', 'On the first note only', 'On the loudest note'], 1),
           ],
         },
         {
@@ -519,6 +596,7 @@ export const keyboard: Track = {
         ],
         answer: 0,
       },
+      check: { title: 'A waltz', piece: keys('E4.3 G4.5 G4.5 | E4.3 G4.5 G4.5 | F4.4 E4.3 D4.2 | E4.3:hd', 'C3.5 [E3 G3].31 [E3 G3].31 | C3.5 [E3 G3].31 [E3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | C3.5:hd', { meter: 3 }), tempo: 66 },
       lessons: [
         {
           id: 'k-waltz',
@@ -604,6 +682,73 @@ export const keyboard: Track = {
               'In step-by-step mode a tied note counts once: the app does not ask for it again.',
             ),
             quiz('Two notes of the same pitch are joined by a tie. How many times do you strike the key?', ['Once', 'Twice', 'Three times', 'It depends on the tempo'], 0),
+          ],
+        },
+        {
+          id: 'k-pedal',
+          title: 'The sustain pedal',
+          goal: 'Use the right pedal to join harmonies cleanly, changing it with the chord.',
+          minutes: 20,
+          steps: [
+            text(
+              'What the pedal does',
+              'The right pedal of a piano is the **sustain pedal**. Pressing it lifts all the dampers off the strings, so notes keep ringing after you let go of the keys. Your hands are free to move while the harmony carries on, and the sound is fuller and more connected. A digital keyboard has the same pedal as a separate footswitch plugged in at the back; a good piano-style one is worth buying.\n\n**Your foot:** sit with the right **heel on the floor** and the ball of your foot resting on the pedal. Pivot from the heel: do not lift the whole leg or stamp. The left foot stays flat on the floor.\n\n**The one rule that matters:** change the pedal whenever the **harmony changes**. Pedal through one chord and it sounds rich. Pedal through two different chords and it sounds like mud.',
+            ),
+            text(
+              'How to change the pedal',
+              'You cannot lift and press at the exact moment the new chord sounds: you would catch the old chord (blur) or leave a gap. This is called **legato pedalling**:\n\n- **Play** the new chord or bass note first.\n- **Then** lift the pedal quickly and press it straight down again. The old chord clears, and the new note is caught.\n- **Listen.** The change should be quick and quiet, with no gap and no blur. If it blurs, change a touch sooner or more cleanly.\n\nThink "down after the note, up as you move on". Practise the foot movement on its own before adding the hands: small, relaxed, quiet.',
+            ),
+            text(
+              'How it is written',
+              'Pedal marks sit **under the lowest staff**. **Ped.** means press down; the **line** means keep it down; the **hook at the end** means lift. When the pedal changes between two chords you will see one line end and a new "Ped." start. In this app, a piece with pedal marks has a **Hear the pedal** option next to Listen: switch it off and compare.\n\nPractise a new piece **without the pedal first**. Your fingers should make it sound connected on their own. The pedal adds colour: it must never cover for notes that are not joined.',
+            ),
+            {
+              t: 'score',
+              piece: keys('r:w | r:w | r:w | r:w', 'C3.5 G3.1 E3.3 G3.1 | B2.5 G3.1 D3.3 G3.1 | C3.5 G3.1 E3.3 G3.1 | C3.5:w', { chords: 'C G C .', pedal: 'p p p p' }),
+              caption: 'A broken-chord bass with one pedal per bar. The brackets show where the pedal goes down and up. Press Play to hear it, then try the exercises below with and without "Hear the pedal".',
+            },
+            exercise(
+              'k-pedal1',
+              'One chord, one pedal',
+              keys(
+                'r:w | r:w | r:w | r:w',
+                'C3.5:8 G3.1:8 E3.3:8 G3.1:8 C3.5:8 G3.1:8 E3.3:8 G3.1:8 | B2.5:8 G3.1:8 D3.3:8 G3.1:8 B2.5:8 G3.1:8 D3.3:8 G3.1:8 | A2.5:8 E3.1:8 C3.3:8 E3.1:8 A2.5:8 E3.1:8 C3.3:8 E3.1:8 | F2.5:8 C3.1:8 A2.3:8 C3.1:8 F2.5:8 C3.1:8 A2.3:8 C3.1:8',
+                { chords: 'C G Am F', pedal: 'p p p p' },
+              ),
+              56,
+              84,
+              'Four chords, four pedals. Play with the pedal as a gentle "down–up–down" at each bar line, listening for a clear change with no blur. Listen first with the pedal on and then off to hear what it adds.',
+            ),
+            exercise(
+              'k-pedal2',
+              'Little Waltz with pedal',
+              keys(
+                'E4.3 G4.5 G4.5 | E4.3 G4.5 G4.5 | F4.4 E4.3 D4.2 | E4.3:hd | D4.2 F4.4 F4.4 | D4.2 F4.4 F4.4 | D4.2 E4.3 D4.2 | C4.1:hd',
+                'C3.5 [E3 G3].31 [E3 G3].31 | C3.5 [E3 G3].31 [E3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | C3.5 [E3 G3].31 [E3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | C3.5:hd',
+                { meter: 3, chords: 'C . G7 C G7 . . C', pedal: 'p c p p p c p p' },
+              ),
+              60,
+              96,
+              'In a waltz the pedal goes down on beat 1 (the bass note) and stays down for the bar. Bars 1 and 2 share one chord, so the pedal stays down across the bar line: the bracket is one long line.',
+            ),
+            exercise(
+              'k-pedal3',
+              'Lift and re-press',
+              keys(
+                '[C4 E4 G4].135:w | [C4 F4 A4].135:w | [B3 D4 G4].125:w | [C4 E4 G4].135:w',
+                'C3.5:w | F2.5:w | G2.5:w | C3.5:w',
+                { chords: 'C F G C', pedal: 'p p p p' },
+              ),
+              54,
+              76,
+              'Four chords, each a different harmony, so the pedal changes at every bar. Play each chord, then change the pedal. Close your eyes on the change and listen for a clean join.',
+            ),
+            text(
+              'Common problems',
+              '- **Mud.** The pedal stayed down through a chord change. Change sooner, or lift fully.\n- **Gaps.** The pedal came up too early and the sound stopped. Press the new pedal straight after lifting.\n- **A thump.** The foot hit the pedal. Keep the heel down and move gently.\n- **Pedalling every note.** Only change when the harmony changes, usually once a bar or less.\n- **Holding the pedal through rests.** Lift at the end of a phrase or on a rest so the silence is silent.\n- **Low notes blur fastest.** Bass notes ring longer and clash sooner than high ones, so be stricter with the pedal when the left hand is low.',
+            ),
+            quiz('When should you change the sustain pedal?', ['On every note', 'When the harmony (chord) changes', 'Only at the end of the piece', 'Every beat'], 1),
+            quiz('You hear a muddy blur between two chords. What is the most likely cause?', ['The pedal stayed down through the change', 'You played too softly', 'The tempo was too slow', 'You used the left pedal'], 0),
           ],
         },
         {

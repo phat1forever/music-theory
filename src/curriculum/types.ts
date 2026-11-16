@@ -50,6 +50,13 @@ export interface Unit {
   lessons: Lesson[]
   /** answer this correctly in the placement check to skip the unit */
   placement: Quiz
+  /** a second question, for units with nothing to play (the theory track) */
+  placement2?: Quiz
+  /**
+   * A short piece to play, in time, as part of the placement check. The unit is only skipped if the question is answered
+   * correctly AND this is played cleanly (microphone or MIDI are graded; otherwise the player rates themselves).
+   */
+  check?: { title: string; piece: Piece; tempo: number; flats?: boolean }
 }
 
 export interface Track {

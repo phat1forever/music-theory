@@ -114,6 +114,8 @@ export function stepAccuracy(total: number, mistakes: number): number {
 }
 
 export const PASS = 0.8
+/** A placement check demands a cleaner performance than a practice pass: "a few slips" does not skip a unit. */
+export const CHECK_PASS = 0.85
 
 export function stars(accuracy: number): number {
   return accuracy >= 0.95 ? 3 : accuracy >= PASS ? 2 : accuracy >= 0.6 ? 1 : 0

@@ -11,7 +11,7 @@ import {
   unlockedExercises,
 } from '../curriculum'
 import type { Track } from '../curriculum/types'
-import { mastery, streak } from '../practice/grading'
+import { CHECK_PASS, mastery, streak } from '../practice/grading'
 import { Runner } from '../practice/Runner'
 import { actions, today, useProfile, useStore, type Profile } from '../store/store'
 import { QuizStep } from './LessonView'
@@ -160,82 +160,157 @@ export function Home() {
 
 // ---------- Lessons ----------
 
+type Phase = 'quiz' | 'quiz2' | 'play'
+
+/**
+ * Placement: for each unit in turn, answer a question (two for the theory units) and, in the instrument tracks, play a short
+ * piece in time. A unit is skipped only if everything is right. The first miss ends the check and starts you there.
+ */
 function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
   const [i, setI] = useState(0)
-  const [stopped, setStopped] = useState(false)
+  const [phase, setPhase] = useState<Phase>('quiz')
+  const [stopped, setStopped] = useState<string | null>(null)
   const [answered, setAnswered] = useState(false)
+  const [score, setScore] = useState<number | null>(null)
+  const [questionsOnly, setQuestionsOnly] = useState<string[]>([])
   const unit = track.units[i]
+  const last = track.units.length - 1
+
   const finish = (count: number) => {
     // Never skip the final unit: even a perfect score starts you there.
-    count = Math.min(count, track.units.length - 1)
+    count = Math.min(count, last)
     actions.skipLessons(track.units.slice(0, count).flatMap((u) => u.lessons.map((l) => l.id)))
     if (track.id === 'guitar' && count >= 4) actions.unlockJam()
   }
-  const last = track.units.length - 1
-  if (stopped || i >= track.units.length) {
+  const stop = (why: string) => {
+    finish(i)
+    setStopped(why)
+  }
+  const pass = (byQuestionsOnly = false) => {
+    finish(i + 1)
+    if (byQuestionsOnly) setQuestionsOnly((q) => [...q, unit.title])
+    setI(i + 1)
+    setPhase('quiz')
+    setAnswered(false)
+    setScore(null)
+  }
+  /** The questions for this unit are all right: on to the next part. */
+  const afterQuestions = () => {
+    setAnswered(false)
+    if (phase === 'quiz' && unit.placement2) setPhase('quiz2')
+    else if (unit.check) {
+      setPhase('play')
+      setScore(null)
+    } else pass()
+  }
+
+  if (stopped !== null || i >= track.units.length) {
     const startAt = track.units[Math.min(i, last)]
     return (
       <div className="card">
         <div className="eyebrow">Placement result</div>
         <h3>{i === 0 ? `Start at the beginning: ${startAt.title}` : `Start at: ${startAt.title}`}</h3>
         <p className="muted">
+          {stopped ? `${stopped} ` : ''}
           {i === 0
             ? 'Nothing was skipped.'
             : `${Math.min(i, last)} earlier unit${Math.min(i, last) > 1 ? 's' : ''} marked as known. Those lessons stay open, so you can go back to any of them.`}
-          {i > last ? ' You answered everything correctly, so you start at the final unit; skim it, or use it as a check.' : ''}
-          {i > 0 ? ' A few questions cannot measure everything: if a skipped unit holds something new, just open it. Its exercises are in Practice under "from lessons you skipped".' : ''}
+          {i > last ? ' You passed everything, so you start at the final unit; skim it, or use it as a check.' : ''}
         </p>
+        {questionsOnly.length > 0 && (
+          <p className="muted">
+            For {questionsOnly.join(', ')} you skipped the playing part, so those units were judged on the questions alone, which is less reliable. If something there feels
+            shaky, just open it.
+          </p>
+        )}
+        {i > 0 && <p className="muted">Skipped exercises are in Practice under "from lessons you skipped".</p>}
         <button className="btn primary" onClick={onClose}>
           Done
         </button>
       </div>
     )
   }
+
+  const steps = phase === 'play' ? 'play it' : phase === 'quiz2' ? 'question 2' : unit.placement2 ? 'question 1' : 'question'
   return (
-    <div className="card">
+    <div className="card placement-check">
       <div className="eyebrow">
-        Placement check · question {i + 1} of {track.units.length}
+        Placement check · unit {i + 1} of {track.units.length} · {steps}
       </div>
       <h3>{unit.title}</h3>
-      <QuizStep
-        key={i}
-        quiz={unit.placement}
-        onAnswered={(right) => {
-          setAnswered(true)
-          if (!right) {
-            finish(i)
-            setStopped(true)
-          }
-        }}
-      />
-      <div className="btns">
-        {answered && !stopped && (
-          <button
-            className="btn primary"
-            onClick={() => {
-              finish(i + 1)
-              setI(i + 1)
-              setAnswered(false)
+
+      {phase !== 'play' && (
+        <>
+          <QuizStep
+            key={`${i}-${phase}`}
+            quiz={phase === 'quiz2' ? unit.placement2! : unit.placement}
+            onAnswered={(right) => {
+              setAnswered(true)
+              if (!right) stop('A question was missed.')
             }}
-          >
-            {i + 1 < track.units.length ? 'Next question' : 'See result'}
-          </button>
-        )}
-        {!answered && (
-          <button
-            className="btn"
-            onClick={() => {
-              finish(i)
-              setStopped(true)
+          />
+          <div className="btns">
+            {answered && stopped === null && (
+              <button className="btn primary" onClick={afterQuestions}>
+                {phase === 'quiz' && unit.placement2 ? 'Next question' : unit.check ? 'Now play it' : i + 1 < track.units.length ? 'Next unit' : 'See result'}
+              </button>
+            )}
+            {!answered && (
+              <button className="btn" onClick={() => stop('You were not sure.')}>
+                I'm not sure
+              </button>
+            )}
+            <button className="btn" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
+
+      {phase === 'play' && unit.check && (
+        <>
+          <p>
+            <strong>{unit.check.title}.</strong> Play this cleanly, in time, from the notation. It is graded if the microphone{track.id === 'keys' ? ' or a MIDI keyboard is' : ' is'}{' '}
+            on; otherwise you rate yourself, so be honest: the point is to land you at the right lesson.
+          </p>
+          <Runner
+            key={`pc-${unit.id}`}
+            ex={{
+              id: `check-${unit.id}`,
+              title: unit.check.title,
+              piece: unit.check.piece,
+              tempo: unit.check.tempo,
+              target: unit.check.tempo,
+              flats: unit.check.flats,
             }}
-          >
-            I'm not sure
-          </button>
-        )}
-        <button className="btn" onClick={onClose}>
-          Cancel
-        </button>
-      </div>
+            check={{ onResult: setScore }}
+          />
+          {score !== null && (
+            <div className="btns" style={{ marginTop: 12 }}>
+              {score >= CHECK_PASS ? (
+                <button className="btn primary" onClick={() => pass()}>
+                  {i + 1 < track.units.length ? 'Next unit' : 'See result'}
+                </button>
+              ) : (
+                <button className="btn primary" onClick={() => stop('The playing check was not clean enough yet.')}>
+                  See where to start
+                </button>
+              )}
+            </div>
+          )}
+          <div className="btns" style={{ marginTop: 12 }}>
+            <button className="btn" onClick={() => pass(true)} title="No instrument handy? Skip the playing and let the questions decide for this unit.">
+              I can't play right now
+            </button>
+            <button className="btn" onClick={() => stop('You were not sure.')}>
+              I'm not sure
+            </button>
+            <button className="btn" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
