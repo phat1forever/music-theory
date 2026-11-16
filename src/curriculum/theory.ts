@@ -274,7 +274,7 @@ export const theory: Track = {
     {
       id: 't3',
       title: 'Chords and progressions',
-      level: 'Intermediate',
+      level: 'Late beginner',
       about: 'How chords are built and why certain chords belong together.',
       placement: {
         q: 'In the key of C major, which chord is the vi chord?',
@@ -437,7 +437,7 @@ export const theory: Track = {
     {
       id: 't4',
       title: 'Colour: pentatonics and modes',
-      level: 'Advancing',
+      level: 'Early intermediate',
       about: 'Where the soloing scales come from and how modes change the mood.',
       placement: {
         q: 'Which scale degrees make up the minor pentatonic scale?',

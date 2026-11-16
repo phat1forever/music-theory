@@ -1,4 +1,5 @@
 import { keys, type PieceOpts } from '../theory/music'
+import { practiceLesson } from './shared'
 import { exercise, km, quiz, text, type Track } from './types'
 
 /** A left-hand-only piece: the right hand rests for the given number of bars. */
@@ -20,6 +21,11 @@ export const keyboard: Track = {
         answer: 2,
       },
       check: { title: 'Five-finger warm-up', piece: keys('C4.1 D4.2 E4.3 F4.4 | G4.5 F4.4 E4.3 D4.2'), tempo: 66 },
+      placement2: {
+        q: 'Which finger is number 5?',
+        options: ['Thumb', 'Index', 'Ring', 'Little finger'],
+        answer: 3,
+      },
       lessons: [
         {
           id: 'k-posture',
@@ -64,6 +70,7 @@ export const keyboard: Track = {
           title: 'Right hand: five-finger position',
           goal: 'Play five notes with the right fingers and a first melody.',
           minutes: 10,
+          related: ['th-rhythm'],
           steps: [
             text(
               'One finger, one key',
@@ -119,6 +126,42 @@ export const keyboard: Track = {
             quiz('In left-hand C position, which finger plays C?', ['1', '3', '5', '2'], 2),
           ],
         },
+        {
+          id: 'k-turns',
+          title: 'Hands take turns',
+          goal: 'Count rests, and play question-and-answer phrases that pass between the hands.',
+          minutes: 12,
+          related: ['th-rests'],
+          steps: [
+            text(
+              'Silence is part of the music',
+              'So far one hand or the other has always been playing. In real music one hand often **rests** while the other plays, and the timing has to stay exact through the silence.\n\nA rest lasts as long as the note of the same name: a **quarter rest** is one beat, a **half rest** two, a **whole rest** a full bar. Keep counting out loud through every rest: "1 2 3 4" never stops. The resting hand should stay **relaxed and ready**, hovering over its keys, not tense or frozen.',
+            ),
+            exercise(
+              'k-turns1',
+              'Right, then left',
+              keys('C4.1 D4.2 E4.3 r | G4.5:h r:h | r:w | r:w', 'r:w | r:w | G3.1 F3.2 E3.3 r | C3.5:h r:h'),
+              60,
+              96,
+              'The right hand plays for two bars and then rests while the left hand answers. Count aloud and do not rush the entry.',
+            ),
+            text(
+              'Question and answer',
+              'A good phrase often works like a conversation: one hand asks, the other answers, an octave lower. Make the answer **sound like** the question: same loudness, same touch, same shape. This is the first step toward playing a melody in one hand while the other accompanies.',
+            ),
+            exercise(
+              'k-turns2',
+              'The echo',
+              keys('E4.3 D4.2 C4.1 r | E4.3 D4.2 C4.1:h | r:w | r:w', 'r:w | r:w | E3.3 D3.4 C3.5 r | E3.3 D3.4 C3.5:h'),
+              60,
+              96,
+              'Same notes, an octave lower, in the left hand. Listen for an exact echo.',
+            ),
+            quiz('How long does a half rest last in 4/4?', ['1 beat', '2 beats', '3 beats', '4 beats'], 1),
+            quiz('While one hand rests, what should it do?', ['Stay relaxed and ready, and keep counting', 'Press the keys silently', 'Drop to your lap', 'Stop counting'], 0),
+          ],
+        },
+        practiceLesson('keys'),
       ],
     },
     {
@@ -132,6 +175,11 @@ export const keyboard: Track = {
         answer: 1,
       },
       check: { title: 'C major scale, right hand', piece: keys('C4.1 D4.2 E4.3 F4.1 | G4.2 A4.3 B4.4 C5.5'), tempo: 72 },
+      placement2: {
+        q: 'Which note is sharp in G major?',
+        options: ['C', 'F', 'G', 'B'],
+        answer: 1,
+      },
       lessons: [
         {
           id: 'k-read',
@@ -164,6 +212,40 @@ export const keyboard: Track = {
               104,
             ),
             quiz('A note on a line followed by a note in the very next space is a…', ['Skip', 'Step', 'Leap', 'Repeat'], 1),
+          ],
+        },
+        {
+          id: 'k-intervals',
+          title: 'Reading by intervals',
+          goal: 'Read a melody by the shape of its steps and skips, with a fingering only on the first note.',
+          minutes: 15,
+          steps: [
+            text(
+              'Read the shape, not every note',
+              'Fluent readers do not name each note. They find the **first note**, then read the **distance and direction** to the next:\n\n- **Repeat**: the same line or space again.\n- **Step**: the neighbouring line or space. On the keys, the next white key.\n- **Skip**: line to line, or space to space (a 3rd). One white key is missed.\n- **Leap**: further (a 4th, 5th or more).\n\nLandmarks help you check yourself: middle C, treble G, bass F.\n\nIn the next exercises **only the first note has a finger number**. It tells you the hand position: the thumb sits on the first note and each finger covers the next key. Keep the hand there and the notes fall under the right fingers on their own.',
+            ),
+            exercise(
+              'k-read-int1',
+              'Steps and skips, right hand',
+              keys('G4.1 B4 A4 C5 | B4 D5 C5:h | B4 G4 A4 B4 | G4:w'),
+              54,
+              90,
+              'Before you play, say each interval aloud: "skip up, step down, skip up…". Then play. For a harder test, turn off "Show keys to play" and read from the staff alone.',
+            ),
+            exercise(
+              'k-read-int2',
+              'Steps and skips, left hand',
+              lh('C3.5 E3 G3 E3 | D3 F3 E3:h | G3 E3 F3 D3 | C3:w', 4),
+              54,
+              90,
+              'Bass clef: the first note is C. Read the shape from there.',
+            ),
+            text(
+              'Look ahead',
+              'Keep your eyes **a beat or two ahead** of your hands, and do not look at the keyboard. Reading is a separate skill from playing, and it grows with a few minutes every day on **easy, new** music, played once, slowly, without stopping. Pick pieces that are easier than the ones you are learning.',
+            ),
+            quiz('A note on a line is followed by a note on the next line up. What is that?', ['A step', 'A skip (a 3rd)', 'A repeat', 'A leap of a 5th'], 1),
+            quiz('Why does only the first note of a piece get a fingering in the exercises above?', ['To save space', 'It shows the hand position; the rest follow from it', 'The other fingers are free', 'It is a mistake'], 1),
           ],
         },
         {
@@ -275,6 +357,7 @@ export const keyboard: Track = {
           title: 'Minor scales: A minor and D minor',
           goal: 'Play two minor scales with correct fingering and a minor-key chord pattern.',
           minutes: 12,
+          related: ['th-minor'],
           steps: [
             text(
               'The other half of the keys',
@@ -317,7 +400,7 @@ export const keyboard: Track = {
               keys('[A3 C4 E4].135:w | [A3 D4 F4].135:w | [G#3 B3 E4].125:w | [A3 C4 E4].135:w', undefined, { key: 'Am', chords: 'Am Dm E Am' }),
               60,
               96,
-              'The thumb stays on A for the first two chords, then drops a half step to G♯: that note is the raised 7th.',
+              'These are the chord notes in the closest positions, so your hand barely moves (you will study inversions properly in the next unit). The thumb stays on A for the first two chords, then drops a half step to G♯: that note is the raised 7th.',
             ),
             quiz('Which major key has the same key signature as D minor?', ['C major', 'G major', 'F major', 'B♭ major'], 2),
           ],
@@ -327,7 +410,7 @@ export const keyboard: Track = {
     {
       id: 'k3',
       title: 'Chords at the keyboard',
-      level: 'Intermediate',
+      level: 'Late beginner',
       about: 'Triads, inversions that sit under the hand, and left-hand accompaniment patterns.',
       placement: {
         q: 'Which notes are a C major triad in first inversion (lowest note first)?',
@@ -335,12 +418,18 @@ export const keyboard: Track = {
         answer: 1,
       },
       check: { title: 'C – F – G – C, close position', piece: keys('[C4 E4 G4]:h [C4 F4 A4]:h | [B3 D4 G4]:h [C4 E4 G4]:h'), tempo: 60 },
+      placement2: {
+        q: 'Which notes make an A minor triad?',
+        options: ['A C♯ E', 'A C E', 'A D E', 'A C E♭'],
+        answer: 1,
+      },
       lessons: [
         {
           id: 'k-triads',
           title: 'Playing triads',
           goal: 'Play C, F and G chords as block and broken chords.',
           minutes: 10,
+          related: ['th-triads'],
           steps: [
             text(
               'Every other key',
@@ -370,6 +459,7 @@ export const keyboard: Track = {
           title: 'Inversions',
           goal: 'Change between C, F and G with almost no hand movement.',
           minutes: 12,
+          related: ['th-triads'],
           steps: [
             text(
               'Same notes, new order',
@@ -386,6 +476,47 @@ export const keyboard: Track = {
               100,
             ),
             quiz('What is the lowest note of a G major triad in first inversion?', ['G', 'B', 'D', 'F'], 1),
+          ],
+        },
+        {
+          id: 'k-arpeggios',
+          title: 'Arpeggios',
+          goal: 'Play broken chords in one flowing line in C, with both hands, and around a chord progression.',
+          minutes: 20,
+          related: ['th-triads'],
+          steps: [
+            text(
+              'A chord, one note at a time',
+              'An **arpeggio** is the notes of a chord played one after another instead of together. It is the same triad you know, spread out into a line, and it is everywhere: accompaniment patterns, melodies, and the exercises every pianist practises next to scales.\n\nFor one octave the fingering needs **no thumb-under**:\n\n- **Right hand, C major:** C E G C with fingers **1 2 3 5**.\n- **Left hand, C major:** C E G C with fingers **5 4 2 1**.\n\nLet the hand **float** and rotate gently from note to note instead of stretching, and keep the notes even. Come down with the same fingers in reverse.',
+            ),
+            exercise(
+              'k-arp-rh',
+              'C major arpeggio, right hand',
+              keys('C4.1 E4.2 G4.3 C5.5 | C5.5 G4.3 E4.2 C4.1 | C4.1 E4.2 G4.3 C5.5 | C5.5:w'),
+              60,
+              104,
+            ),
+            exercise(
+              'k-arp-lh',
+              'C major arpeggio, left hand',
+              lh('C3.5 E3.4 G3.2 C4.1 | C4.1 G3.2 E3.4 C3.5 | C3.5 E3.4 G3.2 C4.1 | C4.1:w', 4),
+              60,
+              104,
+            ),
+            text(
+              'Arpeggios around chords',
+              'Now use arpeggios the way music does: one arpeggio per chord, following a progression. The F and G arpeggios use the same fingering as C, just moved: **F A C F** and **G B D G**, all fingers **1 2 3 5**. The left hand holds the root of each chord underneath.',
+            ),
+            exercise(
+              'k-arp-prog',
+              'I – IV – V – I in arpeggios',
+              keys('C4.1 E4.2 G4.3 C5.5 | F4.1 A4.2 C5.3 F5.5 | G4.1 B4.2 D5.3 G5.5 | C5.5:w', 'C3.5:w | F2.5:w | G2.5:w | C3.5:w', { chords: 'C F G C' }),
+              60,
+              96,
+              'The hand jumps to a new position each bar: look ahead to the next first note while the last one is still sounding.',
+            ),
+            quiz('What is an arpeggio?', ['A chord played all at once', 'The notes of a chord played one after another', 'A very fast scale', 'A pedal technique'], 1),
+            quiz('Which fingers play a one-octave C major arpeggio in the right hand?', ['1 2 3 4', '1 2 3 5', '1 3 4 5', '2 3 4 5'], 1),
           ],
         },
         {
@@ -425,7 +556,7 @@ export const keyboard: Track = {
     {
       id: 'k4',
       title: 'Hands together',
-      level: 'Intermediate',
+      level: 'Late beginner',
       about: 'Coordinate both hands and play complete pieces with melody and accompaniment.',
       placement: {
         q: 'The right hand plays a dotted quarter note then an eighth note. The left hand plays two quarter notes. When does the left hand\'s second note sound?',
@@ -438,6 +569,11 @@ export const keyboard: Track = {
         answer: 1,
       },
       check: { title: 'Melody over chords', piece: keys('E4.3 E4.3 F4.4 G4.5 | G4.5 F4.4 E4.3 D4.2', '[C3 E3 G3].531:w | [B2 D3 G3].531:w'), tempo: 66 },
+      placement2: {
+        q: 'In contrary motion, which fingers play at the same moment?',
+        options: ['The same finger of each hand', 'Always finger 1 and finger 5', 'Different fingers in each hand', 'Only the thumbs'],
+        answer: 0,
+      },
       lessons: [
         {
           id: 'k-together',
@@ -548,6 +684,47 @@ export const keyboard: Track = {
           ],
         },
         {
+          id: 'k-leftmelody',
+          title: 'Melody in the left hand',
+          goal: 'Play a tune in the left hand over a held harmony, and keep two different rhythms going at once.',
+          minutes: 20,
+          related: ['th-rhythm'],
+          steps: [
+            text(
+              'The left hand sings',
+              'In most of your pieces the right hand has had the tune. In real music the **left hand sings** just as often, and the right hand accompanies. Two things change:\n\n- **Balance.** The melody hand plays a little **louder**; the accompaniment hand plays softer. Listen for the tune, as if a singer were performing it.\n- **Confidence.** The left hand is usually the weaker one. Short, regular practice with the left hand alone makes it as steady as the right.\n\nHere is Ode to Joy again, with the tune in the left hand and the right hand holding two-note harmonies underneath.',
+            ),
+            exercise(
+              'k-lm1',
+              'Ode to Joy, tune in the left hand',
+              keys(
+                '[E4 G4].35:w | [D4 G4].25:w | [E4 G4].35:w | [D4 G4].25:w',
+                'E3.3 E3.3 F3.2 G3.1 | G3.1 F3.2 E3.3 D3.4 | C3.5 C3.5 D3.4 E3.3 | E3.3:qd D3.4:8 D3.4:h',
+                { chords: 'C G C G' },
+              ),
+              54,
+              88,
+              'Play the left hand alone first until it sings, then add the right-hand harmony very softly.',
+            ),
+            text(
+              'Two rhythms at once',
+              'Hardest of all is when the hands move at **different speeds**. The right hand plays four notes in a bar, the left hand only two. Teachers use two tricks:\n\n- **Tap it first.** Tap the right-hand rhythm with your right hand and the left-hand rhythm with your left on your knees, counting aloud, until it feels natural.\n- **Count the fastest hand.** Keep the count going "1 2 3 4" and fit both hands into it.',
+            ),
+            exercise(
+              'k-lm2',
+              'Quarter notes over half notes',
+              keys(
+                'C4.1 E4.3 G4.5 E4.3 | F4.4 D4.2 E4.3 C4.1 | D4.2 E4.3 F4.4 D4.2 | C4.1:w',
+                'C3.5:h E3.3:h | D3.4:h E3.3:h | F3.2:h G3.1:h | C3.5:w',
+              ),
+              54,
+              88,
+              'The left hand lands on every second right-hand note. Keep the count steady and the right hand even.',
+            ),
+            quiz('When the left hand has the tune, how should the hands balance?', ['Both equally loud', 'The tune louder, the accompaniment softer', 'The right hand always louder', 'Only the left hand plays'], 1),
+          ],
+        },
+        {
           id: 'k-chordmelody',
           title: 'Melody with chords',
           goal: 'Play a full piece with right-hand melody and left-hand chords.',
@@ -584,7 +761,7 @@ export const keyboard: Track = {
     {
       id: 'k5',
       title: 'Playing pieces',
-      level: 'Intermediate',
+      level: 'Late beginner',
       about: 'Four complete pieces that bring in 3/4 time, dotted rhythms, ties, a key signature and a change of hand position.',
       placement: {
         q: 'A piece has one sharp in its key signature and 3/4 as its time signature. What does that tell you?',
@@ -597,6 +774,11 @@ export const keyboard: Track = {
         answer: 0,
       },
       check: { title: 'A waltz', piece: keys('E4.3 G4.5 G4.5 | E4.3 G4.5 G4.5 | F4.4 E4.3 D4.2 | E4.3:hd', 'C3.5 [E3 G3].31 [E3 G3].31 | C3.5 [E3 G3].31 [E3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | C3.5:hd', { meter: 3 }), tempo: 66 },
+      placement2: {
+        q: 'When should you change the sustain pedal?',
+        options: ['On every note', 'When the harmony changes', 'Only at the end of the piece', 'Every beat'],
+        answer: 1,
+      },
       lessons: [
         {
           id: 'k-waltz',
@@ -700,7 +882,7 @@ export const keyboard: Track = {
             ),
             text(
               'How it is written',
-              'Pedal marks sit **under the lowest staff**. **Ped.** means press down; the **line** means keep it down; the **hook at the end** means lift. When the pedal changes between two chords you will see one line end and a new "Ped." start. In this app, a piece with pedal marks has a **Hear the pedal** option next to Listen: switch it off and compare.\n\nPractise a new piece **without the pedal first**. Your fingers should make it sound connected on their own. The pedal adds colour: it must never cover for notes that are not joined.',
+              'Pedal marks sit **under the lowest staff**. **Ped.** means press down; the **line** means keep it down; the **hook at the end** means lift. When the pedal changes between two chords you will see one line end and a new "Ped." start. In this app, a piece with pedal marks has a **Hear the pedal** option next to Listen: switch it off and compare. The mark sits under the note it belongs to, but in legato pedalling you press a moment **after** playing that note.\n\nPractise a new piece **without the pedal first**. Your fingers should make it sound connected on their own. The pedal adds colour: it must never cover for notes that are not joined.',
             ),
             {
               t: 'score',
@@ -779,6 +961,58 @@ export const keyboard: Track = {
               'You have now played in two time signatures, read a key signature, held ties and moved your hand mid-piece. That is the toolkit for most easy sheet music.\n\n- Pick up a book of easy arrangements and read one new piece a week, hands separately first.\n- Keep one scale and one chord pattern in your daily warm-up.\n- Use **Jam** to improvise right-hand melodies over a backing track, and **Explore** to look up any chord a song throws at you.',
             ),
             quiz('The key signature has one sharp. You see an F with nothing written beside it. What do you play?', ['F', 'F♯', 'G', 'E'], 1),
+          ],
+        },
+        {
+          id: 'k-leadsheet',
+          title: 'Playing from a lead sheet',
+          goal: 'Play a melody with chord symbols, choosing smooth left-hand chords yourself.',
+          minutes: 20,
+          related: ['th-progressions', 'th-sevenths'],
+          steps: [
+            text(
+              'Melody on top, chords above',
+              'A **lead sheet** gives only the **melody** and **chord symbols** above it, and leaves the accompaniment to you. It is how most popular music is written, and learning to read one is a big step toward playing music you love.\n\nFor each symbol:\n\n- **Turn it into notes**: C = C E G, G7 = G B D F, Am = A C E.\n- **Pick the nearest inversion.** Choose the version of each chord that moves your hand the least from the one before. Root-position chords jumping around are clumsy; inversions are smooth.\n- **A G7 in the left hand needs only three notes**: the 3rd (B), the 7th (F) and the root (G). The 5th (D) can be left out without changing the sound. A good voicing is **B – F – G**, fingered 5 – 2 – 1.',
+            ),
+            exercise(
+              'k-lead1',
+              'Lightly Row (traditional)',
+              keys(
+                'G4.5 E4.3 E4.3:h | F4.4 D4.2 D4.2:h | C4.1 D4.2 E4.3 F4.4 | G4.5 G4.5 G4.5:h | G4.5 E4.3 E4.3:h | F4.4 D4.2 D4.2:h | C4.1 E4.3 G4.5 G4.5 | C4.1:w',
+                '[C3 E3 G3].531:w | [B2 F3 G3].521:w | [C3 E3 G3].531:w | [C3 E3 G3].531:w | [C3 E3 G3].531:w | [B2 F3 G3].521:w | [C3 E3 G3].531:w | [C3 E3 G3].531:w',
+                { chords: 'C G7 C . . G7 C .' },
+              ),
+              60,
+              96,
+              'The left hand shows one smooth way to play the chord symbols. Notice how little it moves between C and G7: only the middle note and the little finger change.',
+            ),
+            text(
+              'Make it your own',
+              'Once the written left hand is easy, try a **different pattern** on the same chords: root and fifth, the broken-chord (Alberti) pattern, or the waltz. Open **Explore** to look up the notes of any chord symbol you meet. The chord symbols stay the same; only your accompaniment changes. That freedom is why lead sheets are used.',
+            ),
+            quiz('G7 is G B D F. Which note can you leave out of the left hand without losing the chord\'s character?', ['The 3rd (B)', 'The 7th (F)', 'The 5th (D)', 'The root (G)'], 2),
+            quiz('Why choose the nearest inversion of each chord?', ['It sounds louder', 'Your hand moves less, so the changes are smooth', 'It is easier to read', 'Inversions are required'], 1),
+          ],
+        },
+        {
+          id: 'k-next',
+          title: 'Where to go from here',
+          goal: 'Know what you can do now, what this app cannot teach, and how to keep growing as a pianist.',
+          minutes: 10,
+          steps: [
+            text(
+              'What you can do now',
+              'You can read both clefs in a handful of keys, play scales and arpeggios, build and invert chords, accompany a melody with block chords, broken chords and a waltz bass, play with both hands in different rhythms, use the sustain pedal, and play simple pieces in 3/4 and 4/4 from a key signature. That is a real foundation, roughly the level of a first grade of a graded syllabus.',
+            ),
+            text(
+              'What this app cannot teach',
+              'It can check that you played the right notes at the right time (with a MIDI keyboard, very accurately). It **cannot** hear or see **touch, tone, balance, phrasing, pedalling by ear, posture or tension**. Those need a human ear:\n\n- **A teacher**, even once every four to six weeks, to check hand shape, wrists and tension. Small habits are easy to fix early and hard to fix later.\n- **Record yourself** and listen back, and film your hands from the side.\n- **Play for other people** regularly, even one friend.',
+            ),
+            text(
+              'Your next steps',
+              '- **Follow a graded syllabus** (ABRSM, Trinity or RCM) or a **method book** for adults, such as *Alfred\'s Adult All-in-One Course* or *Faber Adult Piano Adventures*, alongside this app. They add repertoire, sight-reading and exams.\n- **Play real music from every period.** Public-domain pieces that suit this level include the Minuet in G (Petzold, once attributed to Bach), easy sonatinas by Clementi and Kuhlau, Burgmüller\'s *25 Easy Studies*, and Schumann\'s *Album for the Young*.\n- **Sight-read every day**: five minutes, new music, easier than your pieces, no stopping.\n- **Add keys and technique**: harmonic and melodic minors, scales in more keys, arpeggios in all of them, then two octaves hands together.\n- **Learn pieces from lead sheets**, and use **Jam** to improvise a right-hand melody over a backing track.',
+            ),
+            quiz('Which of these can an app NOT judge reliably?', ['Whether you pressed the right notes', 'Touch, tone and posture', 'Whether you kept time', 'Which piece you played'], 1),
           ],
         },
       ],

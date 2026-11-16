@@ -38,6 +38,8 @@ export interface Profile {
   input: InputMode
   leftHanded: boolean
   jamUnlocked: boolean
+  /** unit checkpoints passed, by unit id (ISO date) */
+  checkpoints: Record<string, string>
   /** exercises tried at least once in any mode (step-by-step, one hand, a section, or in time) */
   tried: string[]
   sheets: Sheet[]
@@ -62,6 +64,7 @@ function newProfile(name: string): Profile {
     input: 'self',
     leftHanded: false,
     jamUnlocked: false,
+    checkpoints: {},
     tried: [],
     sheets: [],
     sheet: null,
@@ -122,12 +125,12 @@ export const actions = {
       return { ...p, lessons }
     })
   },
-  attempt(exerciseId: string, accuracy: number, tempo: number) {
+  attempt(exerciseId: string, accuracy: number, tempo: number, target?: number) {
     patchProfile((p) => ({
       ...p,
       exercises: {
         ...p.exercises,
-        [exerciseId]: recordAttempt(p.exercises[exerciseId], accuracy, tempo, today()),
+        [exerciseId]: recordAttempt(p.exercises[exerciseId], accuracy, tempo, today(), target),
       },
       tried: p.tried.includes(exerciseId) ? p.tried : [...p.tried, exerciseId],
       days: withToday(p.days),
@@ -140,6 +143,9 @@ export const actions = {
       days: withToday(p.days),
       tried: exerciseId && !p.tried.includes(exerciseId) ? [...p.tried, exerciseId] : p.tried,
     }))
+  },
+  passCheckpoint(unitId: string) {
+    patchProfile((p) => ({ ...p, checkpoints: { ...p.checkpoints, [unitId]: today() }, days: withToday(p.days) }))
   },
   setInput(input: InputMode) {
     patchProfile((p) => ({ ...p, input }))

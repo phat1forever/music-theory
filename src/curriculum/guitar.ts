@@ -1,4 +1,5 @@
 import { gtr } from '../theory/music'
+import { practiceLesson } from './shared'
 import { exercise, fm, quiz, text, type Track } from './types'
 
 const bars = (chords: string, per: (c: string) => string) =>
@@ -34,6 +35,11 @@ export const guitar: Track = {
         answer: 1,
       },
       check: { title: 'Low-string walk', piece: gtr('6/0 6/1 6/3 6/1 | 5/0 5/2 5/3 5/2'), tempo: 60 },
+      placement2: {
+        q: 'Which string is the thickest, the lowest-sounding one?',
+        options: ['1st (high E)', '6th (low E)', '3rd (G)', '4th (D)'],
+        answer: 1,
+      },
       lessons: [
         {
           id: 'g-setup',
@@ -186,6 +192,7 @@ export const guitar: Track = {
             quiz('The note at string 4, fret 2 is…', ['D', 'E', 'F', 'G'], 1),
           ],
         },
+        practiceLesson('guitar'),
       ],
     },
     {
@@ -194,11 +201,16 @@ export const guitar: Track = {
       level: 'Beginner',
       about: 'The eight essential open chords, strumming, smooth changes and power chords.',
       placement: {
-        q: 'Which of these is a common strumming pattern for a bar of 4/4 written in eighth notes?',
-        options: ['Down, down-up, up-down-up', 'Only upstrokes', 'Down on beat 1 only', 'Up, up, up, up'],
+        q: 'Moving between C and Am, which fingers can stay exactly where they are?',
+        options: ['Fingers 1 and 2: only finger 3 moves', 'None: every finger moves', 'Fingers 3 and 4', 'Only the thumb'],
         answer: 0,
       },
       check: { title: 'Four chords', piece: gtr('{G}:h {C}:h | {D}:h {G}:h'), tempo: 60 },
+      placement2: {
+        q: 'A chord diagram shows × above the 6th string. What does that mean?',
+        options: ['Play it open', 'Do not play that string', 'Bend that string', 'Use your 4th finger'],
+        answer: 1,
+      },
       lessons: [
         {
           id: 'g-chords-1',
@@ -260,6 +272,7 @@ export const guitar: Track = {
           title: 'Strumming patterns',
           goal: 'Keep a steady down-up hand and play two strumming patterns.',
           minutes: 12,
+          related: ['th-rhythm'],
           steps: [
             text(
               'The pendulum',
@@ -304,6 +317,147 @@ export const guitar: Track = {
               'Start moving to the next chord on beat 4, not after it.',
             ),
             quiz('Your fretting hand is late for a chord change. What should the strumming hand do?', ['Stop and wait', 'Keep moving in time', 'Speed up', 'Strum harder'], 1),
+          ],
+        },
+        {
+          id: 'g-strum2',
+          title: 'Strumming 2: leave a gap',
+          goal: 'Play the classic "campfire" strum, with a missed stroke, and a waltz strum in 3/4.',
+          minutes: 15,
+          steps: [
+            text(
+              'The hand never stops',
+              'In the last strumming lesson every swing of your hand hit the strings. Real strumming leaves **gaps**: your hand keeps its steady down-up motion, but on some swings it passes **through the air** without touching the strings. The gaps give a rhythm its shape.\n\nThe most useful pattern in folk, pop and country is **Down, Down-Up, (miss) Up, Down-Up**. Counting in eighth notes: "**1** 2 & (3) & 4 &". Your hand still swings down on beat 3, it just misses the strings, and the chord struck on the "&" of 2 keeps ringing through the gap.\n\nLearn the movement first on muted strings (rest your fretting hand lightly across them), then add the chords.',
+            ),
+            exercise(
+              'g-strum-camp',
+              'The campfire strum',
+              gtr(bars('G Em C D', (c) => `{${c}}~↓ {${c}}:8~↓ {${c}}~↑ {${c}}:8~↑ {${c}}:8~↓ {${c}}:8~↑`), { chords: 'G Em C D' }),
+              60,
+              100,
+              'The arrows show each stroke you play: the gap on beat 3 is simply a swing with no arrow. Say the count out loud: "1, 2 &, (3) &, 4 &".',
+            ),
+            text(
+              'Three beats in a bar',
+              'Many folk songs and hymns are in **3/4**: one-two-three, one-two-three. A simple waltz strum is **Down, Down-Up, Down**: a strong first beat, then lighter ones. Count it "**1** 2 & 3".',
+            ),
+            exercise(
+              'g-strum-waltz',
+              'Waltz strum in 3/4',
+              gtr(bars('G C D G', (c) => `{${c}}~↓ {${c}}:8~↓ {${c}}:8~↑ {${c}}~↓`), { meter: 3, chords: 'G C D G' }),
+              66,
+              112,
+              'The count-in is three clicks. Beat 1 is the loudest strum.',
+            ),
+            quiz('In "Down, Down-Up, (miss) Up, Down-Up", what does your strumming hand do on the missed stroke?', ['Stops and waits', 'Keeps swinging without touching the strings', 'Plays a very quiet downstroke', 'Plays an extra upstroke'], 1),
+            quiz('How many beats are in a bar of 3/4?', ['2', '3', '4', '6'], 1),
+          ],
+        },
+        {
+          id: 'g-colour',
+          title: 'Colour chords and the capo',
+          goal: 'Play sus, add9 and seventh chords, and use a capo to change key.',
+          minutes: 15,
+          related: ['th-sevenths'],
+          steps: [
+            text(
+              'Same roots, new colours',
+              'You can colour the chords you already know without learning new roots:\n\n- **Suspended (sus2, sus4)**: the 3rd is replaced by a neighbour, so the chord feels unfinished and wants to resolve. Dsus4 → D is one of the most used moves in guitar music.\n- **Add9**: a bright extra note on top (Cadd9). Gentle and open.\n- **Seventh chords**: **maj7** is dreamy (Fmaj7, Cmaj7), **m7** is mellow (Am7, Em7), and the plain **7** is bluesy (G7, C7).\n\nThey are often only one finger away from the chord they replace.',
+            ),
+            { t: 'chords', names: ['Dsus2', 'Dsus4', 'Asus2', 'Asus4'], caption: 'Each one lifts or drops a finger from D or A.' },
+            { t: 'chords', names: ['Cadd9', 'Am7', 'Em7', 'Fmaj7', 'Cmaj7', 'G7'], caption: 'Tap each one to hear its colour, then compare with the plain chord.' },
+            exercise(
+              'g-sus',
+              'Sus and resolve',
+              gtr('{D}:h {Dsus4}:h | {D}:h {Dsus2}:h | {A}:h {Asus4}:h | {A}:h {Asus2}:h', { chords: 'D D A A' }),
+              60,
+              96,
+              'Keep your first finger on the same string and move the others. Listen for the tension and release.',
+            ),
+            exercise(
+              'g-colour2',
+              'Am – Am7 – Fmaj7 – Cadd9',
+              gtr('{Am}:h {Am7}:h | {Fmaj7}:h {Cadd9}:h | {Am}:h {Am7}:h | {Fmaj7}:w', { chords: 'Am Am7 Fmaj7 Cadd9' }),
+              56,
+              92,
+              'A soft, rolling sequence: let each chord ring.',
+            ),
+            text(
+              'The capo',
+              'A **capo** clamps across the neck and raises every open string by the number of frets it sits on. The shapes stay the same, but the chords sound higher: **a G shape with the capo on fret 2 sounds as A**.\n\nWhy use one? To play in the key a singer needs without learning hard chords. Songs in A, B or E♭ become easy G, E or C shapes.\n\nTry it: open **Chords**, set Capo to 2, add G, C and D, and read what each one "sounds as". The page works out the shapes either way (as the shape you play, or as the sounding chord).',
+            ),
+            quiz('You play a G shape with a capo on the 2nd fret. What chord do you hear?', ['F', 'G', 'A', 'B'], 2),
+            quiz('What does "sus4" do to a chord?', ['Replaces the root', 'Replaces the 3rd with the 4th', 'Adds a 7th', 'Lowers the 5th'], 1),
+          ],
+        },
+        {
+          id: 'g-songs',
+          title: 'From chords to songs',
+          goal: 'Learn a song from a chord chart, and set up your own songs on the Chords page.',
+          minutes: 15,
+          steps: [
+            text(
+              'A song is a loop with a story',
+              'Most songs are a handful of chords repeated: a **verse** loop and a **chorus** loop, sometimes a **bridge**. You already know enough chords to play thousands of them.\n\nHow to learn a song from a chord chart:\n\n- **Find the form**: verse, chorus, bridge, and the order they come in.\n- **Learn the chords** you do not know yet, one at a time.\n- **Loop the hardest change** slowly (in this app, use Bars X to Y and loop), then speed up.\n- **Count in four beats and keep going** through slips: do not stop for mistakes.\n- **Hum or sing the melody over the chords.** It fixes your timing and tells you exactly when each chord changes.',
+            ),
+            exercise(
+              'g-loop4',
+              'The four-chord loop',
+              gtr(bars('C G Am F C G Am F', (c) => `{${c}}~↓ {${c}}:8~↓ {${c}}~↑ {${c}}:8~↑ {${c}}:8~↓ {${c}}:8~↑`), { chords: 'C G Am F C G Am F' }),
+              66,
+              104,
+              'I–V–vi–IV: eight bars, two times round. Turn on Backing chords to play along with a band.',
+            ),
+            text(
+              'Songs to try',
+              'Look up a chord chart for any of these and play along with your own strum. Only chords from this track are needed (and a capo where noted).\n\n- **Let It Be** (the Beatles): C G Am F.\n- **Knockin\' on Heaven\'s Door** (Bob Dylan): G D Am | G D C.\n- **Stand by Me** (Ben E. King): G Em C D, recorded in A, so use a **capo on the 2nd fret**.\n\nAlways check a chart against the recording, and trust your ears when they disagree.',
+            ),
+            text(
+              'Put your song on the Chords page',
+              'Open **Chords**, name the sheet after your song, set the capo or tuning, and type the chords in order ("G Em C D"). The **key finder** shows the key and a scale to solo with, **Play in order** lets you practise the changes at a steady pace, and you can reorder the chords if the song needs them in another order.',
+            ),
+            quiz('A chord change in a song keeps tripping you up. What is the best fix?', ['Play the whole song faster', 'Loop just that change slowly, then speed up', 'Skip it', 'Stop playing the song'], 1),
+          ],
+        },
+        {
+          id: 'g-fretmap',
+          title: 'Mapping the fretboard',
+          goal: 'Name the natural notes on strings 6 and 5 up to the 12th fret.',
+          minutes: 12,
+          steps: [
+            text(
+              'Why two strings are enough',
+              'Barre chords, power chords and scale positions are all named after their root on the **6th or 5th string**. Learn those two strings and you can find any chord or scale in any key.\n\nNatural notes are two frets apart, **except B–C and E–F**, which are neighbours (one fret). The 12th fret is the octave: the same note names start again.',
+            ),
+            {
+              t: 'fretboard',
+              title: 'Natural notes on strings 6 and 5',
+              marks: fm('*6/0=E 6/1=F 6/3=G 6/5=A 6/7=B 6/8=C 6/10=D *6/12=E *5/0=A 5/2=B 5/3=C 5/5=D 5/7=E 5/8=F 5/10=G *5/12=A'),
+              from: 0,
+              to: 12,
+              caption: 'Landmarks: fret 3 = G/C, fret 5 = A/D, fret 7 = B/E.',
+            },
+            text(
+              'Octave shape',
+              'From any note on the 6th string, go **two strings up and two frets higher** to find the same note an octave above (6th string fret 5 = A, 4th string fret 7 = A). The same shape works from the 5th string to the 3rd.',
+            ),
+            exercise(
+              'g-string6',
+              'Up and down the 6th string',
+              gtr('6/0 6/1 6/3 6/5 | 6/7 6/8 6/10 6/12 | 6/12 6/10 6/8 6/7 | 6/5 6/3 6/1 6/0'),
+              60,
+              100,
+              'Say each note name as you play it. Use one finger and slide: this is about knowing where notes are, not technique.',
+            ),
+            exercise(
+              'g-string5',
+              'Up and down the 5th string',
+              gtr('5/0 5/2 5/3 5/5 | 5/7 5/8 5/10 5/12 | 5/12 5/10 5/8 5/7 | 5/5 5/3 5/2 5/0'),
+              60,
+              100,
+            ),
+            quiz('Which pairs of natural notes are only one fret apart?', ['A–B and D–E', 'B–C and E–F', 'C–D and F–G', 'G–A and B–C'], 1),
+            quiz('What note is on the 5th string, 3rd fret?', ['B', 'C', 'D', 'G'], 1),
           ],
         },
         {
@@ -360,60 +514,24 @@ export const guitar: Track = {
     },
     {
       id: 'g3',
-      title: 'Know the neck',
-      level: 'Intermediate',
-      about: 'Find any note on the two lowest strings and unlock barre chords.',
+      title: 'Barre chords',
+      level: 'Late beginner',
+      about: 'The F and B minor shapes, and how one shape moves anywhere on the neck. Give these weeks, not days.',
       placement: {
-        q: 'What note is at the 5th fret of the low E string?',
+        q: 'You play the F barre shape with the barre on the 5th fret. Which chord is it?',
         options: ['G', 'A', 'B', 'C'],
         answer: 1,
       },
       check: { title: 'Barre chords', piece: gtr('{F}:h {Bm}:h | {F}:h {Bm}:h'), tempo: 56 },
+      placement2: {
+        q: 'In a barre chord, what does the first finger act as?',
+        options: ['A pick', 'A movable nut', 'A mute for the top strings', 'A capo for strings 1 and 2 only'],
+        answer: 1,
+      },
       lessons: [
         {
-          id: 'g-fretmap',
-          title: 'Mapping the fretboard',
-          goal: 'Name the natural notes on strings 6 and 5 up to the 12th fret.',
-          minutes: 12,
-          steps: [
-            text(
-              'Why two strings are enough',
-              'Barre chords, power chords and scale positions are all named after their root on the **6th or 5th string**. Learn those two strings and you can find any chord or scale in any key.\n\nNatural notes are two frets apart, **except B–C and E–F**, which are neighbours (one fret). The 12th fret is the octave: the same note names start again.',
-            ),
-            {
-              t: 'fretboard',
-              title: 'Natural notes on strings 6 and 5',
-              marks: fm('*6/0=E 6/1=F 6/3=G 6/5=A 6/7=B 6/8=C 6/10=D *6/12=E *5/0=A 5/2=B 5/3=C 5/5=D 5/7=E 5/8=F 5/10=G *5/12=A'),
-              from: 0,
-              to: 12,
-              caption: 'Landmarks: fret 3 = G/C, fret 5 = A/D, fret 7 = B/E.',
-            },
-            text(
-              'Octave shape',
-              'From any note on the 6th string, go **two strings up and two frets higher** to find the same note an octave above (6th string fret 5 = A, 4th string fret 7 = A). The same shape works from the 5th string to the 3rd.',
-            ),
-            exercise(
-              'g-string6',
-              'Up and down the 6th string',
-              gtr('6/0 6/1 6/3 6/5 | 6/7 6/8 6/10 6/12 | 6/12 6/10 6/8 6/7 | 6/5 6/3 6/1 6/0'),
-              60,
-              100,
-              'Say each note name as you play it. Use one finger and slide: this is about knowing where notes are, not technique.',
-            ),
-            exercise(
-              'g-string5',
-              'Up and down the 5th string',
-              gtr('5/0 5/2 5/3 5/5 | 5/7 5/8 5/10 5/12 | 5/12 5/10 5/8 5/7 | 5/5 5/3 5/2 5/0'),
-              60,
-              100,
-            ),
-            quiz('Which pairs of natural notes are only one fret apart?', ['A–B and D–E', 'B–C and E–F', 'C–D and F–G', 'G–A and B–C'], 1),
-            quiz('What note is on the 5th string, 3rd fret?', ['B', 'C', 'D', 'G'], 1),
-          ],
-        },
-        {
           id: 'g-barre',
-          title: 'Barre chords',
+          title: 'Your first barre chords: F and Bm',
           goal: 'Play F and Bm and understand how barre shapes move.',
           minutes: 15,
           steps: [
@@ -442,7 +560,7 @@ export const guitar: Track = {
     {
       id: 'g4',
       title: 'The pentatonic scale',
-      level: 'Intermediate',
+      level: 'Late beginner',
       about: 'The scale behind most rock and blues solos, with the techniques that make it sing.',
       placement: {
         q: 'You play a full bend at the 7th fret of the 3rd string (the note D). Which note should the bend reach?',
@@ -450,12 +568,18 @@ export const guitar: Track = {
         answer: 1,
       },
       check: { title: 'Minor pentatonic, box 1', piece: gtr('6/5 6/8 5/5 5/7 | 4/5 4/7 3/5 3/7 | 2/5 2/8 1/5 1/8 | 1/8 1/5 2/8 2/5'), tempo: 80 },
+      placement2: {
+        q: 'Which notes are in the A minor pentatonic scale?',
+        options: ['A B C D E', 'A C D E G', 'A C♯ E F♯ G', 'A B D E G'],
+        answer: 1,
+      },
       lessons: [
         {
           id: 'g-pent1',
           title: 'Minor pentatonic: box 1',
           goal: 'Play the A minor pentatonic scale up and down from memory.',
           minutes: 12,
+          related: ['th-pent'],
           steps: [
             text(
               'Five notes that always work',
@@ -701,7 +825,7 @@ export const guitar: Track = {
     {
       id: 'g5',
       title: 'Building solos',
-      level: 'Advancing',
+      level: 'Early intermediate',
       about: 'Follow the chords, phrase like a singer, and play a complete 12-bar solo.',
       placement: {
         q: 'In a 12-bar blues in A, which chord is played in bar 5?',
@@ -709,6 +833,11 @@ export const guitar: Track = {
         answer: 1,
       },
       check: { title: 'A lick over the blues', piece: gtr('2/8:8 2/5:8 3/7:8 3/5:8 4/7:h | 1/5:8 2/8:8 2/5:8 3/7:8 3/5 4/7', { chords: 'A7 A7' }), tempo: 80 },
+      placement2: {
+        q: 'Over an A7 chord in a blues, which note is the 3rd of the chord (and is not in the minor pentatonic scale)?',
+        options: ['C♯', 'C', 'E', 'G'],
+        answer: 0,
+      },
       lessons: [
         {
           id: 'g-12bar',
@@ -774,6 +903,7 @@ export const guitar: Track = {
           title: 'Targeting chord tones',
           goal: 'Land on a note from the current chord whenever the chord changes.',
           minutes: 15,
+          related: ['th-progressions'],
           steps: [
             text(
               'Why some notes sound "right"',
@@ -902,6 +1032,27 @@ export const guitar: Track = {
               'Open **Jam**, choose **12-bar blues** or **Quick-change blues** in E, and play this solo over it. Then keep bars 1–4 and improvise the rest. Then keep only the rhythm of each phrase and change the notes. That is how players turn a learned solo into their own vocabulary.',
             ),
             quiz('Where is box 1 of the E minor pentatonic scale?', ['At the 5th fret', 'At the 7th fret', 'At the 12th fret (and the open position)', 'At the 9th fret'], 2),
+          ],
+        },
+        {
+          id: 'g-next',
+          title: 'Where to go from here',
+          goal: 'Know what you can do now, what this app cannot teach, and how to keep growing as a guitarist.',
+          minutes: 10,
+          steps: [
+            text(
+              'What you can do now',
+              'You can play open chords, power chords and a first barre chord, strum and shuffle, play the minor pentatonic scale across the neck with hammer-ons, slides and bends, follow a 12-bar blues and improvise over it, and play two complete solos. That is a real foundation: a solid late beginner with a strong lead side.',
+            ),
+            text(
+              'What this app cannot teach',
+              'It can check that a note sounded at the right time. It **cannot** hear or see **tone, muting, buzzing strings, fretting-hand tension, bend pitch, vibrato or feel**. A microphone "pass" on a chord only proves one note sounded. Those need a human ear:\n\n- **A teacher**, even once every four to six weeks, at three moments in particular: your first chords, your first barre chords, your first bends.\n- **Record yourself** and listen back; film your hands once a month to check posture and your thumb.\n- **Play with other people**: a friend, a jam night, or a backing track.\n- A guitar with a **good setup** (low action) makes barre chords much easier. A music shop can adjust it cheaply.',
+            ),
+            text(
+              'Your next steps',
+              '- **Learn songs.** One new song a week from chord charts is the best motivation there is, and it builds rhythm playing fast.\n- **Go deeper on rhythm.** Barre chords need weeks of daily practice. Add **fingerpicking** (arpeggios, then Travis picking), **palm muting** and more strumming patterns.\n- **Learn the major scale across the neck**, then the modes you have met (Dorian, Mixolydian) over backing tracks in **Jam**.\n- **Move your licks to other keys and positions**, and learn to connect all five boxes.\n- **Learn from recordings by ear.** Slow a solo down and work out a phrase note by note.\n- Practise most days for 20 minutes, using the routine from the lesson "How to practise".',
+            ),
+            quiz('Which of these can an app NOT judge reliably?', ['Whether a note sounded', 'Tone, muting and tension', 'Whether you kept time', 'Which exercise you played'], 1),
           ],
         },
       ],

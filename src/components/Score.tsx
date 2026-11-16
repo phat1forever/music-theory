@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Accidental,
+  Barline,
   Annotation,
   Beam,
   Dot,
@@ -218,6 +219,9 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
         const w = mw + (i === 0 ? lead : 0)
         const y = line * lineH + 8 + chordPad
         const upper = new Stave(x, y, w)
+        // The very last bar of the piece ends with a double bar line (thin and thick).
+        const finalBar = idx === top.length - 1
+        if (finalBar) upper.setEndBarType(Barline.type.END)
         if (i === 0) {
           upper.addClef(topClef)
           if (piece.key) upper.addKeySignature(keySig)
@@ -241,10 +245,12 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
 
         if (guitar) {
           lower = new TabStave(x, y + 110, w)
+          if (finalBar) lower.setEndBarType(Barline.type.END)
           if (i === 0) lower.addClef('tab')
           voices.push(voice(tabNotes(top[idx])))
         } else if (bottom) {
           lower = new Stave(x, y + 100, w)
+          if (finalBar) lower.setEndBarType(Barline.type.END)
           if (i === 0) {
             lower.addClef('bass')
             if (piece.key) lower.addKeySignature(keySig)

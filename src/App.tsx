@@ -13,7 +13,6 @@ const NAV = [
   ['explore', 'Explore'],
   ['chords', 'Chords'],
   ['jam', 'Jam'],
-  ['transcribe', 'Tabs from audio'],
   ['progress', 'Progress'],
 ] as const
 
@@ -86,6 +85,9 @@ export default function App() {
         {page === 'transcribe' && <Transcribe />}
         {page === 'progress' && <Progress />}
       </main>
+      <footer className="foot">
+        <a href="#/transcribe">Tabs from audio (coming later)</a>
+      </footer>
     </>
   )
 }

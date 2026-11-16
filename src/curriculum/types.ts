@@ -39,13 +39,15 @@ export interface Lesson {
   title: string
   goal: string
   minutes: number
+  /** ids of theory lessons that help with this one, shown as "Helpful to know first" */
+  related?: string[]
   steps: StepDef[]
 }
 
 export interface Unit {
   id: string
   title: string
-  level: 'Beginner' | 'Intermediate' | 'Advancing'
+  level: 'Beginner' | 'Late beginner' | 'Early intermediate' | 'Intermediate' | 'Advancing'
   about: string
   lessons: Lesson[]
   /** answer this correctly in the placement check to skip the unit */

@@ -1509,3 +1509,57 @@ input[type='range'] {
   color: var(--good);
   font-weight: 700;
 }
+.today-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: step;
+}
+.today-list > li {
+  counter-increment: step;
+  position: relative;
+  padding: 10px 0 10px 38px;
+  border-top: 1px solid var(--line);
+}
+.today-list > li:first-child {
+  border-top: 0;
+}
+.today-list > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.today-list .rows {
+  margin-top: 4px;
+}
+.checkpoint {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+.checkpoint .tight {
+  margin-top: 4px;
+}
+.related {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin: -4px 0 8px;
+}
+.foot {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+  font-size: 0.85rem;
+}
+.foot a {
+  color: var(--muted);
+}

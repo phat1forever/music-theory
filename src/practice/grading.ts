@@ -152,22 +152,31 @@ export function addDays(iso: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-/** Update progress after an attempt: passing doubles the review gap, failing brings it back tomorrow. */
+/**
+ * Update progress after an attempt.
+ * - A pass at or above the goal tempo doubles the review gap (up to 30 days). A pass below the goal brings it back
+ *   within three days, because the tempo still has to climb.
+ * - Failing a tempo *above* your best one is trying something harder, not forgetting: the schedule is left alone.
+ *   Failing at or below your best tempo means the piece slipped, so it returns tomorrow.
+ * `target` is optional for callers that do not have a goal tempo.
+ */
 export function recordAttempt(
   prev: ExerciseProgress | undefined,
   accuracy: number,
   tempo: number,
   today: string,
+  target?: number,
 ): ExerciseProgress {
   const passed = accuracy >= PASS
-  const interval = passed ? Math.min(30, prev?.interval ? prev.interval * 2 : 1) : 1
-  return {
+  const base = {
     bestTempo: passed ? Math.max(prev?.bestTempo ?? 0, tempo) : (prev?.bestTempo ?? 0),
     bestAccuracy: Math.max(prev?.bestAccuracy ?? 0, accuracy),
     attempts: (prev?.attempts ?? 0) + 1,
-    interval,
-    due: addDays(today, interval),
   }
+  if (!passed && prev?.bestTempo && tempo > prev.bestTempo) return { ...base, interval: prev.interval, due: prev.due }
+  const atGoal = target === undefined || tempo >= target
+  const interval = passed ? (atGoal ? Math.min(30, prev?.interval ? prev.interval * 2 : 1) : Math.min(3, prev?.interval ? Math.max(1, prev.interval) : 1)) : 1
+  return { ...base, interval, due: addDays(today, interval) }
 }
 
 /** Count of consecutive practice days ending today or yesterday. */

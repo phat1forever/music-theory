@@ -101,7 +101,7 @@ export function Runner({ ex, onAttempt, check }: Props) {
   const [good, setGood] = useState<number[]>([])
   const [bad, setBad] = useState<number[]>([])
   const [count, setCount] = useState<number | null>(null)
-  const [result, setResult] = useState<{ accuracy: number; note: string; counts: boolean } | null>(null)
+  const [result, setResult] = useState<{ accuracy: number; note: string; counts: boolean; how: string } | null>(null)
   const [guide, setGuide] = useState(true)
   const [hints, setHints] = useState(true)
   const [hand, setHand] = useState<'both' | 'rh' | 'lh'>('both')
@@ -161,11 +161,11 @@ export function Runner({ ex, onAttempt, check }: Props) {
   }
 
   /** `counts` is false for run-throughs that should not move the tempo record: step-by-step and one hand alone. */
-  function finish(accuracy: number, usedTempo: number, note: string, counts = true) {
+  function finish(accuracy: number, usedTempo: number, note: string, counts = true, how = '') {
     if (check) check.onResult(accuracy)
-    else if (counts && !partial) actions.attempt(ex.id, accuracy, usedTempo)
+    else if (counts && !partial) actions.attempt(ex.id, accuracy, usedTempo, ex.target)
     else actions.touch(ex.id)
-    setResult({ accuracy, note, counts: counts && !partial })
+    setResult({ accuracy, note, counts: counts && !partial, how })
     setMode('done')
     setCursor(null)
     onAttempt?.(accuracy)
@@ -216,7 +216,7 @@ export function Runner({ ex, onAttempt, check }: Props) {
           st.got = new Set()
           if (st.index >= steps.length) {
             const acc = stepAccuracy(steps.length, st.mistakes)
-            finish(acc, ex.tempo, st.mistakes ? `${st.mistakes} wrong note${st.mistakes > 1 ? 's' : ''} along the way.` : 'No wrong notes.', false)
+            finish(acc, ex.tempo, st.mistakes ? `${st.mistakes} wrong note${st.mistakes > 1 ? 's' : ''} along the way.` : 'No wrong notes.', false, howChecked(e.source))
           } else setCursor(steps[st.index].beat)
         }
       } else {
@@ -279,7 +279,7 @@ export function Runner({ ex, onAttempt, check }: Props) {
         const timing =
           r.hits < 2 ? '' : Math.abs(r.offset) < 0.05 ? ' Timing was right on the beat.' : r.offset > 0 ? ' You tended to play a little late.' : ' You tended to rush ahead of the beat.'
         const stray = r.extra ? ` ${r.extra} extra or wrong note${r.extra > 1 ? 's' : ''}.` : ''
-        finish(r.accuracy, tempo, `${r.hits} of ${r.total} notes on time.${stray}${timing}`)
+        finish(r.accuracy, tempo, `${r.hits} of ${r.total} notes on time.${stray}${timing}`, true, howChecked(source))
       },
       { countIn: true, metronome: true, sound: guide && profile.input !== 'mic', backing: backing && hasChords && profile.input !== 'mic' },
     )
@@ -532,6 +532,12 @@ export function Runner({ ex, onAttempt, check }: Props) {
         <label className="check" hidden={!!check} title="Turn this off to practise reading the notes without being shown where they are">
           <input type="checkbox" checked={hints} onChange={(e) => setHints(e.target.checked)} /> Show {guitar ? 'frets' : 'keys'} to play
         </label>
+        {profile.input === 'mic' && (
+          <small className="muted mic-note" data-mic-note>
+            The microphone follows one note at a time, so it checks timing and that a note of each chord sounded, not that every string rang. Listen for buzzes, muted
+            strings and uneven notes yourself.
+          </small>
+        )}
         {profile.input !== 'mic' && (
           <label className="check">
             <input type="checkbox" checked={guide} onChange={(e) => setGuide(e.target.checked)} /> Guide sound
@@ -559,13 +565,13 @@ export function Runner({ ex, onAttempt, check }: Props) {
         <div className="result">
           <strong>How did that go?</strong>
           <div className="btns">
-            <button className="btn primary" data-rate="good" onClick={() => finish(0.95, tempo, 'Self-rated: clean and in time.')}>
+            <button className="btn primary" data-rate="good" onClick={() => finish(0.95, tempo, 'Self-rated: clean and in time.', true, howChecked('self'))}>
               Clean and in time
             </button>
-            <button className="btn" onClick={() => finish(0.8, tempo, 'Self-rated: a few slips.')}>
+            <button className="btn" onClick={() => finish(0.7, tempo, 'Self-rated: a few slips.', true, howChecked('self'))}>
               A few slips
             </button>
-            <button className="btn" onClick={() => finish(0.5, tempo, 'Self-rated: not there yet.')}>
+            <button className="btn" onClick={() => finish(0.5, tempo, 'Self-rated: not there yet.', true, howChecked('self'))}>
               Not there yet
             </button>
           </div>
@@ -600,6 +606,11 @@ export function Runner({ ex, onAttempt, check }: Props) {
                   : `Next step: ${nextTempo} bpm.`
                 : 'Slow the tempo down a little, or use Step by step to check the notes.'}
             </p>
+            {result.how && (
+              <small className="muted" data-how>
+                {result.how}
+              </small>
+            )}
           </div>
           <div className="btns">
             {!check && result.counts && passed && tempo < ex.target && (
@@ -627,6 +638,14 @@ export function Runner({ ex, onAttempt, check }: Props) {
       )}
     </div>
   )
+}
+
+/** What the app actually verified, in plain words, so a result is never mistaken for more than it is. */
+function howChecked(source: Source | 'self'): string {
+  if (source === 'midi') return 'Checked by your MIDI keyboard: every note and its timing.'
+  if (source === 'mic') return 'Checked by the microphone: timing and one note per hand, not that every string or key sounded cleanly.'
+  if (source === 'click') return 'Checked from the notes you tapped on screen.'
+  return 'Not checked: you rated this yourself.'
 }
 
 const ORDINAL = ['1st', '2nd', '3rd', '4th', '5th', '6th']

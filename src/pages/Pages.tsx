@@ -1,16 +1,17 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { InputBar } from '../components/InputBar'
 import {
   EXERCISES,
   findExercise,
   isOpen,
   nextLesson,
+  pendingCheckpoints,
   TRACKS,
   trackLessons,
   trackProgress,
   unlockedExercises,
 } from '../curriculum'
-import type { Track } from '../curriculum/types'
+import type { Track, Unit } from '../curriculum/types'
 import { CHECK_PASS, mastery, streak } from '../practice/grading'
 import { Runner } from '../practice/Runner'
 import { actions, today, useProfile, useStore, type Profile } from '../store/store'
@@ -31,11 +32,146 @@ const dueExercises = (p: Profile) =>
 
 // ---------- Home ----------
 
+/** A short session plan built from the "how to practise" routine: warm up, review what is due, learn, consolidate, play. */
+function Today({ p }: { p: Profile }) {
+  const due = dueExercises(p)
+  const active = TRACKS.filter((t) => trackLessons(t.id).some((r) => p.lessons[r.lesson.id]))
+  const checkpoints = active.flatMap((t) => pendingCheckpoints(t.id, p))
+  const next = active.flatMap((t) => {
+    const n = nextLesson(t.id, p)
+    return n ? [n] : []
+  })
+  return (
+    <section className="card today" data-today>
+      <div className="eyebrow">Today's session · about 20 minutes</div>
+      <ol className="today-list">
+        <li>
+          <strong>Warm up</strong> <small className="muted">3 min</small>
+          <span className="muted"> A slow scale or the chord changes you already know. Loosen your hands first.</span>
+        </li>
+        <li>
+          <strong>Review</strong> <small className="muted">5 min</small>
+          {due.length === 0 ? (
+            <span className="muted"> Nothing due today. Replay a favourite from Practice.</span>
+          ) : (
+            <ul className="rows">
+              {due.slice(0, 3).map((r) => (
+                <li key={r.ex.id}>
+                  <a href={`#/practice/${r.ex.id}`}>
+                    <span>
+                      <strong>{r.ex.title}</strong>
+                      <small>
+                        {r.track.title} · best {p.exercises[r.ex.id].bestTempo || '–'} bpm, goal {r.ex.target}
+                      </small>
+                    </span>
+                    <span className="chev">Practise →</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+          {due.length > 3 && (
+            <a className="link" href="#/practice">
+              {' '}
+              {due.length - 3} more due
+            </a>
+          )}
+        </li>
+        <li>
+          <strong>New</strong> <small className="muted">8 min</small>
+          {next.length === 0 ? (
+            <span className="muted"> You have taken every lesson in your tracks. Spend this time on review and Jam.</span>
+          ) : (
+            <ul className="rows">
+              {next.map((n) => (
+                <li key={n.lesson.id}>
+                  <a href={`#/lesson/${n.lesson.id}`}>
+                    <span>
+                      <strong>{n.lesson.title}</strong>
+                      <small>
+                        {n.track.title} · {n.unit.title}
+                      </small>
+                    </span>
+                    <span className="chev">Start →</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+        {checkpoints.length > 0 && (
+          <li>
+            <strong>Consolidate</strong>
+            <span className="muted"> You have finished the lessons in {checkpoints.map((c) => `"${c.unit.title}"`).join(' and ')}. Show it has sunk in with the unit checkpoint:</span>
+            <ul className="rows">
+              {checkpoints.map((c) => (
+                <li key={c.unit.id}>
+                  <a href={`#/lessons/${c.track.id}`}>
+                    <span>
+                      <strong>{c.unit.title}: checkpoint</strong>
+                      <small>{c.unit.check!.title}</small>
+                    </span>
+                    <span className="chev">Take it →</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </li>
+        )}
+        <li>
+          <strong>Play</strong> <small className="muted">4 min</small>
+          <span className="muted">
+            {' '}
+            Something you enjoy: a piece you know, or <a href="#/jam">Jam</a>. Finish on a good note.
+          </span>
+        </li>
+      </ol>
+    </section>
+  )
+}
+
+function Checkpoint({ unit }: { unit: Unit }) {
+  const p = useProfile()
+  const [open, setOpen] = useState(false)
+  if (!unit.check) return null
+  const passedOn = p.checkpoints[unit.id]
+  return (
+    <div className="checkpoint" data-checkpoint={unit.id}>
+      <div className="split-head">
+        <div>
+          <strong>Unit checkpoint:</strong> <span className="muted">{unit.check.title}</span>
+          {passedOn ? (
+            <p className="place-ok tight">✓ Passed on {passedOn}. Replay it any time to keep it sharp.</p>
+          ) : (
+            <p className="muted tight">
+              You have taken the lessons in this unit. Now show it has sunk in: play this short piece cleanly, in time. The microphone or MIDI keyboard grades it; otherwise you rate yourself.
+            </p>
+          )}
+        </div>
+        <button className="btn small" onClick={() => setOpen(!open)}>
+          {open ? 'Close' : passedOn ? 'Replay' : 'Take the checkpoint'}
+        </button>
+      </div>
+      {open && (
+        <Runner
+          key={`cp-${unit.id}`}
+          ex={{ id: `checkpoint-${unit.id}`, title: unit.check.title, piece: unit.check.piece, tempo: unit.check.tempo, target: unit.check.tempo, flats: unit.check.flats }}
+          check={{
+            onResult: (a) => {
+              if (a !== null && a >= CHECK_PASS) actions.passCheckpoint(unit.id)
+            },
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
 export function Home() {
   const p = useProfile()
-  const due = dueExercises(p)
   const days = streak(p.days, today())
-  const started = Object.keys(p.lessons).length > 0
+  // Someone who has practised something is past the first-run screen, even before finishing a lesson.
+  const started = Object.keys(p.lessons).length > 0 || p.tried.length > 0 || Object.keys(p.exercises).length > 0
   return (
     <div className="stack">
       <header className="hero">
@@ -43,7 +179,7 @@ export function Home() {
           <h1>{started ? `Welcome back, ${p.name}` : 'Learn theory, guitar and keyboard'}</h1>
           <p>
             {started
-              ? 'Today’s session: review what is due, then take the next lesson.'
+              ? 'Your session for today is below: about twenty minutes, in this order.'
               : 'Short, focused lessons with diagrams, tab and sheet music. Practise each skill until it sticks, then build toward improvising your own solos.'}
           </p>
         </div>
@@ -65,7 +201,10 @@ export function Home() {
               I'm new to keyboard
             </a>
             <a className="btn" href="#/lessons/guitar">
-              I already play: find my level
+              I already play guitar: find my level
+            </a>
+            <a className="btn" href="#/lessons/keys">
+              I already play keyboard: find my level
             </a>
           </div>
           <p className="muted tight">
@@ -75,31 +214,7 @@ export function Home() {
         </section>
       )}
 
-      {due.length > 0 && (
-        <section className="card">
-          <div className="eyebrow">Warm-up · due for review</div>
-          <ul className="rows">
-            {due.slice(0, 4).map((r) => (
-              <li key={r.ex.id}>
-                <a href={`#/practice/${r.ex.id}`}>
-                  <span>
-                    <strong>{r.ex.title}</strong>
-                    <small>
-                      {r.track.title} · best {p.exercises[r.ex.id].bestTempo || '–'} bpm, goal {r.ex.target}
-                    </small>
-                  </span>
-                  <span className="chev">Practise →</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-          {due.length > 4 && (
-            <a className="link" href="#/practice">
-              {due.length - 4} more due
-            </a>
-          )}
-        </section>
-      )}
+      {started && <Today p={p} />}
 
       <section className="grid3">
         {TRACKS.map((t) => {
@@ -121,9 +236,9 @@ export function Home() {
                   <p className="muted">Skipped lessons stay open under All lessons. Keep reviewing in Practice and Jam.</p>
                 </>
               )}
-              <Bar value={prog.done / prog.total} />
+              <Bar value={(prog.done + prog.skipped) / prog.total} />
               <small className="muted">
-                {prog.done} of {prog.total} lessons
+                {prog.done} of {prog.total} lessons done{prog.skipped ? ` · ${prog.skipped} skipped` : ''}
               </small>
               <div className="btns">
                 {next && (
@@ -173,6 +288,10 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
   const [answered, setAnswered] = useState(false)
   const [score, setScore] = useState<number | null>(null)
   const [questionsOnly, setQuestionsOnly] = useState<string[]>([])
+  // Once the player has attempted the playing part of a unit, skipping it is no longer offered.
+  const [playTried, setPlayTried] = useState(false)
+  // Nothing is saved until the check ends, so Cancel really cancels.
+  const committed = useRef(false)
   const unit = track.units[i]
   const last = track.units.length - 1
 
@@ -182,17 +301,23 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
     actions.skipLessons(track.units.slice(0, count).flatMap((u) => u.lessons.map((l) => l.id)))
     if (track.id === 'guitar' && count >= 4) actions.unlockJam()
   }
+  const commit = (count: number) => {
+    if (committed.current) return
+    committed.current = true
+    finish(count)
+  }
   const stop = (why: string) => {
-    finish(i)
+    commit(i)
     setStopped(why)
   }
   const pass = (byQuestionsOnly = false) => {
-    finish(i + 1)
     if (byQuestionsOnly) setQuestionsOnly((q) => [...q, unit.title])
+    if (i + 1 >= track.units.length) commit(i + 1)
     setI(i + 1)
     setPhase('quiz')
     setAnswered(false)
     setScore(null)
+    setPlayTried(false)
   }
   /** The questions for this unit are all right: on to the next part. */
   const afterQuestions = () => {
@@ -283,7 +408,12 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
               target: unit.check.tempo,
               flats: unit.check.flats,
             }}
-            check={{ onResult: setScore }}
+            check={{
+              onResult: (a) => {
+                setScore(a)
+                if (a !== null) setPlayTried(true)
+              },
+            }}
           />
           {score !== null && (
             <div className="btns" style={{ marginTop: 12 }}>
@@ -299,9 +429,11 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
             </div>
           )}
           <div className="btns" style={{ marginTop: 12 }}>
-            <button className="btn" onClick={() => pass(true)} title="No instrument handy? Skip the playing and let the questions decide for this unit.">
-              I can't play right now
-            </button>
+            {!playTried && (
+              <button className="btn" onClick={() => pass(true)} title="No instrument handy? Skip the playing and let the questions decide for this unit.">
+                I can't play right now
+              </button>
+            )}
             <button className="btn" onClick={() => stop('You were not sure.')}>
               I'm not sure
             </button>
@@ -339,7 +471,7 @@ export function Lessons({ trackId }: { trackId?: string }) {
       </div>
       {placing && <Placement key={track.id} track={track} onClose={() => setPlacing(false)} />}
       {track.units.map((u, ui) => {
-        const done = u.lessons.filter((l) => p.lessons[l.id]).length
+        const done = u.lessons.filter((l) => p.lessons[l.id] === 'done').length
         const untouched = u.lessons.every((l) => !p.lessons[l.id])
         const locked = !u.lessons.some((l) => isOpen({ track, unit: u, lesson: l }, p))
         return (
@@ -402,6 +534,7 @@ export function Lessons({ trackId }: { trackId?: string }) {
                 )
               })}
             </ol>
+            {u.check && u.lessons.every((l) => p.lessons[l.id]) && u.lessons.some((l) => p.lessons[l.id] === 'done') && <Checkpoint unit={u} />}
           </section>
         )
       })}

@@ -42,9 +42,21 @@ export function isOpen(ref: LessonRef, p: Profile): boolean {
   return nextLesson(ref.track.id, p)?.lesson.id === ref.lesson.id
 }
 
-export function trackProgress(trackId: string, p: Profile): { done: number; total: number } {
+export function trackProgress(trackId: string, p: Profile): { done: number; skipped: number; total: number } {
   const all = trackLessons(trackId)
-  return { done: all.filter((r) => p.lessons[r.lesson.id]).length, total: all.length }
+  return {
+    done: all.filter((r) => p.lessons[r.lesson.id] === 'done').length,
+    skipped: all.filter((r) => p.lessons[r.lesson.id] === 'skipped').length,
+    total: all.length,
+  }
+}
+
+/** Units whose lessons have all been taken (at least one for real) but whose checkpoint has not been passed. */
+export function pendingCheckpoints(trackId: string, p: Profile): { track: Track; unit: Unit }[] {
+  const track = TRACKS.find((t) => t.id === trackId)!
+  return track.units
+    .filter((u) => u.check && !p.checkpoints[u.id] && u.lessons.every((l) => p.lessons[l.id]) && u.lessons.some((l) => p.lessons[l.id] === 'done'))
+    .map((unit) => ({ track, unit }))
 }
 
 /** Exercises whose lesson has been reached (done, skipped or currently open). */

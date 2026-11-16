@@ -165,9 +165,16 @@ describe('grading', () => {
     expect(suggestedTempo(60, 100, p)).toBe(68)
     p = recordAttempt(p, 0.9, 68, '2026-01-02')
     expect(p.due).toBe('2026-01-04')
+    // trying a faster tempo and missing it is not forgetting: the schedule is left alone
     p = recordAttempt(p, 0.5, 76, '2026-01-04')
     expect(p.bestTempo).toBe(68)
+    expect(p.due).toBe('2026-01-04')
+    // missing a tempo you had already passed means it slipped: back tomorrow
+    p = recordAttempt(p, 0.5, 60, '2026-01-04')
     expect(p.due).toBe('2026-01-05')
+    // a pass below the goal tempo comes back within three days, one at the goal doubles the gap
+    expect(recordAttempt(recordAttempt(undefined, 0.9, 60, '2026-01-01', 100), 0.9, 68, '2026-01-02', 100).interval).toBe(1)
+    expect(recordAttempt({ bestTempo: 100, bestAccuracy: 1, attempts: 3, interval: 8, due: '2026-01-02' }, 0.9, 100, '2026-01-02', 100).interval).toBe(16)
     expect(addDays('2026-02-28', 1)).toBe('2026-03-01')
     expect(streak(['2026-01-01', '2026-01-02', '2026-01-03'], '2026-01-03')).toBe(3)
     expect(streak(['2026-01-01', '2026-01-02'], '2026-01-03')).toBe(2)
@@ -332,10 +339,11 @@ describe('pedal, placement checks and hands-together scales', () => {
     for (const t of TRACKS) {
       for (const u of t.units) {
         expect(u.placement.options.length, `${u.id} question`).toBeGreaterThan(1)
-        if (t.id === 'theory') {
-          expect(u.placement2, `${u.id} second question`).toBeTruthy()
-          expect(u.placement2!.answer).toBeLessThan(u.placement2!.options.length)
-        } else {
+        // every unit asks two questions, and the instrument units also have a piece to play
+        expect(u.placement2, `${u.id} second question`).toBeTruthy()
+        expect(u.placement2!.answer).toBeLessThan(u.placement2!.options.length)
+        expect(u.placement.answer).toBeLessThan(u.placement.options.length)
+        if (t.id !== 'theory') {
           expect(u.check, `${u.id} playing check`).toBeTruthy()
           const per = u.check!.piece.meter ?? 4
           const beats = totalBeats(u.check!.piece)
@@ -355,5 +363,24 @@ describe('pedal, placement checks and hands-together scales', () => {
     expect(two.rh.map((e) => e.fingers![0]).join('')).toBe('123123412312345')
     expect(two.lh!.map((e) => e.fingers![0]).join('')).toBe('543213214321321')
     expect(two.rh.length).toBe(15)
+  })
+})
+
+describe('curriculum links', () => {
+  it('points every "helpful first" link at a real lesson', () => {
+    for (const { lesson } of LESSONS) for (const r of lesson.related ?? []) expect(LESSONS.some((l) => l.lesson.id === r), `${lesson.id} -> ${r}`).toBe(true)
+  })
+  it('has a "where to go next" lesson at the end of each instrument track and a practice lesson in the first unit', () => {
+    for (const t of ['guitar', 'keys']) {
+      const track = TRACKS.find((x) => x.id === t)!
+      const last = track.units[track.units.length - 1].lessons.at(-1)!
+      expect(last.id).toMatch(/-next$/)
+      expect(track.units[0].lessons.some((l) => l.id.endsWith('-practice'))).toBe(true)
+    }
+  })
+  it('keeps the arpeggio fingerings standard', () => {
+    const find = (id: string) => EXERCISES.find((e) => e.ex.id === id)!.ex.piece
+    expect(find('k-arp-rh').rh.slice(0, 4).map((e) => e.fingers![0]).join('')).toBe('1235')
+    expect(find('k-arp-lh').lh!.slice(0, 4).map((e) => e.fingers![0]).join('')).toBe('5421')
   })
 })

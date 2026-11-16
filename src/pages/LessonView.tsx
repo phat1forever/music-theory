@@ -333,6 +333,10 @@ export function LessonView({ id }: { id: string }) {
   const firstOpen = Math.min(...unansweredAt, ...untriedAt)
   const quizzes = lesson.steps.filter((st) => st.t === 'quiz').length
   const quizRight = lesson.steps.filter((st, idx) => st.t === 'quiz' && picks[idx] === st.answer).length
+  const related = (lesson.related ?? []).flatMap((rid) => {
+    const r = findLesson(rid)
+    return r ? [r] : []
+  })
   const all = trackLessons(track.id)
   const next = all[all.findIndex((r) => r.lesson.id === id) + 1]
 
@@ -388,6 +392,17 @@ export function LessonView({ id }: { id: string }) {
       <p className="goal">
         <strong>Goal:</strong> {lesson.goal}
       </p>
+      {related.length > 0 && (
+        <p className="related" data-related>
+          Helpful to know first:{' '}
+          {related.map((r, k) => (
+            <span key={r.lesson.id}>
+              {k > 0 && ', '}
+              <a href={`#/lesson/${r.lesson.id}`}>{r.lesson.title}</a>
+            </span>
+          ))}
+        </p>
+      )}
       <div className="dots" aria-label={`Step ${i + 1} of ${lesson.steps.length}`}>
         {lesson.steps.map((s, j) => (
           <button key={j} className={j === i ? 'on' : j < i ? 'past' : ''} onClick={() => setI(j)} title={KIND[s.t]} aria-label={`Step ${j + 1}: ${KIND[s.t]}`} />
@@ -417,9 +432,11 @@ export function LessonView({ id }: { id: string }) {
               .
             </small>
             <div className="btns">
-              <button className="btn primary" onClick={() => setI(firstOpen)}>
-                {unansweredAt.length > 0 && unansweredAt[0] === firstOpen ? 'Go to the question' : 'Go to the exercise'}
-              </button>
+              {firstOpen !== i && (
+                <button className="btn primary" onClick={() => setI(firstOpen)}>
+                  {unansweredAt.length > 0 && unansweredAt[0] === firstOpen ? 'Go to the question' : 'Go to the exercise'}
+                </button>
+              )}
               <button
                 className="btn"
                 data-act="skip"
