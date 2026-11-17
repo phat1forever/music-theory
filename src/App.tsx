@@ -47,6 +47,8 @@ function useRoute(): string[] {
 export default function App() {
   const route = useRoute()
   const [page, arg] = route
+  // On a phone the links fold away behind a Menu button.
+  const [menu, setMenu] = useState(false)
   const state = useStore()
   const profile = useProfile()
 
@@ -67,9 +69,12 @@ export default function App() {
           </svg>
           Music Coach
         </a>
-        <nav aria-label="Main">
+        <button className="menu-btn" aria-expanded={menu} aria-controls="main-nav" onClick={() => setMenu(!menu)}>
+          {menu ? 'Close' : `Menu · ${NAV.find(([path]) => path === active)?.[1] ?? 'Home'}`}
+        </button>
+        <nav aria-label="Main" id="main-nav" className={menu ? 'open' : ''}>
           {NAV.map(([path, label]) => (
-            <a key={path} href={`#/${path}`} className={active === path ? 'on' : ''}>
+            <a key={path} href={`#/${path}`} className={active === path ? 'on' : ''} onClick={() => setMenu(false)}>
               {label}
             </a>
           ))}

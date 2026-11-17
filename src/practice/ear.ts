@@ -14,7 +14,7 @@ export const DRILLS: DrillInfo[] = [
   {
     id: 'intervals',
     name: 'Intervals',
-    about: 'Two notes play. Name the distance between them.',
+    about: 'Two notes play. Name how far apart they are: the interval. Each name counts the letter names from the lower note to the upper (C up to E is a 3rd: C, D, E).',
     levels: ['Five rising intervals: 3rds, 4th, 5th, octave', 'All twelve intervals, rising', 'All twelve: rising, falling or played together'],
   },
   {

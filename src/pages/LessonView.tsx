@@ -303,8 +303,25 @@ const KIND: Record<StepDef['t'], string> = {
 export function LessonView({ id }: { id: string }) {
   const profile = useProfile()
   const ref = findLesson(id)
-  const [i, setI] = useState(0)
+  // The step you were on survives a reload (for this browser tab).
+  const [i, setI] = useState(() => {
+    try {
+      const n = Number(sessionStorage.getItem(`lesson-step:${id}`))
+      return ref && n > 0 && n < ref.lesson.steps.length ? n : 0
+    } catch {
+      return 0
+    }
+  })
   const [finished, setFinished] = useState(false)
+  // Once the lesson is finished (or skipped), opening it again starts from the top.
+  useEffect(() => {
+    try {
+      if (finished) sessionStorage.removeItem(`lesson-step:${id}`)
+      else sessionStorage.setItem(`lesson-step:${id}`, String(i))
+    } catch {
+      // storage unavailable: the place is simply not remembered
+    }
+  }, [id, i, finished])
   // Answers given to this lesson's quick checks, by step number.
   const [picks, setPicks] = useState<Record<number, number>>({})
   // Was this lesson already finished when it was opened? Then it can be revisited freely; otherwise quizzes and exercises gate it.
@@ -377,8 +394,15 @@ export function LessonView({ id }: { id: string }) {
             any time: playing each one once completes it.{' '}
             <a href={`#/practice/${untried[0].id}`}>Practise "{untried[0].title}" now</a>
           </p>
-        ) : (
+        ) : lesson.steps.some((st) => st.t === 'exercise') ? (
           <p className="muted">The exercises from this lesson are in Practice. They will come back for review, a little faster each time.</p>
+        ) : null}
+        {unit.check && !unit.free && !profile.checkpoints[unit.id] && unit.lessons.every((l) => profile.lessons[l.id]) && (
+          <p className="notice" data-unit-done>
+            That was the last lesson of <strong>{unit.title}</strong>. When you are ready, the unit checkpoint on the{' '}
+            <a href={`#/lessons/${track.id}`}>{track.title.toLowerCase()} lessons page</a> is a short piece that shows it has sunk in. It is optional: nothing is locked
+            without it.
+          </p>
         )}
         <div className="btns">
           {next ? (

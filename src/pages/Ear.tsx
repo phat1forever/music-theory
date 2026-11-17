@@ -130,7 +130,7 @@ function makeChoice(drill: string, level: number): Choice {
       answer: q.options.indexOf(q.semis),
       play: () =>
         void sequence(q.how === 'together' ? [[[q.low, hi], 0, 1.4]] : q.how === 'up' ? [[[q.low], 0, 0.8], [[hi], 0.7, 1.1]] : [[[hi], 0, 0.8], [[q.low], 0.7, 1.1]]),
-      detail: `${pretty(lowName)} and ${pretty(highName)}: ${q.semis} half step${q.semis > 1 ? 's' : ''}${q.how === 'down' ? ', falling' : q.how === 'together' ? ', played together' : ''}.`,
+      detail: `${pretty(lowName)} and ${pretty(highName)}: ${q.semis === 12 ? 'an octave' : `a ${intervalName(q.semis).toLowerCase()}`}, ${q.semis} half step${q.semis > 1 ? 's' : ''}${q.how === 'down' ? ', falling' : q.how === 'together' ? ', played together' : ''}.`,
     }
   }
   if (drill === 'chords') {
@@ -196,7 +196,7 @@ function ChoiceDrill({ info }: { info: DrillInfo }) {
   return (
     <div className="ear-drill">
       <div className="btns">
-        <button className="btn primary" data-act="ear-next" onClick={ask}>
+        <button className={q && picked === null ? 'btn' : 'btn primary'} data-act="ear-next" onClick={ask}>
           {q ? (picked === null ? 'Skip' : 'Next') : 'Start'}
         </button>
         {q && (
@@ -349,7 +349,7 @@ function EchoDrill({ info }: { info: DrillInfo }) {
   return (
     <div className="ear-drill">
       <div className="btns">
-        <button className="btn primary" data-act="ear-next" onClick={ask}>
+        <button className={q && !done ? 'btn' : 'btn primary'} data-act="ear-next" onClick={ask}>
           {q ? (done ? 'Next phrase' : 'Skip') : 'Start'}
         </button>
         {q && (
@@ -426,7 +426,7 @@ function RhythmDrill({ info }: { info: DrillInfo }) {
   return (
     <div className="ear-drill">
       <div className="btns">
-        <button className="btn primary" data-act="ear-next" onClick={ask}>
+        <button className={q && picked === null ? 'btn' : 'btn primary'} data-act="ear-next" onClick={ask}>
           {q ? (picked === null ? 'Skip' : 'Next') : 'Start'}
         </button>
         {q && (

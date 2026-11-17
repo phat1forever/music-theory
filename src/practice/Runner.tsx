@@ -93,7 +93,8 @@ interface Props {
    * Placement-check mode: a single "play it in time" test. Nothing is recorded (no tempo, review date or practice day),
    * the tempo is fixed, and the result is reported through `onResult` (null when the player chooses to try again).
    */
-  check?: { onResult: (accuracy: number | null) => void }
+  /** a placement check or unit checkpoint: reports the result instead of recording practice */
+  check?: { onResult: (accuracy: number | null) => void; kind?: 'placement' | 'checkpoint' }
 }
 
 /** The practice screen for one exercise: listen, step through it, or play along in time and get graded. */
@@ -602,6 +603,8 @@ export function Runner({ ex, onAttempt, check }: Props) {
               {check
                 ? passed
                   ? 'This is comfortably within what the unit teaches.'
+                  : check.kind === 'checkpoint'
+                  ? 'No problem: replay the lessons or try again another day. Nothing is locked.'
                   : 'That is a good sign the unit has something new for you. You can try again, or move on.'
                 : !result.counts
                 ? !whole

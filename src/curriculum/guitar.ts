@@ -282,7 +282,7 @@ export const guitar: Track = {
             exercise(
               'g-strum1',
               'Quarter-note downstrokes',
-              gtr('{G}~↓ {G}~↓ {G}~↓ {G}~↓ | {Em}~↓ {Em}~↓ {Em}~↓ {Em}~↓ | {C}~↓ {C}~↓ {C}~↓ {C}~↓ | {D}~↓ {D}~↓ {D}:h~↓'),
+              gtr('{G}~↓ {G}~↓ {G}~↓ {G}~↓ | {Em}~↓ {Em}~↓ {Em}~↓ {Em}~↓ | {C}~↓ {C}~↓ {C}~↓ {C}~↓ | {D}~↓ {D}~↓ {D}:h~↓', { chords: 'G Em C D' }),
               66,
               110,
               'G, Em, C, D: one bar each.',
@@ -290,7 +290,7 @@ export const guitar: Track = {
             exercise(
               'g-strum2',
               'Down, down-up',
-              gtr('{G}~↓ {G}:8~↓ {G}:8~↑ {G}~↓ {G}:8~↓ {G}:8~↑ | {Em}~↓ {Em}:8~↓ {Em}:8~↑ {Em}~↓ {Em}:8~↓ {Em}:8~↑ | {C}~↓ {C}:8~↓ {C}:8~↑ {C}~↓ {C}:8~↓ {C}:8~↑ | {D}~↓ {D}:8~↓ {D}:8~↑ {D}:h~↓'),
+              gtr('{G}~↓ {G}:8~↓ {G}:8~↑ {G}~↓ {G}:8~↓ {G}:8~↑ | {Em}~↓ {Em}:8~↓ {Em}:8~↑ {Em}~↓ {Em}:8~↓ {Em}:8~↑ | {C}~↓ {C}:8~↓ {C}:8~↑ {C}~↓ {C}:8~↓ {C}:8~↑ | {D}~↓ {D}:8~↓ {D}:8~↑ {D}:h~↓', { chords: 'G Em C D' }),
               60,
               100,
               'Upstrokes only need to catch the top three or four strings.',

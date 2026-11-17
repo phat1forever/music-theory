@@ -36,8 +36,9 @@ const dueExercises = (p: Profile) =>
 
 // ---------- Home ----------
 
-/** The ear drill with the fewest answers so far, so all six get attention. */
-const earTip = (p: Profile) => [...DRILLS].sort((a, b) => (p.ear[a.id]?.total ?? 0) - (p.ear[b.id]?.total ?? 0))[0]
+/** The ear drill with the fewest answers so far, so all six get attention. A first-timer starts with major or minor chords, the easiest to hear. */
+const earTip = (p: Profile) =>
+  Object.keys(p.ear).length === 0 ? DRILLS.find((d) => d.id === 'chords')! : [...DRILLS].sort((a, b) => (p.ear[a.id]?.total ?? 0) - (p.ear[b.id]?.total ?? 0))[0]
 
 /** A short session plan built from the "how to practise" routine: warm up, review what is due, learn, consolidate, play. */
 function Today({ p }: { p: Profile }) {
@@ -58,11 +59,15 @@ function Today({ p }: { p: Profile }) {
   })
   return (
     <section className="card today" data-today>
-      <div className="eyebrow">Today's session · about 25 minutes</div>
+      <div className="eyebrow">Today's session · about 20 to 25 minutes</div>
       <ol className="today-list">
         <li>
           <strong>Warm up</strong> <small className="muted">3 min</small>
-          <span className="muted"> A slow scale or the chord changes you already know. Loosen your hands first.</span>
+          <span className="muted">
+            {Object.values(p.lessons).filter((s) => s === 'done').length < 3
+              ? ' Loosen your hands, then play something slow and easy: the open strings on guitar, or C D E F G on the keyboard, one note at a time.'
+              : ' A slow scale or the chord changes you already know. Loosen your hands first.'}
+          </span>
         </li>
         <li>
           <strong>Review</strong> <small className="muted">5 min</small>
@@ -183,6 +188,7 @@ function Checkpoint({ unit }: { unit: Unit }) {
           ) : (
             <p className="muted tight">
               You have taken the lessons in this unit. Now show it has sunk in: play this short piece cleanly, in time. The microphone or MIDI keyboard grades it; otherwise you rate yourself.
+              It is optional: nothing is locked if you leave it for later.
             </p>
           )}
         </div>
@@ -195,6 +201,7 @@ function Checkpoint({ unit }: { unit: Unit }) {
           key={`cp-${unit.id}`}
           ex={{ id: `checkpoint-${unit.id}`, title: unit.check.title, piece: unit.check.piece, tempo: unit.check.tempo, target: unit.check.tempo, flats: unit.check.flats }}
           check={{
+            kind: 'checkpoint',
             onResult: (a) => {
               if (a !== null && a >= CHECK_PASS) actions.passCheckpoint(unit.id)
             },
@@ -218,7 +225,7 @@ export function Home() {
           <h1>{started ? `Welcome back, ${p.name}` : 'Learn theory, guitar and keyboard'}</h1>
           <p>
             {started
-              ? 'Your session for today is below: about twenty-five minutes, in this order.'
+              ? 'Your session for today is below: about twenty to twenty-five minutes, in this order.'
               : 'Short, focused lessons with diagrams, tab and sheet music. Practise each skill until it sticks, then build toward improvising your own solos.'}
           </p>
         </div>
@@ -565,9 +572,13 @@ export function Lessons({ trackId, place }: { trackId?: string; place?: boolean 
                   <button
                     className="btn small"
                     onClick={() => {
-                      const before = trackLessons(track.id)
+                      const path = trackLessons(track.id)
+                        .filter((r) => !r.unit.free)
                         .map((r) => r.lesson.id)
-                      actions.skipLessons(before.slice(0, before.indexOf(u.lessons[0].id)))
+                      const before = path.slice(0, path.indexOf(u.lessons[0].id))
+                      const untaken = before.filter((lid) => !p.lessons[lid]).length
+                      if (untaken && !window.confirm(`This marks the ${untaken} lesson${untaken > 1 ? 's' : ''} before this unit as skipped. They stay open, so you can go back. Jump ahead?`)) return
+                      actions.skipLessons(before)
                     }}
                   >
                     Jump to this unit
@@ -617,6 +628,9 @@ export function Lessons({ trackId, place }: { trackId?: string; place?: boolean 
           <h2>The studio: pick what you need</h2>
           <p className="muted">
             Beyond the step-by-step path, skills grow at different speeds. Every lesson below is <strong>open now</strong>, in any order.
+            {trackProgress(track.id, p).done + trackProgress(track.id, p).skipped < coreUnits(track)[0].lessons.length && (
+              <strong> New to this? These are intermediate lessons: start with Unit 1 above, and come back here later.</strong>
+            )}
             {track.id !== 'theory' && (
               <>
                 {' '}
