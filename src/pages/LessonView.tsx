@@ -5,7 +5,8 @@ import { Fretboard, type Mark } from '../components/Fretboard'
 import { Tuner } from '../components/InputBar'
 import { Keyboard, type KeyMark } from '../components/Keyboard'
 import { Score } from '../components/Score'
-import { findLesson, isOpen, nextLesson, trackLessons } from '../curriculum'
+import { findLesson, isOpen, lessonSkill, nextLesson, trackLessons } from '../curriculum'
+import { SKILLS, type Instrument } from '../curriculum/skills'
 import type { Quiz, StepDef } from '../curriculum/types'
 import { playPiece, Runner } from '../practice/Runner'
 import { actions, useProfile } from '../store/store'
@@ -315,7 +316,16 @@ export function LessonView({ id }: { id: string }) {
     return (
       <div className="card">
         <h2>{lesson.title}</h2>
-        <p>This lesson unlocks when you finish the ones before it.</p>
+        <p>
+          This lesson opens when you finish the ones before it.
+          {track.id !== 'theory' && (
+            <>
+              {' '}
+              To get here sooner, rate <strong>{SKILLS[track.id as Instrument].find((s) => s.id === lessonSkill(ref))?.name ?? 'this skill'}</strong> on the{' '}
+              <a href={`#/skills/${track.id}`}>skill map</a>: a rating opens the next lesson of that skill, and "Comfortable" opens them all.
+            </>
+          )}
+        </p>
         <div className="btns">
           {nextLesson(track.id, profile) && (
             <a className="btn primary" href={`#/lesson/${nextLesson(track.id, profile)!.lesson.id}`}>
@@ -341,8 +351,12 @@ export function LessonView({ id }: { id: string }) {
     const r = findLesson(rid)
     return r ? [r] : []
   })
+  // What to offer next: the first lesson after this one that is open and not already done. After a studio lesson
+  // with nothing left behind it, go back to the step-by-step path.
   const all = trackLessons(track.id)
-  const next = all[all.findIndex((r) => r.lesson.id === id) + 1]
+  const todo = (r: (typeof all)[number]) => profile.lessons[r.lesson.id] !== 'done' && isOpen(r, profile)
+  const next = all.slice(all.findIndex((r) => r.lesson.id === id) + 1).find(todo) ?? (unit.free ? nextLesson(track.id, profile) : undefined)
+  const everything = all.every((r) => profile.lessons[r.lesson.id] === 'done')
 
   if (finished)
     return (
@@ -371,11 +385,11 @@ export function LessonView({ id }: { id: string }) {
             <a className="btn primary" href={`#/lesson/${next.lesson.id}`}>
               Next: {next.lesson.title}
             </a>
-          ) : (
-            <a className="btn primary" href="#/jam">
-              Track finished. Open Jam
+          ) : everything ? (
+            <a className="btn primary" href={track.id === 'theory' ? '#/ear' : '#/jam'}>
+              {track.id === 'theory' ? 'Every theory lesson done. Open Ear training' : 'Every lesson done. Open Jam'}
             </a>
-          )}
+          ) : null}
           <a className="btn" href={`#/lessons/${track.id}`}>
             All {track.title.toLowerCase()} lessons
           </a>

@@ -80,7 +80,7 @@ export default function App() {
       </header>
       <main key={profile.id}>
         {page === '' && <Home />}
-        {page === 'lessons' && <Lessons trackId={arg} />}
+        {page === 'lessons' && <Lessons key={route[2] ?? 'list'} trackId={arg} place={route[2] === 'place'} />}
         {page === 'lesson' && <LessonView key={arg} id={arg} />}
         {page === 'practice' && <Practice exerciseId={arg} />}
         {page === 'ear' && <Ear key={arg ?? 'menu'} drill={arg} />}

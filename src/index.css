@@ -191,9 +191,12 @@ main {
     flex-wrap: wrap;
     gap: 6px 12px;
   }
+  /* On a narrow screen the nav wraps onto a second line so that no page is hidden off to the side. */
   .top nav {
     order: 3;
     flex-basis: 100%;
+    flex-wrap: wrap;
+    overflow-x: visible;
   }
   .who {
     margin-left: auto;
@@ -1220,8 +1223,12 @@ input[type='range'] {
   .ex-meter {
     width: 96px;
   }
+  /* Keep "Open", "Locked" and "Skipped" readable on a phone: smaller, and allowed to wrap. */
   .chev {
-    display: none;
+    font-size: 0.72rem;
+    max-width: 78px;
+    text-align: right;
+    white-space: normal;
   }
   .track-row {
     grid-template-columns: 80px 1fr 40px;
@@ -1577,8 +1584,14 @@ input[type='range'] {
 .ear-score {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--muted);
   margin-left: auto;
+}
+.ear-report {
+  flex-basis: 100%;
+}
+.ear-score.good {
+  color: var(--accent);
 }
 .ear-drill > * + * {
   margin-top: 12px;

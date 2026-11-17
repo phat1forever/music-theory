@@ -34,6 +34,8 @@ export interface Piece {
   chords?: string[]
   /** sustain pedal per bar: "p" press at the start of the bar, "c" keep it down from the bar before, "-" no pedal */
   pedal?: ('p' | 'c' | '-')[]
+  /** only the melody is written and the player adds an accompaniment of their own: notes below the melody are not checked */
+  ownLeft?: boolean
 }
 
 export interface PieceOpts {
@@ -44,6 +46,8 @@ export interface PieceOpts {
   chords?: string
   /** sustain pedal, one token per bar: p = press (and lift at the end of the bar), c = still down from the bar before, - = none */
   pedal?: string
+  /** the player adds their own left hand below the written melody */
+  ownLeft?: boolean
 }
 
 function withOpts<T extends Piece>(piece: T, o?: PieceOpts): T {
@@ -55,6 +59,7 @@ function withOpts<T extends Piece>(piece: T, o?: PieceOpts): T {
     swing: o.swing,
     chords: o.chords?.split(/\s+/).map((c) => (c === '.' ? '' : c)),
     pedal: o.pedal?.split(/\s+/) as Piece['pedal'],
+    ownLeft: o.ownLeft,
   }
 }
 

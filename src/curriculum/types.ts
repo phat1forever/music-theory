@@ -35,7 +35,7 @@ export type StepDef =
   | ({ t: 'quiz' } & Quiz)
 
 /** The areas a player develops, often unevenly. Each instrument uses a subset. */
-export type Skill = 'rhythm' | 'chords' | 'fingerstyle' | 'lead' | 'reading' | 'technique' | 'hands' | 'expression' | 'theory' | 'ear'
+export type Skill = 'rhythm' | 'chords' | 'barre' | 'fingerstyle' | 'lead' | 'reading' | 'technique' | 'hands' | 'expression' | 'theory' | 'ear'
 
 export interface Lesson {
   id: string

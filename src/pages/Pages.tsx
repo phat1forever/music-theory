@@ -36,11 +36,8 @@ const dueExercises = (p: Profile) =>
 
 // ---------- Home ----------
 
-/** Suggest the ear drill with the fewest answers so far, so all six get attention. */
-function earTip(p: Profile): string {
-  const least = [...DRILLS].sort((a, b) => (p.ear[a.id]?.total ?? 0) - (p.ear[b.id]?.total ?? 0))[0]
-  return `try "${least.name}" today.`
-}
+/** The ear drill with the fewest answers so far, so all six get attention. */
+const earTip = (p: Profile) => [...DRILLS].sort((a, b) => (p.ear[a.id]?.total ?? 0) - (p.ear[b.id]?.total ?? 0))[0]
 
 /** A short session plan built from the "how to practise" routine: warm up, review what is due, learn, consolidate, play. */
 function Today({ p }: { p: Profile }) {
@@ -61,7 +58,7 @@ function Today({ p }: { p: Profile }) {
   })
   return (
     <section className="card today" data-today>
-      <div className="eyebrow">Today's session · about 20 minutes</div>
+      <div className="eyebrow">Today's session · about 25 minutes</div>
       <ol className="today-list">
         <li>
           <strong>Warm up</strong> <small className="muted">3 min</small>
@@ -96,7 +93,7 @@ function Today({ p }: { p: Profile }) {
           )}
         </li>
         <li>
-          <strong>New</strong> <small className="muted">7 min</small>
+          <strong>New</strong> <small className="muted">about 10 min: one lesson, or part of one</small>
           {next.length === 0 && focus.length === 0 && <span className="muted"> You have taken every lesson on your paths. Pick something from the studio, or spend this time on review.</span>}
           {focus.length > 0 && (
             <ul className="rows" data-today-focus>
@@ -106,7 +103,7 @@ function Today({ p }: { p: Profile }) {
                     <span>
                       <strong>{f.lesson.lesson.title}</strong>
                       <small>
-                        From your skill map · focus: {f.skill}
+                        From your skill map · focus: {f.skill} · {f.lesson.lesson.minutes} min
                       </small>
                     </span>
                     <span className="chev">Start →</span>
@@ -123,7 +120,7 @@ function Today({ p }: { p: Profile }) {
                     <span>
                       <strong>{n.lesson.title}</strong>
                       <small>
-                        {n.track.title} · {n.unit.title}
+                        {n.track.title} · {n.unit.title} · {n.lesson.minutes} min
                       </small>
                     </span>
                     <span className="chev">Start →</span>
@@ -156,7 +153,7 @@ function Today({ p }: { p: Profile }) {
           <strong>Ear</strong> <small className="muted">2 min</small>
           <span className="muted">
             {' '}
-            Ten questions in <a href="#/ear">Ear training</a>: {earTip(p)}
+            Ten questions in <a href="#/ear">Ear training</a>: try <a href={`#/ear/${earTip(p).id}`}>{earTip(p).name}</a> today.
           </span>
         </li>
         <li>
@@ -221,7 +218,7 @@ export function Home() {
           <h1>{started ? `Welcome back, ${p.name}` : 'Learn theory, guitar and keyboard'}</h1>
           <p>
             {started
-              ? 'Your session for today is below: about twenty minutes, in this order.'
+              ? 'Your session for today is below: about twenty-five minutes, in this order.'
               : 'Short, focused lessons with diagrams, tab and sheet music. Practise each skill until it sticks, then build toward improvising your own solos.'}
           </p>
         </div>
@@ -242,16 +239,16 @@ export function Home() {
             <a className="btn primary" href="#/lesson/k-posture">
               I'm new to keyboard
             </a>
-            <a className="btn" href="#/lessons/guitar">
+            <a className="btn" href="#/lessons/guitar/place">
               I already play guitar: find my level
             </a>
-            <a className="btn" href="#/lessons/keys">
+            <a className="btn" href="#/lessons/keys/place">
               I already play keyboard: find my level
             </a>
           </div>
           <p className="muted tight">
-            Each track starts from zero. If you already play, open a track and use the placement check to skip what you know. The theory track explains the "why" and
-            can be taken alongside either instrument.
+            Each track starts from zero. If you already play, the placement check skips what you know, and the <a href="#/skills">skill map</a> finds the areas
+            that have fallen behind. The theory track explains the "why" and can be taken alongside either instrument.
           </p>
         </section>
       )}
@@ -392,7 +389,17 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
             shaky, just open it.
           </p>
         )}
-        {i > 0 && <p className="muted">Skipped exercises are in Practice under "from lessons you skipped".</p>}
+        {i > 0 && (
+          <p className="muted">
+            Marked as known: {units.slice(0, Math.min(i, last)).map((u) => u.title).join(', ')}. Skipped exercises are in Practice under "from lessons you skipped".
+          </p>
+        )}
+        {track.id !== 'theory' && (
+          <p className="muted">
+            A placement check only samples each unit, and nobody develops evenly. If one area is behind the rest ({track.id === 'guitar' ? 'barre chords, say, or note names' : 'reading the bass clef, say, or the pedal'}),
+            rate it on the <a href={`#/skills/${track.id}`}>skill map</a>: that puts its lessons in front of you wherever you start.
+          </p>
+        )}
         <button className="btn primary" onClick={onClose}>
           Done
         </button>
@@ -439,7 +446,7 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
       {phase === 'play' && unit.check && (
         <>
           <p>
-            <strong>{unit.check.title}.</strong> Play this cleanly, in time, from the notation. It is graded if the microphone{track.id === 'keys' ? ' or a MIDI keyboard is' : ' is'}{' '}
+            <strong>{unit.check.title}.</strong> Play this cleanly, in time, from the {track.id === 'guitar' ? 'tab or the notation' : 'notation'}. It is graded if the microphone{track.id === 'keys' ? ' or a MIDI keyboard is' : ' is'}{' '}
             on; otherwise you rate yourself, so be honest: the point is to land you at the right lesson.
           </p>
           <Runner
@@ -491,10 +498,11 @@ function Placement({ track, onClose }: { track: Track; onClose: () => void }) {
   )
 }
 
-export function Lessons({ trackId }: { trackId?: string }) {
+export function Lessons({ trackId, place }: { trackId?: string; place?: boolean }) {
   const p = useProfile()
   const track = TRACKS.find((t) => t.id === trackId) ?? TRACKS.find((t) => nextLesson(t.id, p) && t.id === 'guitar') ?? TRACKS[0]
-  const [placing, setPlacing] = useState(false)
+  const [placing, setPlacing] = useState(!!place)
+  const anyLocked = coreUnits(track).some((u) => u.lessons.some((l) => !isOpen({ track, unit: u, lesson: l }, p)))
   const next = nextLesson(track.id, p)
   return (
     <div className="stack">
@@ -521,10 +529,23 @@ export function Lessons({ trackId }: { trackId?: string }) {
         )}
       </div>
       {placing && <Placement key={track.id} track={track} onClose={() => setPlacing(false)} />}
+      {anyLocked && !placing && (
+        <p className="muted tight" data-lock-note>
+          Lessons open in order. To get to a locked one sooner, use <strong>Jump to this unit</strong>, take the placement check
+          {track.id !== 'theory' ? (
+            <>
+              , or rate that skill on the <a href={`#/skills/${track.id}`}>skill map</a>
+            </>
+          ) : null}
+          .
+        </p>
+      )}
       {coreUnits(track).map((u, ui) => {
         const done = u.lessons.filter((l) => p.lessons[l.id] === 'done').length
+        const skipped = u.lessons.filter((l) => p.lessons[l.id] === 'skipped').length
         const untouched = u.lessons.every((l) => !p.lessons[l.id])
-        const locked = !u.lessons.some((l) => isOpen({ track, unit: u, lesson: l }, p))
+        // A unit can be jumped to while its first lesson is still closed, even if a skill rating has opened a later one.
+        const locked = !isOpen({ track, unit: u, lesson: u.lessons[0] }, p)
         return (
           <section className="card unit" key={u.id}>
             <div className="unit-head">
@@ -538,6 +559,7 @@ export function Lessons({ trackId }: { trackId?: string }) {
               <div className="unit-side">
                 <small className="muted">
                   {done}/{u.lessons.length}
+                  {skipped ? ` · ${skipped} skipped` : ''}
                 </small>
                 {locked && untouched && (
                   <button
@@ -721,7 +743,7 @@ export function Practice({ exerciseId }: { exerciseId?: string }) {
                   <span className="ex-meter">
                     <Bar value={mastery(r.ex.tempo, r.ex.target, pr)} />
                     <small>
-                      {pr?.bestTempo ? `${pr.bestTempo} / ${r.ex.target} bpm` : pr ? 'Not passed yet' : 'New'}
+                      {pr?.bestTempo ? `${pr.bestTempo} / ${r.ex.target} bpm` : pr ? 'Not passed yet' : p.tried.includes(r.ex.id) ? 'Tried step by step' : 'New'}
                       {due.has(r.ex.id) ? <em className="due"> · due now</em> : pr?.bestTempo ? ` · review ${reviewIn(pr.due)}` : ''}
                     </small>
                   </span>
@@ -771,10 +793,8 @@ export function Progress() {
           <span>lessons completed</span>
         </div>
         <div className="card stat">
-          <strong>
-            {mastered}/{EXERCISES.length}
-          </strong>
-          <span>exercises at goal tempo</span>
+          <strong>{triedCount}</strong>
+          <span>exercises tried</span>
         </div>
       </section>
 
@@ -782,6 +802,7 @@ export function Progress() {
         <h2>Tracks</h2>
         {TRACKS.map((t) => {
           const prog = trackProgress(t.id, p)
+          const studio = trackLessons(t.id).filter((r) => r.unit.free && p.lessons[r.lesson.id] === 'done').length
           return (
             <div className="track-row" key={t.id}>
               <span>{t.title}</span>
@@ -789,13 +810,15 @@ export function Progress() {
               <small className="muted">
                 {prog.done}/{prog.total}
                 {skippedIn(t.id) ? ` (${skippedIn(t.id)} skipped)` : ''}
+                {studio ? ` + ${studio} studio` : ''}
               </small>
             </div>
           )
         })}
         <p className="muted">
-          {triedCount} exercise{triedCount === 1 ? '' : 's'} tried; {attempted.length} played in time ({attempted.reduce((n, e) => n + e.attempts, 0)} timed attempts in
-          total). Step-by-step runs count as tried but do not record a tempo.
+          The first number counts the step-by-step path; studio lessons are counted separately. {triedCount} exercise{triedCount === 1 ? '' : 's'} tried;{' '}
+          {attempted.length} played in time ({attempted.reduce((n, e) => n + e.attempts, 0)} timed attempts in total); {mastered} brought up to goal tempo.
+          Step-by-step runs count as tried but do not record a tempo.
         </p>
       </section>
 

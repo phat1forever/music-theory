@@ -50,11 +50,28 @@ export function nextLesson(trackId: string, p: Profile): LessonRef | undefined {
  * - The skill map lets skills advance separately. Rating a skill at all opens the next lesson of that skill, so a
  *   player can work on a weak area without first finishing everything that comes before it on the path. Rating it
  *   "comfortable" or "strong" opens all of that skill's lessons.
+ * - A lesson linked as "helpful to know first" from any lesson that is open by the rules above.
  */
 export function isOpen(ref: LessonRef, p: Profile): boolean {
+  // A lesson that an open lesson names as "helpful to know first" is open too, so that link never leads to a lock.
+  return openOnPath(ref, p) || (RELATED_BY.get(ref.lesson.id) ?? []).some((r) => openOnPath(r, p))
+}
+
+/** Lessons that list a given lesson as related ("helpful to know first"). */
+const RELATED_BY = new Map<string, LessonRef[]>()
+for (const r of LESSONS) for (const id of r.lesson.related ?? []) RELATED_BY.set(id, [...(RELATED_BY.get(id) ?? []), r])
+
+/** A skill's self-rating. The shared theory track has no ratings of its own: it takes the higher of the two instruments'. */
+function ratingFor(ref: LessonRef, skill: Skill, p: Profile): number | undefined {
+  if (ref.track.id !== 'theory') return p.skillSelf[`${ref.track.id}:${skill}`]
+  const both = [p.skillSelf[`guitar:${skill}`], p.skillSelf[`keys:${skill}`]].filter((r) => r !== undefined)
+  return both.length ? Math.max(...both) : undefined
+}
+
+function openOnPath(ref: LessonRef, p: Profile): boolean {
   if (ref.unit.free || p.lessons[ref.lesson.id]) return true
   const skill = lessonSkill(ref)
-  const rating = p.skillSelf[`${ref.track.id}:${skill}`]
+  const rating = ratingFor(ref, skill, p)
   if (rating !== undefined) {
     if (rating >= 2) return true
     const nextInSkill = trackLessons(ref.track.id).find((r) => !r.unit.free && lessonSkill(r) === skill && !p.lessons[r.lesson.id])

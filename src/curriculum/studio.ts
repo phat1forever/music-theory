@@ -50,7 +50,7 @@ export const keysStudio: Unit[] = [
             ),
             50,
             88,
-            'The thumbs tuck at different moments: the right after C, the left after E. Practise each hand alone first.',
+            'The hands shift at different moments. Going up, the right thumb tucks under after C; in the left hand, finger 3 crosses over the thumb after E. Practise each hand alone first.',
           ),
           exercise(
             'k-harm-d',
@@ -235,7 +235,7 @@ export const keysStudio: Unit[] = [
             'k-comp1',
             'Bass and chord',
             keys(
-              'r [E4 G4 C5].135 r [E4 G4 C5].135 | r [F4 A4 C5].135 r [F4 A4 C5].135 | r [D4 G4 B4].125 r [D4 G4 B4].125 | [E4 G4 C5].135:w',
+              'r [E4 G4 C5].135 r [E4 G4 C5].135 | r [F4 A4 C5].135 r [F4 A4 C5].135 | r [D4 G4 B4].135 r [D4 G4 B4].135 | [E4 G4 C5].135:w',
               'C3.5 r G3.1 r | F2.5 r C3.1 r | G2.5 r D3.1 r | C3.5:w',
               { chords: 'C F G C' },
             ),
@@ -247,13 +247,13 @@ export const keysStudio: Unit[] = [
             'k-comp2',
             'Three, three, two',
             keys(
-              '[E4 G4 C5].135:qd [E4 G4 C5]:qd [E4 G4 C5] | [E4 A4 C5].135:qd [E4 A4 C5]:qd [E4 A4 C5] | [F4 A4 C5].135:qd [F4 A4 C5]:qd [F4 A4 C5] | [D4 G4 B4].125:qd [D4 G4 B4]:qd [D4 G4 B4] | [E4 G4 C5].135:w',
+              '[E4 G4 C5].135:qd [E4 G4 C5]:8- [E4 G4 C5] [E4 G4 C5] | [E4 A4 C5].135:qd [E4 A4 C5]:8- [E4 A4 C5] [E4 A4 C5] | [F4 A4 C5].135:qd [F4 A4 C5]:8- [F4 A4 C5] [F4 A4 C5] | [D4 G4 B4].135:qd [D4 G4 B4]:8- [D4 G4 B4] [D4 G4 B4] | [E4 G4 C5].135:w',
               'C3.5:w | A2.5:w | F2.5:w | G2.5:w | C3.5:w',
               { chords: 'C Am F G C' },
             ),
             60,
             96,
-            'Count "1 2 & 3 4": the chords land on 1, the "&" of 2, and 4. Feel the middle chord arrive early.',
+            'Count "1 2 & 3 4": the chords land on 1, the "&" of 2, and 4. The middle chord arrives early and is held across beat 3: that is the tie.',
           ),
           text(
             'Use it on a real song',
@@ -294,7 +294,7 @@ export const keysStudio: Unit[] = [
             'k-alb1',
             'Sonatina Sketch',
             keys(
-              'E4.3:h G4.5:h | F4.4 D4.2 D4.2:h | E4.3 F4.4 G4.5:h | D4.2:hd r | F4.4 E4.3 F4.4 G4.5 | E4.3:h C4.1:h | D4.2 F4.4 E4.3 D4.2 | C4.1:w',
+              'E4.3:h G4.5:h | F4.4 E4.3 D4.2:h | E4.3 F4.4 G4.5:h | D4.2:hd r | F4.4 E4.3 F4.4 G4.5 | E4.3:h C4.1:h | D4.2 F4.4 E4.3 D4.2 | C4.1:w',
               [
                 alberti('C3.5', 'G3.1', 'E3.3'),
                 alberti('B2.5', 'G3.1', 'D3.3'),
@@ -324,7 +324,7 @@ export const keysStudio: Unit[] = [
         steps: [
           text(
             'About the piece',
-            'This minuet comes from the notebook that J. S. Bach compiled for his wife, Anna Magdalena, in 1725. It was long thought to be by Bach; it is now credited to **Christian Petzold**. It has been a first "real" piece for piano students for three hundred years.\n\nA **minuet** is a graceful dance in **3/4**: feel a gentle lean on beat 1 of each bar. The key is **G major**, so every F is **F♯**.\n\nWhat makes it a step up:\n\n- The right hand mixes **quarter notes and eighth notes** and leaves the five-finger position: watch the finger numbers, especially in bar 7, where finger 2 crosses **over** the thumb to reach F♯.\n- The **two hands have different rhythms** in nearly every bar.\n\nThe left hand here is slightly simplified from the original.',
+            'This minuet comes from the notebook that J. S. Bach began for his wife, Anna Magdalena, in 1725. It was long thought to be by Bach; it is now credited to **Christian Petzold**. It has been a first "real" piece for piano students for well over a century.\n\nA **minuet** is a graceful dance in **3/4**: feel a gentle lean on beat 1 of each bar. The key is **G major**, so every F is **F♯**.\n\nWhat makes it a step up:\n\n- The right hand mixes **quarter notes and eighth notes** and leaves the five-finger position: watch the finger numbers, especially in bar 7, where finger 2 crosses **over** the thumb to reach F♯.\n- The **two hands have different rhythms** in nearly every bar.\n\nIt assumes you know the **G major scale** and have played pieces **hands together** (the keyboard path\'s units 2 and 4). If either is new, do those first: this piece will still be here.\n\nThe left hand here is slightly simplified from the original.',
           ),
           exercise(
             'k-min-rh',

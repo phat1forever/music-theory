@@ -421,7 +421,10 @@ describe('studio units and the skill map', () => {
     const p = blank()
     const barre = LESSONS.find((r) => r.lesson.id === 'g-barre-e')!
     expect(isOpen(barre, p)).toBe(false)
+    // barre chords are a skill of their own: being comfortable with open chords does not open them
     p.skillSelf['guitar:chords'] = 2
+    expect(isOpen(barre, p)).toBe(false)
+    p.skillSelf['guitar:barre'] = 2
     expect(isOpen(barre, p)).toBe(true)
     expect(isOpen(LESSONS.find((r) => r.lesson.id === 'g-pent1')!, p)).toBe(false)
     // any rating opens the next lesson of that skill, and only that one
@@ -431,9 +434,41 @@ describe('studio units and the skill map', () => {
     p.lessons['g-fp-basics'] = 'done'
     expect(isOpen(LESSONS.find((r) => r.lesson.id === 'g-fp-arps')!, p)).toBe(true)
   })
+  it('opens the theory lessons that an open lesson links to, and lets an instrument rating open theory', () => {
+    const p = blank()
+    // every "helpful to know first" link from a studio lesson (always open) leads to an open lesson
+    for (const r of LESSONS.filter((x) => x.unit.free))
+      for (const id of r.lesson.related ?? []) expect(isOpen(LESSONS.find((x) => x.lesson.id === id)!, p), `${r.lesson.id} -> ${id}`).toBe(true)
+    const theory = TRACKS.find((t) => t.id === 'theory')!
+    const closed = LESSONS.filter((r) => r.track.id === 'theory' && !isOpen(r, p))
+    expect(closed.length).toBeGreaterThan(0)
+    p.skillSelf['keys:theory'] = 2
+    for (const u of coreUnits(theory)) for (const l of u.lessons) expect(isOpen({ track: theory, unit: u, lesson: l }, p), l.id).toBe(true)
+  })
+  it('lets work done raise a skill above a low self-rating, and asks for the rating to be looked at again', () => {
+    const p = blank()
+    p.skillSelf['guitar:fingerstyle'] = 0
+    const before = skillStates('guitar', p).find((s) => s.info.id === 'fingerstyle')!
+    expect(before.outgrown).toBe(false)
+    for (const r of before.lessons) p.lessons[r.lesson.id] = 'done'
+    const after = skillStates('guitar', p).find((s) => s.info.id === 'fingerstyle')!
+    expect(after.outgrown).toBe(true)
+    expect(after.level).toBeGreaterThanOrEqual(after.evidence)
+    expect(after.level).toBeGreaterThan(0.5)
+  })
+  it('keeps lessons skipped by placement out of the focus unless the skill is rated weak', () => {
+    const p = blank()
+    const g = TRACKS.find((t) => t.id === 'guitar')!
+    for (const u of coreUnits(g).slice(0, 2)) for (const l of u.lessons) p.lessons[l.id] = 'skipped'
+    expect(p.lessons['g-chords-1']).toBe('skipped')
+    for (const f of focusSkills('guitar', p, 9)) for (const r of f.lessons) expect(p.lessons[r.lesson.id], r.lesson.id).toBeUndefined()
+    p.skillSelf['guitar:chords'] = 0
+    const chords = focusSkills('guitar', p, 9).find((f) => f.state.info.id === 'chords')!
+    expect(p.lessons[chords.lessons[0].lesson.id]).toBe('skipped')
+  })
   it('points at the weakest skills, and at studio lessons for skills rated comfortable', () => {
     const p = blank()
-    p.skillSelf = { 'guitar:rhythm': 3, 'guitar:chords': 3, 'guitar:lead': 2, 'guitar:theory': 3, 'guitar:ear': 3, 'guitar:fingerstyle': 0 }
+    p.skillSelf = { 'guitar:rhythm': 3, 'guitar:chords': 3, 'guitar:barre': 3, 'guitar:lead': 2, 'guitar:theory': 3, 'guitar:ear': 3, 'guitar:fingerstyle': 0 }
     const focus = focusSkills('guitar', p)
     expect(focus[0].state.info.id).toBe('fingerstyle')
     expect(focus[0].lessons[0].lesson.id).toBe('g-fp-basics')
@@ -443,7 +478,7 @@ describe('studio units and the skill map', () => {
   })
 })
 
-import { chordNotes, DRILLS, echoQuestion, intervalQuestion, PROGRESSIONS, progressionQuestion, rhythmPiece, rhythmQuestion, RHYTHMS } from '../practice/ear'
+import { chordNotes, DRILLS, echoQuestion, flatKey, intervalQuestion, intervalSpelling, PROGRESSIONS, progressionQuestion, rhythmPiece, rhythmQuestion, RHYTHMS, rootName } from '../practice/ear'
 import { earAccuracy, earEvidence } from '../curriculum/skills'
 
 describe('ear training', () => {
@@ -451,6 +486,9 @@ describe('ear training', () => {
     for (const [level, pool] of Object.entries(RHYTHMS)) {
       expect(new Set(pool).size, `level ${level}`).toBe(pool.length)
       for (const pattern of pool) expect(totalBeats(rhythmPiece(pattern)), pattern).toBe(4)
+      // two rhythms that start their notes at the same moments cannot be told apart by ear
+      const attacks = pool.map((pattern) => timeline(rhythmPiece(pattern)).map((s) => s.beat).join(','))
+      expect(new Set(attacks).size, `level ${level} attacks`).toBe(pool.length)
     }
     for (let i = 0; i < 30; i++) {
       const q = rhythmQuestion(1 + (i % 3))
@@ -470,10 +508,22 @@ describe('ear training', () => {
         expect(e.notes).toHaveLength(level + 2)
         const scale = (e.minor ? SCALES.minor : SCALES.major).steps
         for (const n of e.notes) expect(scale, `level ${level}`).toContain(mod(n - e.tonic, 12))
-        e.notes.slice(1).forEach((n, k) => expect(n).not.toBe(e.notes[k]))
+        e.notes.slice(1).forEach((n, k) => {
+          expect(n).not.toBe(e.notes[k])
+          expect(Math.abs(n - e.notes[k]), 'no tritone leaps').not.toBe(6)
+        })
       }
-      expect(echoQuestion(1).notes[0]).toBe(60)
+      // level 1: C major, by step, between the home note and the 6th above it
+      const one = echoQuestion(1)
+      expect(one.tonic).toBe(60)
+      for (const n of one.notes) expect(n - 60).toBeGreaterThanOrEqual(0)
+      for (const n of one.notes) expect(n - 60).toBeLessThanOrEqual(9)
+      one.notes.slice(1).forEach((n, k) => expect(Math.abs(n - one.notes[k])).toBeLessThanOrEqual(2))
     }
+    // level 1 offers more than a couple of phrases
+    expect(new Set(Array.from({ length: 300 }, () => echoQuestion(1).notes.join())).size).toBeGreaterThan(8)
+    // a minor home chord must not give a level 3 progression away
+    expect(PROGRESSIONS[3].filter((x) => x.minor).length).toBeGreaterThanOrEqual(3)
     expect(DRILLS.map((d) => d.id)).toEqual(['intervals', 'chords', 'scales', 'progressions', 'echo', 'rhythm'])
   })
   it('voices progression chords from the right notes', () => {
@@ -486,5 +536,21 @@ describe('ear training', () => {
     expect(earAccuracy({ level: 1, recent: { 1: [1, 1, 0, 1, 1] }, total: 5, right: 4 }, 1)).toBeCloseTo(0.8)
     const p = { ear: { intervals: { level: 3, recent: { 3: Array(10).fill(1) }, total: 10, right: 10 } } } as unknown as Profile
     expect(earEvidence(p)).toBeCloseTo(3 / 18)
+    // five answers are not yet a pass (the drill asks for ten), but they do show as progress
+    const few = { ear: { intervals: { level: 1, recent: { 1: [1, 1, 1, 1, 1] }, total: 5, right: 5 } } } as unknown as Profile
+    expect(earEvidence(few)).toBeGreaterThan(0)
+    expect(earEvidence(few)).toBeLessThan(1 / 18)
+    const half = { ear: { intervals: { level: 1, recent: { 1: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0] }, total: 10, right: 5 } } } as unknown as Profile
+    expect(earEvidence(half)).toBeGreaterThan(0)
+    expect(earEvidence(half)).toBeLessThan(earEvidence(few))
+  })
+  it('names notes the way they are usually written', () => {
+    expect(intervalSpelling(66, 4)).toEqual(['F#', 'A#']) // F♯ up a major 3rd
+    expect(intervalSpelling(63, 3)).toEqual(['Eb', 'Gb']) // E♭ up a minor 3rd
+    expect(intervalSpelling(60, 7)).toEqual(['C', 'G'])
+    expect(rootName(58)).toBe('Bb')
+    expect(flatKey(65, false)).toBe(true) // F major
+    expect(flatKey(67, false)).toBe(false) // G major
+    expect(flatKey(62, true)).toBe(true) // D minor
   })
 })

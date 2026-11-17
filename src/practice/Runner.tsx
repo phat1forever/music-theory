@@ -130,6 +130,8 @@ export function Runner({ ex, onAttempt, check }: Props) {
     if (window.innerWidth < 720) paper.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
   const guitar = ex.piece.instrument === 'guitar'
+  // A lead sheet leaves the accompaniment to the player: anything below the written melody is theirs, and is not checked.
+  const ownBelow = ex.piece.ownLeft ? Math.min(...ex.piece.rh.flatMap((e) => e.midi)) : null
   const twoHands = !guitar && !!ex.piece.lh && ex.piece.rh.some((e) => e.midi.length > 0)
   // Practising one hand alone: the other hand is replaced by rests (or dropped).
   const piece: Piece = useMemo(() => {
@@ -208,6 +210,7 @@ export function Runner({ ex, onAttempt, check }: Props) {
       const st = stepState.current
       const step = steps[st.index]
       if (!step) return
+      if (ownBelow !== null && e.midi < ownBelow) return
       if (noteMatches(step, e.midi, e.source)) {
         st.got.add(matchKey(step, e.midi, e.source)!)
         setWrong(null)
@@ -298,11 +301,12 @@ export function Runner({ ex, onAttempt, check }: Props) {
   useEffect(() => {
     if (mode !== 'tempo') return
     return onNote((e) => {
+      if (ownBelow !== null && e.midi < ownBelow) return
       const p = played.current
       p.source ??= e.source
       p.list.push({ midi: e.midi, time: (e.at - p.t0) / 1000 })
     })
-  }, [mode])
+  }, [mode, ownBelow])
 
   // ---- diagram of what to play right now ----
   const current = cursor === null ? [] : evs.filter((e) => e.beat === cursor)

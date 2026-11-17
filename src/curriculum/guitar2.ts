@@ -26,7 +26,7 @@ export const barrePartial: Lesson = {
     exercise(
       'g-bp1',
       'Fmaj7 to small F',
-      gtr('{Fmaj7}:h {Fsmall}:h | {C}:h {Fsmall}:h | {Fmaj7}:h {Fsmall}:h | {C}:w', { chords: 'F C F C' }),
+      gtr('{Fmaj7}:h {Fsmall}:h | {C}:w | {Fmaj7}:h {Fsmall}:h | {C}:w', { chords: 'F C F C' }),
       56,
       92,
       'Fingers 2 and 3 stay in the same place for Fmaj7 and F. Only finger 1 changes.',
@@ -84,7 +84,7 @@ export const barreE: Lesson = {
     exercise(
       'g-be2',
       'Major and minor',
-      gtr('{Gbarre}:h {Gm}:h | {Gbarre}:h {Gm}:h | {F}:h {Fm}:h | {F}:w', { chords: 'G G F F' }),
+      gtr('{Gbarre}:h {Gbarre}:h | {Gm}:h {Gm}:h | {F}:h {F}:h | {Fm}:w', { chords: 'G Gm F Fm' }),
       56,
       88,
       'Only finger 2 moves. Check that the 3rd string still rings when it lifts.',
@@ -92,7 +92,7 @@ export const barreE: Lesson = {
     exercise(
       'g-be3',
       'Four colours from one shape',
-      gtr('{F}:h {F7}:h | {Fm}:h {Fm7}:h | {F}:h {F7}:h | {Fm7}:w', { chords: 'F Fm F Fm7' }),
+      gtr('{F}:h {F}:h | {F7}:h {F7}:h | {Fm}:h {Fm}:h | {Fm7}:w', { chords: 'F F7 Fm Fm7' }),
       56,
       88,
     ),
@@ -168,7 +168,9 @@ const roll = (bass: string, g: number, b: number, e: number) => `${bass}:8 3/${g
 const rollPima = (bass: string, g: number, b: number, e: number) => `${bass}:8~p 3/${g}:8~i 2/${b}:8~m 1/${e}:8~a`
 const waltzRoll = (bass: string, g: number, b: number, e: number) => `${bass}:8 3/${g}:8 2/${b}:8 1/${e}:8 2/${b}:8 3/${g}:8`
 const travis = (b1: string, b2: string, g: number, b: number) => `${b1}:8 2/${b}:8 ${b2}:8 3/${g}:8 ${b1}:8 2/${b}:8 ${b2}:8 3/${g}:8`
-const pinch = (bass: string, top: number, g: number, b: number, bass2: string) => `[${bass} 1/${top}] 3/${g}:8 2/${b}:8 ${bass2} 3/${g}:8 2/${b}:8`
+/** One bar: a pinch (bass and a 1st-string melody note together), i and m, then a second bass note (pinched with `top2` if given), i and m. */
+const pinch = (bass: string, top: number, g: number, b: number, bass2: string, top2?: number) =>
+  `[${bass} 1/${top}] 3/${g}:8 2/${b}:8 ${top2 === undefined ? bass2 : `[${bass2} 1/${top2}]`} 3/${g}:8 2/${b}:8`
 
 export const fingerpicking: Unit = {
   id: 'gfp',
@@ -318,27 +320,27 @@ export const fingerpicking: Unit = {
       steps: [
         text(
           'The pinch',
-          'A **pinch** is the thumb and a finger plucking **at the same moment**: a bass note and a top note together. It gives each bar a clear first beat and lets a tune sit on top of the accompaniment.\n\nIn this piece every bar starts with a pinch (thumb on the root, ring finger on the 1st string), followed by **i** and **m**, then a second bass note and **i**, **m** again. Count "**1** 2 & **3** 4 &".',
+          'A **pinch** is the thumb and a finger plucking **at the same moment**: a bass note and a top note together. It gives each bar a clear first beat and lets a tune sit on top of the accompaniment.\n\nIn this piece every bar starts with a pinch (thumb on the root, ring finger on the 1st string), followed by **i** and **m**, then a second bass note, usually pinched too, and **i**, **m** again. Count "**1** 2 & **3** 4 &".\n\nThe **top notes of the pinches are the tune**. It uses only two notes on the 1st string: the open **E**, and **G** at the 3rd fret, which your little finger reaches without letting go of the chord. Play those a little louder than everything else.',
         ),
         exercise(
           'g-fp7',
           'Morning Fingers',
           gtr(
             [
-              pinch('5/3', 0, 0, 1, '4/2'),
-              pinch('6/3', 3, 0, 0, '4/0'),
-              pinch('5/0', 0, 2, 1, '4/2'),
+              pinch('5/3', 0, 0, 1, '4/2', 3),
+              pinch('6/3', 3, 0, 0, '4/0', 0),
+              pinch('5/0', 0, 2, 1, '4/2', 3),
               pinch('4/3', 0, 2, 1, '4/3'),
-              pinch('5/3', 0, 0, 1, '4/2'),
-              pinch('6/3', 3, 0, 0, '4/0'),
-              pinch('4/3', 0, 2, 1, '4/3'),
+              pinch('5/3', 3, 0, 1, '4/2', 0),
+              pinch('6/3', 3, 0, 0, '4/0', 3),
+              pinch('4/3', 3, 2, 1, '4/3', 0),
               '[5/3 4/2 3/0 2/1 1/0]:w',
             ].join(' | '),
             { chords: 'C G Am Fmaj7 C G Fmaj7 C' },
           ),
           54,
           92,
-          'Loop bars 1 to 2 first (set Bars to 1 and 2). The last bar is a slow strum with the thumb across the C chord.',
+          'Loop bars 1 to 2 first (set Bars to 1 and 2). Listen for the tune on the 1st string: E G, G E, E G, E. The last bar is one C chord: pluck it together, or brush the thumb down across the strings.',
         ),
         text(
           'Where fingerstyle goes next',
@@ -456,16 +458,16 @@ export const guitarStudio: Unit[] = [
             'g-pm1',
             'Mute, then open',
             gtr(
-              '6/0:8~PM 6/0:8 6/0:8 6/0:8 [6/3 5/5]:8 6/0:8~PM [6/5 5/7]:8 6/0:8~PM | 6/0:8~PM 6/0:8 6/0:8 6/0:8 [6/5 5/7]:8 6/0:8~PM [6/3 5/5]:8 6/0:8~PM | 6/0:8~PM 6/0:8 6/0:8 6/0:8 [6/3 5/5]:8 6/0:8~PM [6/5 5/7]:8 6/0:8~PM | [6/0 5/2]:w',
+              `${['[6/3 5/5]:8 6/0:8~PM [6/5 5/7]:8', '[6/5 5/7]:8 6/0:8~PM [6/3 5/5]:8', '[6/3 5/5]:8 6/0:8~PM [6/5 5/7]:8'].map((end) => `6/0:8~PM 6/0:8~PM 6/0:8~PM 6/0:8~PM ${end} 6/0:8~PM`).join(' | ')} | [6/0 5/2]:w`,
             ),
             70,
             120,
-            'The low E notes are palm muted; lift the hand for the two-note power chords so they jump out.',
+            'Every note marked PM is palm muted; lift the hand for the two-note power chords so they jump out.',
           ),
           exercise(
             'g-pm2',
             'Accent the backbeat',
-            gtr(`${rep('5/0:8~PM 5/0:8 [5/0 4/2]:8~> 5/0:8 5/0:8 5/0:8 [5/0 4/2]:8~> 5/0:8', 3)} | [5/0 4/2]:w`),
+            gtr(`${rep('5/0:8~PM 5/0:8~PM [5/0 4/2]:8~> 5/0:8~PM 5/0:8~PM 5/0:8~PM [5/0 4/2]:8~> 5/0:8~PM', 3)} | [5/0 4/2]:w`),
             70,
             120,
             'Muted A notes with an open, louder A5 on beats 2 and 4.',
@@ -492,7 +494,7 @@ export const guitarStudio: Unit[] = [
         steps: [
           text(
             'Less is more',
-            'A chord only needs three notes. On the **top three strings** every major triad has **three small shapes**, one for each note that can be on top. They are the same three notes in a different order (the **inversions**):\n\n- **Root position** (root lowest): the shape of an open D chord without its bass.\n- **1st inversion** (3rd lowest): a small slanted shape.\n- **2nd inversion** (5th lowest): a tiny barre with one finger behind, like the top of an F chord.\n\nThese shapes cut through a band without clashing with the bass, and they put you next to melody notes all over the neck. They are also the heart of the **CAGED** way of seeing the fretboard: each one is the top of a bigger chord shape you already know.',
+            'A chord only needs three notes. On the **top three strings** every major triad has **three small shapes**, one for each note that can be on top. They are the same three notes in a different order (the **inversions**):\n\n- **Root position** (root lowest): the top of an open **A** chord, two notes on one fret and the top string two frets lower.\n- **1st inversion** (3rd lowest): a tiny barre with one finger behind it, like the top of an **F** chord.\n- **2nd inversion** (5th lowest): the triangle of an open **D** chord.\n\nThese shapes cut through a band without clashing with the bass, and they put you next to melody notes all over the neck. They are also the heart of the **CAGED** way of seeing the fretboard: each one is the top of a bigger chord shape you already know.',
           ),
           {
             t: 'fretboard',
@@ -535,15 +537,23 @@ export const guitarStudio: Unit[] = [
         steps: [
           text(
             'Four notes, four strings',
-            'Jazz, soul, bossa nova and neo-soul are built on seventh chords. The standard guitar shapes use just **four strings** and skip one, which keeps them clear and easy to move.\n\n**Root on the 6th string** (the 5th string is muted by the side of finger 1):\n\n- **maj7**: 3 x 4 4 3 x · **7**: 3 x 3 4 3 x · **m7**: 3 x 3 3 3 x (all shown on G)\n\n**Root on the 5th string**:\n\n- **maj7**: x 3 5 4 5 x · **7**: x 3 5 3 5 x · **m7**: x 3 5 3 4 x (all shown on C)\n\nCompare neighbours: from maj7 to 7, one note drops a fret (the 7th). From 7 to m7, another drops (the 3rd).',
+            'Jazz, soul, bossa nova and neo-soul are built on seventh chords. The standard guitar shapes use just **four strings** and skip one, which keeps them clear and easy to move.\n\n**Root on the 6th string** (the 5th string is muted by the side of finger 1):\n\n- **maj7**: 3 x 4 4 3 x · **7**: 3 x 3 4 3 x · **m7**: 3 x 3 3 3 x (all shown on G)\n\n**Root on the 5th string**:\n\n- **maj7**: x 3 5 4 5 x · **7**: x 3 5 3 5 x · **m7**: x 3 5 3 4 x (all shown on C)\n\nCompare neighbours: from maj7 to 7, one note drops a fret (the 7th). From 7 to m7, another drops (the 3rd).\n\nSeveral of these shapes need a finger laid flat across two or three strings, as in a barre chord. If that is new to you, take **Small barres first** in the barre-chord unit before this lesson.',
           ),
           {
             t: 'fretboard',
-            title: 'G7 and Cmaj7',
-            marks: fm('*6/3=G +4/3=F +3/4=B 2/3=D *5/3=C 4/5=G +3/4=B +2/5=E'),
+            title: 'G7, root on the 6th string',
+            marks: fm('*6/3=G +4/3=F +3/4=B 2/3=D'),
             from: 1,
             to: 7,
-            caption: 'G7 from the 6th string uses strings 6, 4, 3, 2. Cmaj7 from the 5th string uses strings 5, 4, 3, 2. They share the B on the 3rd string.',
+            caption: 'Strings 6, 4, 3 and 2; the 5th string is muted. Orange: the root. Teal: the 3rd (B) and the 7th (F), the two notes that give a seventh chord its colour. Grey: the 5th.',
+          },
+          {
+            t: 'fretboard',
+            title: 'Cmaj7, root on the 5th string',
+            marks: fm('*5/3=C 4/5=G +3/4=B +2/5=E'),
+            from: 1,
+            to: 7,
+            caption: 'Strings 5, 4, 3 and 2. The same colours: here the 3rd is E and the 7th is B. Notice that the B on the 3rd string is in both chords.',
           },
           exercise(
             'g-7a',
@@ -654,7 +664,7 @@ export const guitarStudio: Unit[] = [
         steps: [
           text(
             'Solos that follow the chords',
-            'A scale fits the whole key. An **arpeggio** fits **one chord**: it is that chord played a note at a time. When a soloist seems to "play the changes", they are leaning on the arpeggio of each chord as it goes by.\n\nA dominant 7th arpeggio has four notes: **root, 3rd, 5th, ♭7th**. All three arpeggios of the A blues sit in and around box 1, so you do not need to move.',
+            'A scale fits the whole key. An **arpeggio** fits **one chord**: it is that chord played a note at a time. When a soloist seems to "play the changes", they are leaning on the arpeggio of each chord as it goes by.\n\nA dominant 7th arpeggio has four notes: **root, 3rd, 5th, ♭7th**. The A7 and D7 arpeggios both sit inside box 1; for E7 the hand moves up two frets.',
           ),
           {
             t: 'fretboard',
@@ -670,7 +680,7 @@ export const guitarStudio: Unit[] = [
             gtr('6/5 5/4 5/7 4/5 | 4/7 3/6 2/5 2/8 | 5/5 4/4 4/7 3/5 | 3/7 2/7 1/5 1/8 | 5/7 4/6 4/9 3/7 | 3/9 2/9 1/7:h', { chords: 'A7 . D7 . E7 .' }),
             60,
             104,
-            'Two bars on each chord, climbing: root, 3rd, 5th, 7th, and again an octave higher.',
+            'Two bars on each chord, climbing: root, 3rd, 5th, 7th, and again an octave higher. The E7 bars sit two frets higher, and the last one stops on the 5th and holds it.',
           ),
           text(
             'The 3rd is the target',
@@ -682,13 +692,13 @@ export const guitarStudio: Unit[] = [
             gtr(
               'A7 A7 A7 A7 D7 D7 A7 A7 E7 D7 A7 E7'
                 .split(' ')
-                .map((c) => (c === 'A7' ? '3/5:8 3/6:8~H 3/6:hd' : c === 'D7' ? '2/6:8 2/7:8~sl 2/7:hd' : '2/8:8 2/9:8~sl 2/9:hd'))
+                .map((c) => (c === 'A7' ? '3/5:8 3/6:8-~H 3/6:hd' : c === 'D7' ? '2/6:8 2/7:8-~sl 2/7:hd' : '2/8:8 2/9:8-~sl 2/9:hd'))
                 .join(' | '),
               { chords: 'A7 . . . D7 . A7 . E7 D7 A7 E7' },
             ),
             66,
             104,
-            'Turn on Backing chords and listen to each target note lock into its chord.',
+            'Pick the first note only: the hammer-on or slide makes the second, which then rings for the rest of the bar (the tie). Turn on Backing chords and listen to each target note lock into its chord.',
           ),
           quiz('Which note of a chord tells the ear whether it is major or minor?', ['The root', 'The 3rd', 'The 5th', 'The octave'], 1),
         ],
@@ -701,13 +711,13 @@ export const guitarStudio: Unit[] = [
         steps: [
           text(
             'Fewer notes, more feeling',
-            'At a slow tempo there is nowhere to hide: every note is heard, so **how** you play matters more than what you play. This study uses everything from the studio lessons:\n\n- the **♭3-to-3 hammer** (C to C♯) over A7,\n- **chord 3rds** as targets: F♯ over D7 in bars 5 and 10, G♯ over E7 in bar 9,\n- a **full bend with a release**: bend the note up a whole step, then let it back down to where it started, both in one pick stroke,\n- **space**: bars 1 and 3 start with a rest, and bar 8 breathes.\n\nThis blues has a **quick change**: it goes to D7 in bar 2 and straight back.',
+            'At a slow tempo there is nowhere to hide: every note is heard, so **how** you play matters more than what you play. This study uses everything from the studio lessons:\n\n- the **♭3-to-3 hammer** (C to C♯) over A7,\n- **chord 3rds** as targets: F♯ over D7 in bars 5 and 10, G♯ over E7 in bar 9,\n- a **full bend with a release**: bend the note up a whole step, then let it back down to where it started, both in one pick stroke (in bar 2 the two are joined by a tie, and the tab shows the release in brackets),\n- **space**: bars 1 and 3 start with a rest, and bar 8 breathes.\n\nThis blues has a **quick change**: it goes to D7 in bar 2 and straight back.',
           ),
           exercise(
             'g-slow1',
             'Slow blues in A',
             gtr(
-              'r 3/5:8 3/6:8~H 2/5:h | 2/8:8~full 2/8:8~rel 2/5 3/7:h | r 2/5:8 2/7:8 1/5:h | 1/8:8~full 1/5:8 2/8 2/5:h | ' +
+              'r 3/5:8 3/6:8~H 2/5:h | 2/8:8-~full 2/8:8~rel 2/5 3/7:h | r 2/5:8 2/7:8 1/5:h | 1/8:8~full 1/5:8 2/8 2/5:h | ' +
                 '3/7:h 2/7:8 3/7:8 3/5 | 2/8:8 2/5:8 3/7 3/5:h | 3/5:8 3/6:8~H 2/5 2/7 1/5 | 1/5:h~vib r:h | ' +
                 '2/9:h 2/5 3/7 | 2/7:h 3/7 3/5 | 3/5:8 3/6:8~H 2/5 3/7:8 3/5:8 4/7 | 4/6:8 4/7:8 4/9:hd~vib',
               { chords: 'A7 D7 A7 . D7 . A7 . E7 D7 A7 E7' },

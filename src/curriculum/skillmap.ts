@@ -50,7 +50,7 @@ const BY_ID: Record<string, Skill> = {
   'k-next': 'technique',
 }
 
-const UNIT_DEFAULT: Record<string, Skill> = { g3: 'chords', g4: 'lead', g5: 'lead' }
+const UNIT_DEFAULT: Record<string, Skill> = { g3: 'barre', g4: 'lead', g5: 'lead' }
 
 /** The skill a lesson builds: its own tag, else its unit's, else the table above. */
 export function skillOf(unit: Unit, lesson: Lesson): Skill {

@@ -223,7 +223,7 @@ export const keyboard: Track = {
           steps: [
             text(
               'Read the shape, not every note',
-              'Fluent readers do not name each note. They find the **first note**, then read the **distance and direction** to the next:\n\n- **Repeat**: the same line or space again.\n- **Step**: the neighbouring line or space. On the keys, the next white key.\n- **Skip**: line to line, or space to space (a 3rd). One white key is missed.\n- **Leap**: further (a 4th, 5th or more).\n\nLandmarks help you check yourself: middle C, treble G, bass F.\n\nIn the next exercises **only the first note has a finger number**. It tells you the hand position: the thumb sits on the first note and each finger covers the next key. Keep the hand there and the notes fall under the right fingers on their own.',
+              'Fluent readers do not name each note. They find the **first note**, then read the **distance and direction** to the next:\n\n- **Repeat**: the same line or space again.\n- **Step**: the neighbouring line or space. On the keys, the next white key.\n- **Skip**: line to line, or space to space (a 3rd). One white key is missed.\n- **Leap**: further (a 4th, 5th or more).\n\nLandmarks help you check yourself: middle C, treble G, bass F.\n\nIn the next exercises **only the first note has a finger number**. It tells you the hand position: the finger shown sits on the first note and the other fingers cover the keys on either side, one key each. Keep the hand there and the notes fall under the right fingers on their own.',
             ),
             exercise(
               'k-read-int1',
@@ -654,12 +654,12 @@ export const keyboard: Track = {
               'G major, contrary motion',
               keys(
                 'G4.1 A4.2 B4.3 C5.1 | D5.2 E5.3 F#5.4 G5.5 | G5.5 F#5.4 E5.3 D5.2 | C5.1 B4.3 A4.2 G4.1',
-                'G4.1 F#4.2 E4.3 D4.1 | C4.2 B3.3 A3.4 G3.5 | G3.5 A3.4 B3.3 C4.2 | D4.1 E4.3 F#4.2 G4.1',
+                'G3.1 F#3.2 E3.3 D3.1 | C3.2 B2.3 A2.4 G2.5 | G2.5 A2.4 B2.3 C3.2 | D3.1 E3.3 F#3.2 G3.1',
                 { key: 'G' },
               ),
               54,
               92,
-              'The same mirror pattern in a new key. The key signature has one sharp, so every F is F♯: the left hand reaches it with finger 2.',
+              'The same mirror pattern in a new key, with the thumbs an octave apart: left thumb on the G below middle C, right thumb on the G above it. The key signature has one sharp, so every F is F♯: the left hand reaches it with finger 2.',
             ),
             text(
               'Stretch: two octaves',
@@ -693,7 +693,7 @@ export const keyboard: Track = {
           steps: [
             text(
               'The left hand sings',
-              'In most of your pieces the right hand has had the tune. In real music the **left hand sings** just as often, and the right hand accompanies. Two things change:\n\n- **Balance.** The melody hand plays a little **louder**; the accompaniment hand plays softer. Listen for the tune, as if a singer were performing it.\n- **Confidence.** The left hand is usually the weaker one. Short, regular practice with the left hand alone makes it as steady as the right.\n\nHere is Ode to Joy again, with the tune in the left hand and the right hand holding two-note harmonies underneath.',
+              'In most of your pieces the right hand has had the tune. In real music the **left hand sings** just as often, and the right hand accompanies. Two things change:\n\n- **Balance.** The melody hand plays a little **louder**; the accompaniment hand plays softer. Listen for the tune, as if a singer were performing it.\n- **Confidence.** The left hand is usually the weaker one. Short, regular practice with the left hand alone makes it as steady as the right.\n\nHere is Ode to Joy again, with the tune in the left hand and the right hand holding two-note harmonies above it.',
             ),
             exercise(
               'k-lm1',
@@ -908,11 +908,11 @@ export const keyboard: Track = {
               keys(
                 'E4.3 G4.5 G4.5 | E4.3 G4.5 G4.5 | F4.4 E4.3 D4.2 | E4.3:hd | D4.2 F4.4 F4.4 | D4.2 F4.4 F4.4 | D4.2 E4.3 D4.2 | C4.1:hd',
                 'C3.5 [E3 G3].31 [E3 G3].31 | C3.5 [E3 G3].31 [E3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | C3.5 [E3 G3].31 [E3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | B2.5 [D3 G3].31 [D3 G3].31 | C3.5:hd',
-                { meter: 3, chords: 'C . G7 C G7 . . C', pedal: 'p c p p p c p p' },
+                { meter: 3, chords: 'C . G7 C G7 . . C', pedal: 'p c p p p c c p' },
               ),
               60,
               96,
-              'In a waltz the pedal goes down on beat 1 (the bass note) and stays down for the bar. Bars 1 and 2 share one chord, so the pedal stays down across the bar line: the bracket is one long line.',
+              'In a waltz the pedal goes down on beat 1 (the bass note) and stays down for the bar. Bars 1 and 2 share one chord, so the pedal stays down across the bar line: the bracket is one long line. The same happens across bars 5 to 7.',
             ),
             exercise(
               'k-pedal3',
@@ -973,7 +973,7 @@ export const keyboard: Track = {
           steps: [
             text(
               'Melody on top, chords above',
-              'A **lead sheet** gives only the **melody** and **chord symbols** above it, and leaves the accompaniment to you. It is how most popular music is written, and learning to read one is a big step toward playing music you love.\n\nFor each symbol:\n\n- **Turn it into notes**: C = C E G, G7 = G B D F, Am = A C E.\n- **Pick the nearest inversion.** Choose the version of each chord that moves your hand the least from the one before. Root-position chords jumping around are clumsy; inversions are smooth.\n- **A G7 in the left hand needs only three notes**: the 3rd (B), the 7th (F) and the root (G). The 5th (D) can be left out without changing the sound. A good voicing is **B – F – G**, fingered 5 – 2 – 1.',
+              'A **lead sheet** gives only the **melody** and **chord symbols** above it, and leaves the accompaniment to you. It is how most popular music is written, and learning to read one is a big step toward playing music you love.\n\nFor each symbol:\n\n- **Turn it into notes**: C = C E G, G7 = G B D F, Am = A C E.\n- **Pick the nearest inversion.** Choose the version of each chord that moves your hand the least from the one before. Root-position chords jumping around are clumsy; inversions are smooth.\n- **A G7 in the left hand needs only three notes**: the 3rd (B), the 7th (F) and the root (G). The 5th (D) can be left out without losing the chord\'s character. A good voicing is **B – F – G**, fingered 5 – 2 – 1.',
             ),
             exercise(
               'k-lead1',
@@ -986,6 +986,22 @@ export const keyboard: Track = {
               60,
               96,
               'The left hand shows one smooth way to play the chord symbols. Notice how little it moves between C and G7: only the middle note and the little finger change.',
+            ),
+            text(
+              'Now you choose the left hand',
+              'A real lead sheet shows **only the melody and the chord symbols**. The next tune is written that way: the left hand is yours to work out.\n\nIt uses four chords. Starting from C in root position, the nearest shapes are:\n\n- **C**: C – E – G (5 – 3 – 1)\n- **F**: C – F – A (5 – 2 – 1). The C stays; the top two notes each move up one key.\n- **G7**: B – F – G (5 – 2 – 1)\n- **Am**: C – E – A (5 – 3 – 1). Only the thumb moves, from G up to A.\n\nPlay each chord once, on beat 1 of its bar, and hold it. Say the chord name aloud as you change.',
+            ),
+            exercise(
+              'k-lead2',
+              'Evening Song: melody and chord symbols only',
+              keys(
+                'E4.3 G4.5 G4.5:h | F4.4 E4.3 F4.4:h | D4.2 F4.4 D4.2:h | E4.3:w | E4.3 C4.1 E4.3:h | F4.4 G4.5 F4.4:h | F4.4 D4.2 D4.2:h | C4.1:w',
+                undefined,
+                { chords: 'C F G7 C Am F G7 C', ownLeft: true },
+              ),
+              60,
+              92,
+              'Learn the melody first, then add one left-hand chord per bar from the symbols. Only the melody is checked: with a MIDI keyboard, anything you play below it is ignored. Turn on Backing chords to hear whether your chords match.',
             ),
             text(
               'Make it your own',

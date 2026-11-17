@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ensureAudio, now, play, type Ticker } from '../audio/audio'
+import { ensureAudio, now, play, silence, type Ticker } from '../audio/audio'
 import { Fretboard, type Mark } from '../components/Fretboard'
 import { InputBar } from '../components/InputBar'
 import { Keyboard, type KeyMark } from '../components/Keyboard'
@@ -11,9 +11,12 @@ import {
   chordQuestion,
   DRILLS,
   echoQuestion,
+  flatKey,
   intervalName,
   intervalQuestion,
+  intervalSpelling,
   progressionQuestion,
+  rootName,
   rhythmPiece,
   rhythmQuestion,
   scaleQuestion,
@@ -25,11 +28,31 @@ import { playPiece } from '../practice/Runner'
 import { actions, useProfile } from '../store/store'
 import { CHORDS, midiName, mod, pretty, SCALES, TUNING } from '../theory/theory'
 
-/** Play groups of notes one after another: each entry is [notes, seconds after the start, length]. */
-async function sequence(events: [number[], number, number][]): Promise<void> {
+let playing = 0
+let pending: number[] = []
+
+/** Stop whatever `sequence` is playing or still has to play. */
+function stopSequence(): void {
+  playing++
+  pending.forEach((id) => window.clearTimeout(id))
+  pending = []
+  silence()
+}
+
+/**
+ * Play groups of notes one after another: each entry is [notes, seconds after the start, length].
+ * Starting a new sequence stops the one before it. Resolves to the seconds until the last note ends, or 0 when
+ * another sequence took over before this one began.
+ */
+async function sequence(events: [number[], number, number][]): Promise<number> {
+  stopSequence()
+  const mine = playing
   await ensureAudio()
+  if (mine !== playing) return 0
   const t = now() + 0.06
-  for (const [notes, at, len] of events) play('keys', notes, len, t + at)
+  // Each note is handed to the audio clock just before it sounds, so the rest can still be cancelled.
+  pending = events.map(([notes, at, len]) => window.setTimeout(() => mine === playing && play('keys', notes, len, t + at), Math.max(0, at * 1000 - 50)))
+  return 0.06 + Math.max(...events.map(([, at, len]) => at + len))
 }
 
 function useLevel(drill: string): [number, (n: number) => void] {
@@ -43,6 +66,10 @@ function LevelBar({ info }: { info: DrillInfo }) {
   const stat = profile.ear[info.id]
   const acc = earAccuracy(stat, level)
   const answered = stat?.recent[level]?.length ?? 0
+  // Answers given since this drill was opened: every tenth one gets a short report.
+  const [start] = useState(() => ({ total: stat?.total ?? 0, right: stat?.right ?? 0 }))
+  const session = (stat?.total ?? 0) - start.total
+  const sessionRight = (stat?.right ?? 0) - start.right
   return (
     <div className="ear-level">
       <div className="seg" role="group" aria-label="Level">
@@ -53,7 +80,7 @@ function LevelBar({ info }: { info: DrillInfo }) {
         ))}
       </div>
       <span className="muted">{info.levels[level - 1]}</span>
-      <span className="ear-score" data-ear-score>
+      <span className={`ear-score${acc !== null && acc >= 0.8 ? ' good' : ''}`} data-ear-score>
         {answered === 0 ? 'No answers yet at this level' : `Last ${Math.min(10, answered)}: ${(stat!.recent[level] ?? []).slice(-10).reduce((a, b) => a + b, 0)} right`}
       </span>
       {acc !== null && answered >= 10 && acc >= 0.8 && level < 3 && (
@@ -66,6 +93,16 @@ function LevelBar({ info }: { info: DrillInfo }) {
           Too hard for now? Try level {level - 1}
         </button>
       )}
+      {session > 0 && session % 10 === 0 && (
+        <p className="notice tight ear-report" data-ear-report>
+          {session} answered this visit, {sessionRight} right.{' '}
+          {acc !== null && acc >= 0.8
+            ? level < 3
+              ? 'That is a pass at this level: move up when you are ready.'
+              : 'That is a pass at the top level. Keep it alive with a few questions most days.'
+            : 'Eight right out of the last ten passes a level. Ten questions is a good session: stop here and come back tomorrow, or carry on.'}
+        </p>
+      )}
     </div>
   )
 }
@@ -73,6 +110,8 @@ function LevelBar({ info }: { info: DrillInfo }) {
 // ---------- multiple-choice drills ----------
 
 interface Choice {
+  /** identifies the question, so the same one is not asked twice running */
+  key: string
   options: string[]
   answer: number
   play: () => void
@@ -84,28 +123,32 @@ function makeChoice(drill: string, level: number): Choice {
   if (drill === 'intervals') {
     const q = intervalQuestion(level)
     const hi = q.low + q.semis
+    const [lowName, highName] = intervalSpelling(q.low, q.semis)
     return {
+      key: `${q.low} ${q.semis} ${q.how}`,
       options: q.options.map(intervalName),
       answer: q.options.indexOf(q.semis),
       play: () =>
         void sequence(q.how === 'together' ? [[[q.low, hi], 0, 1.4]] : q.how === 'up' ? [[[q.low], 0, 0.8], [[hi], 0.7, 1.1]] : [[[hi], 0, 0.8], [[q.low], 0.7, 1.1]]),
-      detail: `${pretty(midiName(q.low))} and ${pretty(midiName(hi))}: ${q.semis} half step${q.semis > 1 ? 's' : ''}${q.how === 'down' ? ', falling' : q.how === 'together' ? ', played together' : ''}.`,
+      detail: `${pretty(lowName)} and ${pretty(highName)}: ${q.semis} half step${q.semis > 1 ? 's' : ''}${q.how === 'down' ? ', falling' : q.how === 'together' ? ', played together' : ''}.`,
     }
   }
   if (drill === 'chords') {
     const q = chordQuestion(level)
     const notes = CHORDS[q.quality].steps.map((s) => q.root + s)
     return {
+      key: `${q.root} ${q.quality}`,
       options: q.options.map((k) => CHORDS[k].name),
       answer: q.options.indexOf(q.quality),
       play: () => void sequence([...notes.map((n, i): [number[], number, number] => [[n], i * 0.25, 0.5]), [notes, notes.length * 0.25 + 0.2, 1.6]]),
-      detail: `${pretty(midiName(q.root).replace(/-?\d+$/, ''))} ${CHORDS[q.quality].name.toLowerCase()}: ${CHORDS[q.quality].labels.map(pretty).join(' ')}.`,
+      detail: `${pretty(rootName(q.root))} ${CHORDS[q.quality].name.toLowerCase()}: ${CHORDS[q.quality].labels.map(pretty).join(' ')}.`,
     }
   }
   if (drill === 'scales') {
     const q = scaleQuestion(level)
     const notes = [...SCALES[q.scale].steps, 12].map((s) => q.root + s)
     return {
+      key: `${q.root} ${q.scale}`,
       options: q.options.map((k) => SCALES[k].name),
       answer: q.options.indexOf(q.scale),
       play: () => void sequence(notes.map((n, i): [number[], number, number] => [[n], i * 0.3, 0.45])),
@@ -115,6 +158,7 @@ function makeChoice(drill: string, level: number): Choice {
   const q = progressionQuestion(level)
   const home = chordNotes(q.key, 0, q.answer.minor ? 'min' : 'maj')
   return {
+    key: `${q.key} ${q.answer.label}`,
     options: q.options.map((p) => p.label),
     answer: q.options.indexOf(q.answer),
     play: () =>
@@ -125,7 +169,7 @@ function makeChoice(drill: string, level: number): Choice {
           return [[c.bass, ...c.notes], 1.7 + i * 1.05, 1.0]
         }),
       ]),
-    detail: `In ${pretty(midiName(60 + q.key).replace(/-?\d+$/, ''))} ${q.answer.minor ? 'minor' : 'major'}.`,
+    detail: `In ${pretty(rootName(q.key))} ${q.answer.minor ? 'minor' : 'major'}.`,
   }
 }
 
@@ -134,14 +178,16 @@ function ChoiceDrill({ info }: { info: DrillInfo }) {
   const [q, setQ] = useState<Choice | null>(null)
   const [picked, setPicked] = useState<number | null>(null)
 
-  // A change of level starts afresh.
+  // A change of level starts afresh, and leaving the drill stops the sound.
   useEffect(() => {
     setQ(null)
     setPicked(null)
+    return stopSequence
   }, [level])
 
   const ask = () => {
-    const next = makeChoice(info.id, level)
+    let next = makeChoice(info.id, level)
+    for (let tries = 0; q && next.key === q.key && tries < 5; tries++) next = makeChoice(info.id, level)
     setQ(next)
     setPicked(null)
     next.play()
@@ -201,11 +247,16 @@ function EchoDrill({ info }: { info: DrillInfo }) {
   const guitarFirst = Object.keys(profile.lessons).filter((id) => id.startsWith('g-')).length >= Object.keys(profile.lessons).filter((id) => id.startsWith('k-')).length
   const [view, setView] = useState<'keys' | 'guitar'>(guitarFirst && Object.keys(profile.lessons).length > 0 ? 'guitar' : 'keys')
   const listening = useRef(false)
+  const listenTimer = useRef(0)
   const state = useRef({ at: 0, mistakes: 0 })
   const done = q !== null && (at >= q.notes.length || shown)
 
   useEffect(() => {
     setQ(null)
+    return () => {
+      window.clearTimeout(listenTimer.current)
+      stopSequence()
+    }
   }, [level])
 
   const hear = (question: EchoQ) => {
@@ -215,13 +266,19 @@ function EchoDrill({ info }: { info: DrillInfo }) {
       [[question.tonic - 12, question.tonic, question.tonic + third, question.tonic + 7], 0, 0.9],
       ...question.notes.map((n, i): [number[], number, number] => [[n], 1.4 + i * 0.6, 0.55]),
     ]
-    void sequence(events)
-    // Ignore the microphone while the app itself is playing.
-    window.setTimeout(() => (listening.current = true), (1.4 + question.notes.length * 0.6) * 1000)
+    // Ignore the microphone while the app itself is playing, until its last note has died away. Hearing the
+    // phrase again starts that wait afresh.
+    window.clearTimeout(listenTimer.current)
+    void sequence(events).then((seconds) => {
+      if (seconds) listenTimer.current = window.setTimeout(() => (listening.current = true), (seconds + 0.35) * 1000)
+    })
   }
 
   const ask = () => {
-    const next = echoQuestion(level)
+    // Giving up on a phrase after a wrong note is a miss, not a free pass.
+    if (q && !done && state.current.mistakes > 0) actions.earAnswer(info.id, level, false)
+    let next = echoQuestion(level)
+    for (let tries = 0; q && next.notes.join() === q.notes.join() && tries < 5; tries++) next = echoQuestion(level)
     setQ(next)
     setAt(0)
     setMistakes(0)
@@ -260,12 +317,14 @@ function EchoDrill({ info }: { info: DrillInfo }) {
     setShown(true)
   }
 
-  const flat = false
+  const flat = q ? flatKey(q.tonic, q.minor) : false
   const found = q ? q.notes.slice(0, done ? q.notes.length : at) : []
   const hint = q && level < 3 && at === 0 && !done ? [q.notes[0]] : []
+  // A pitch that comes round again keeps every number it was played at ("1,3").
+  const numbered = [...found.reduce((by, m, i) => by.set(m, by.has(m) ? `${by.get(m)},${i + 1}` : String(i + 1)), new Map<number, string>())]
   const keyMarks: KeyMark[] = q
     ? [
-        ...found.map((m, i): KeyMark => ({ midi: m, label: String(i + 1), kind: 'done' })),
+        ...numbered.map(([m, label]): KeyMark => ({ midi: m, label, kind: 'done' })),
         ...hint.map((m): KeyMark => ({ midi: m, label: '1', kind: 'active' })),
         ...(found.includes(q.tonic) || hint.includes(q.tonic) ? [] : [{ midi: q.tonic, label: 'home', kind: 'ghost' } as KeyMark]),
       ]
@@ -281,8 +340,9 @@ function EchoDrill({ info }: { info: DrillInfo }) {
   }
   const fretMarks: Mark[] = q
     ? [
-        ...found.map((m, i): Mark => ({ ...onFret(m), label: String(i + 1), kind: 'chord' })),
+        ...numbered.map(([m, label]): Mark => ({ ...onFret(m), label, kind: 'chord' })),
         ...hint.map((m): Mark => ({ ...onFret(m), label: '1', kind: 'active' })),
+        ...(found.includes(q.tonic) || hint.includes(q.tonic) ? [] : [{ ...onFret(q.tonic), label: 'home', kind: 'ghost' } as Mark]),
       ]
     : []
 
@@ -324,7 +384,7 @@ function EchoDrill({ info }: { info: DrillInfo }) {
           </p>
           <div className="scroll-x">
             {view === 'keys' ? (
-              <Keyboard marks={keyMarks} from={q.tonic - 2} to={q.tonic + 17} onPick={tap} />
+              <Keyboard marks={keyMarks} from={q.tonic - 2} to={q.tonic + 17} flats={flat} onPick={tap} />
             ) : (
               <Fretboard marks={fretMarks} from={0} to={12} leftHanded={profile.leftHanded} onPick={(m) => tap(m)} />
             )}
@@ -356,7 +416,8 @@ function RhythmDrill({ info }: { info: DrillInfo }) {
     ticker.current = await playPiece(rhythmPiece(question.options[question.answer]), 80, () => {}, { countIn: true })
   }
   const ask = () => {
-    const next = rhythmQuestion(level)
+    let next = rhythmQuestion(level)
+    for (let tries = 0; q && next.options[next.answer] === q.options[q.answer] && tries < 5; tries++) next = rhythmQuestion(level)
     setQ(next)
     setPicked(null)
     void hear(next)

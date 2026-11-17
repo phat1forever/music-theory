@@ -100,6 +100,13 @@ export function drum(kind: 'kick' | 'hat' | 'snare', time: number): void {
   else kit.hat.triggerAttackRelease(0.05, time)
 }
 
+/** Cut off every instrument note that is still sounding. */
+export function silence(): void {
+  kit?.guitar.releaseAll()
+  kit?.keys.releaseAll()
+  kit?.pad.releaseAll()
+}
+
 export interface Ticker {
   stop(): void
   /** audio-clock time of tick 0 */
@@ -146,9 +153,7 @@ export async function startTicker(
     stop() {
       window.clearInterval(interval)
       timers.forEach((id) => window.clearTimeout(id))
-      kit?.guitar.releaseAll()
-      kit?.keys.releaseAll()
-      kit?.pad.releaseAll()
+      silence()
     },
   }
 }

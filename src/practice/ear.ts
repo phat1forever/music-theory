@@ -1,6 +1,6 @@
 // Ear-training drills: what each one asks at each level. Pure data and question generators; the page adds sound and UI.
 import { keys, type Piece } from '../theory/music'
-import { CHORDS, INTERVALS, mod, SCALES } from '../theory/theory'
+import { CHORDS, INTERVALS, mod, pcName, SCALES, spell, type Formula } from '../theory/theory'
 
 export interface DrillInfo {
   id: string
@@ -39,7 +39,7 @@ export const DRILLS: DrillInfo[] = [
     id: 'echo',
     name: 'Play it back',
     about: 'A short phrase plays. Play it back on your instrument, or tap it on screen.',
-    levels: ['Three notes, moving by step, starting on the home note', 'Four notes of the major scale, with small skips', 'Five notes, major or minor, in different keys, with leaps'],
+    levels: ['Three notes of the C major scale, moving by step; the first note is shown', 'Four notes of the major scale, with small skips', 'Five notes, major or minor, in different keys, with leaps'],
   },
   {
     id: 'rhythm',
@@ -69,6 +69,22 @@ export function intervalQuestion(level: number): IntervalQ {
 }
 
 export const intervalName = (semis: number) => INTERVALS.find((i) => i.semis === semis)!.name
+
+// Black keys are named the way they most often appear: C♯, E♭, F♯, A♭, B♭.
+const FLAT_ROOTS = [3, 8, 10]
+/** The usual name of a note taken on its own (no octave). */
+export const rootName = (midi: number) => pcName(midi, FLAT_ROOTS.includes(mod(midi, 12)))
+
+const INTERVAL_DEGREE = [1, 2, 2, 3, 3, 4, 4, 5, 6, 6, 7, 7, 8]
+/** Names for the two notes of an interval, the upper one spelled by its distance (F♯ up a major 3rd is A♯, not B♭). */
+export function intervalSpelling(low: number, semis: number): [string, string] {
+  const root = rootName(low)
+  const [, top] = spell(root, { steps: [0, semis], degrees: [1, INTERVAL_DEGREE[semis]], plain: true } as Formula)
+  return [root, top]
+}
+
+/** Whether a key is written with flats (F, B♭, E♭, A♭, D♭ major; D, G, C, F, B♭, E♭ minor). */
+export const flatKey = (tonic: number, minor: boolean) => (minor ? [2, 7, 0, 5, 10, 3] : [5, 10, 3, 8, 1]).includes(mod(tonic, 12))
 
 // ---------- chords ----------
 
@@ -124,9 +140,12 @@ export const PROGRESSIONS: Record<number, Progression[]> = {
     { label: 'ii – V – I – I', chords: [[2, 'min'], [7, 'maj'], [0, 'maj'], [0, 'maj']] },
     { label: 'I – IV – I – V', chords: [[0, 'maj'], [5, 'maj'], [0, 'maj'], [7, 'maj']] },
   ],
+  // Several minor-key choices, so that hearing a minor home chord does not give the answer away.
   3: [
     { label: 'i – ♭VII – ♭VI – V', chords: [[0, 'min'], [10, 'maj'], [8, 'maj'], [7, 'maj']], minor: true },
     { label: 'i – iv – V – i', chords: [[0, 'min'], [5, 'min'], [7, 'maj'], [0, 'min']], minor: true },
+    { label: 'i – ♭VI – ♭III – ♭VII', chords: [[0, 'min'], [8, 'maj'], [3, 'maj'], [10, 'maj']], minor: true },
+    { label: 'i – ♭VII – ♭VI – ♭VII', chords: [[0, 'min'], [10, 'maj'], [8, 'maj'], [10, 'maj']], minor: true },
     { label: 'I – ♭VII – IV – I', chords: [[0, 'maj'], [10, 'maj'], [5, 'maj'], [0, 'maj']] },
   ],
 }
@@ -140,8 +159,8 @@ export interface ProgressionQ {
 
 export function progressionQuestion(level: number): ProgressionQ {
   const options = [1, 2, 3].filter((lv) => lv <= level).flatMap((lv) => PROGRESSIONS[lv])
-  // Favour the newest progressions so a higher level is not mostly revision.
-  const answer = Math.random() < 0.6 ? pick(PROGRESSIONS[level]) : pick(options)
+  // Lean toward the newest progressions so a higher level is not mostly revision, without starving the rest.
+  const answer = Math.random() < 0.35 ? pick(PROGRESSIONS[level]) : pick(options)
   return { key: pick([0, 2, 4, 5, 7, 9]), answer, options }
 }
 
@@ -162,14 +181,20 @@ export interface EchoQ {
 export function echoQuestion(level: number): EchoQ {
   const minor = level === 3 && Math.random() < 0.5
   const tonic = level === 1 ? 60 : level === 2 ? pick([60, 62, 65, 67]) : rand(57, 65)
-  const steps = level === 1 ? [0, 2, 4, 7, 9, 12] : [...(minor ? SCALES.minor : SCALES.major).steps, 12, 14]
+  // Level 1 stays between the home note and the 6th above it; the other levels reach a little past the octave.
+  const steps = level === 1 ? SCALES.major.steps.slice(0, 6) : [...(minor ? SCALES.minor : SCALES.major).steps, 12, 14]
   const count = level + 2
   const maxMove = level
-  let i = level === 1 ? 0 : pick(level === 2 ? [0, 2, 4] : [0, 2, 4, 7].filter((x) => x < steps.length))
+  let i = level === 1 ? pick([0, 0, 1, 2, 3, 4]) : pick(level === 2 ? [0, 2, 4] : [0, 2, 4, 7].filter((x) => x < steps.length))
   const notes = [tonic + steps[i]]
   while (notes.length < count) {
     const moves = []
-    for (let d = -maxMove; d <= maxMove; d++) if (d !== 0 && i + d >= 0 && i + d < steps.length) moves.push(d)
+    for (let d = -maxMove; d <= maxMove; d++) {
+      if (d === 0 || i + d < 0 || i + d >= steps.length) continue
+      // A tritone leap is hard to sing and to hear: leave it out.
+      if (Math.abs(steps[i + d] - steps[i]) === 6) continue
+      moves.push(d)
+    }
     i += pick(moves)
     notes.push(tonic + steps[i])
   }
@@ -178,11 +203,15 @@ export function echoQuestion(level: number): EchoQ {
 
 // ---------- rhythm ----------
 
-/** One-bar rhythms in 4/4. "r" is a quarter rest, "r8" an eighth rest; everything else is a note length. */
+/**
+ * One-bar rhythms in 4/4. "r" is a quarter rest, "r8" an eighth rest; everything else is a note length, and a
+ * trailing "-" ties it to the next note. No two rhythms of a level start their notes at the same moments, and a
+ * note that crosses the middle of the bar is written as two tied notes so that beat 3 can be seen.
+ */
 export const RHYTHMS: Record<number, string[]> = {
   1: ['q q q q', 'h q q', 'q q h', 'h h', 'q 8 8 q q', '8 8 q 8 8 q', 'q q 8 8 q', '8 8 8 8 h', 'q h q', '8 8 q h'],
-  2: ['qd 8 q q', 'q qd 8 q', 'q r q q', 'r q q q', 'qd 8 qd 8', 'h r q', 'q 8 8 r q', 'q q r q', 'hd q', 'q q qd 8'],
-  3: ['16 16 16 16 q q q', '8 16 16 q 8 16 16 q', 'q 16 16 8 q q', '8d 16 q 8d 16 q', 'q 8 q 8 q', '8 q 8 q q', '16 16 8 q 16 16 8 q', 'r8 8 q r8 8 q', '8 q q 8 q', 'q 8d 16 q q'],
+  2: ['qd 8 q q', 'q qd 8 q', 'q r q q', 'r q q q', 'qd 8 qd 8', 'r q r q', 'q 8 8 r q', 'q q r q', 'hd q', 'q q qd 8'],
+  3: ['16 16 16 16 q q q', '8 16 16 q 8 16 16 q', 'q 16 16 8 q q', '8d 16 q 8d 16 q', 'q 8 8- 8 8 q', '8 q 8 q q', '16 16 8 q 16 16 8 q', 'r8 8 q r8 8 q', '8 q 8- 8 8 q', 'q 8d 16 q q'],
 }
 
 export function rhythmPiece(pattern: string): Piece {

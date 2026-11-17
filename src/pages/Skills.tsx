@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { TRACKS, isOpen } from '../curriculum'
-import { focusSkills, RATINGS, skillStates, type Instrument, type SkillState } from '../curriculum/skills'
+import { EAR_DRILLS, focusSkills, RATINGS, skillStates, type Instrument, type SkillState } from '../curriculum/skills'
+import { DRILLS } from '../practice/ear'
 import { actions, useProfile } from '../store/store'
 
 const NAMES: Record<Instrument, string> = { guitar: 'Guitar', keys: 'Keyboard' }
@@ -30,6 +31,7 @@ function SkillRow({ instrument, state }: { instrument: Instrument; state: SkillS
           <Meter value={state.level} />
           <small className="muted">
             {state.done} of {state.lessons.length} lessons done
+            {state.info.id === 'ear' ? ` · ${EAR_DRILLS.reduce((n, d) => n + (p.ear[d]?.total ?? 0), 0)} drill answers` : ''}
           </small>
         </div>
       </div>
@@ -42,14 +44,34 @@ function SkillRow({ instrument, state }: { instrument: Instrument; state: SkillS
             </button>
           ))}
         </div>
-        {state.self !== null && state.self >= 2 && state.info.id !== 'ear' && state.info.id !== 'theory' && (
-          <small className="muted">All lessons for this skill are open to you.</small>
-        )}
-        {state.self !== null && state.self < 2 && state.info.id !== 'ear' && state.info.id !== 'theory' && <small className="muted">Its next lesson is open to you.</small>}
+        {state.self !== null && state.self >= 2 && state.info.id !== 'ear' && <small className="muted">All lessons for this skill are open to you.</small>}
+        {state.self !== null && state.self < 2 && state.info.id !== 'ear' && <small className="muted">Its next lesson is open to you.</small>}
+        {state.info.id === 'ear' && <small className="muted">Its lessons are always open.</small>}
         <button className="link" onClick={() => setOpen(!open)}>
           {open ? 'Hide lessons' : `Show its ${state.lessons.length} lessons`}
         </button>
       </div>
+      {state.outgrown && (
+        <p className="notice tight" data-rerate>
+          You have done {state.done} of this skill's {state.lessons.length} lessons since rating it "{RATINGS[state.self!]}". Is that still right? Tap a rating to update it.
+        </p>
+      )}
+      {state.info.id === 'ear' && (
+        <p className="muted tight" data-ear-drills>
+          Drills (right answers in the last ten at your level):{' '}
+          {DRILLS.map((d, k) => {
+            const stat = p.ear[d.id]
+            const recent = stat?.recent[stat.level]?.slice(-10) ?? []
+            return (
+              <span key={d.id}>
+                {k > 0 && ' · '}
+                <a href={`#/ear/${d.id}`}>{d.name}</a> {recent.length ? `${recent.reduce((a, b) => a + b, 0)}/${recent.length} at level ${stat!.level}` : 'not started'}
+              </span>
+            )
+          })}
+          . The bar rises as you answer, and a level counts as passed at eight right out of ten.
+        </p>
+      )}
       {open && (
         <ol className="rows">
           {state.lessons.map((r) => {

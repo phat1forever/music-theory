@@ -19,7 +19,7 @@ import {
   Voice,
   type StemmableNote,
 } from 'vexflow'
-import { barBeats, BEATS, pedalSpans, type Ev, type Piece } from '../theory/music'
+import { barBeats, barChords, BEATS, pedalSpans, type Ev, type Piece } from '../theory/music'
 import { mod, pc, pretty, SCALES, spell } from '../theory/theory'
 
 interface Props {
@@ -162,7 +162,16 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
           e.midi.forEach((m, i) => e.fingers![i] && byPitch.set(m, e.fingers![i]))
           shown.forEach((m, i) => {
             const f = byPitch.get(m - (guitar ? 12 : 0))
-            if (f) note.addModifier(new FretHandFinger(String(f)).setPosition(Modifier.Position.LEFT), i)
+            if (!f) return
+            const finger = new FretHandFinger(String(f)).setPosition(Modifier.Position.LEFT)
+            // Two notes a step apart sit almost on top of each other: nudge their numbers apart.
+            const above = i < shown.length - 1 && shown[i + 1] - m <= 2
+            const below = i > 0 && m - shown[i - 1] <= 2
+            if (above !== below) finger.setOffsetY(above ? 3 : -3)
+            // Keep the number clear of a ledger line.
+            const ledger = clef === 'treble' ? m <= 60 || m >= 81 : m >= 60 || m <= 40
+            if (ledger) finger.setOffsetX(-4)
+            note.addModifier(finger, i)
           })
         }
         const label = e.held || stacked ? undefined : e.fingers?.length ? e.fingers.join(' ') : !guitar ? e.text : undefined
@@ -181,17 +190,22 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
       })
     }
 
+    // The chord sounding in each bar: its name is already printed above the staff.
+    const sounding = barChords(piece)
     const tabNotes = (ms: Timed[]) =>
       ms.map((e) => {
-        // A note held over by a tie is not picked again, so the tab shows nothing new for it.
-        if (!e.midi.length || !e.tab || e.held) return new GhostNote({ duration: vexDur(e).replace('r', '') })
+        const text = e.text && e.text === sounding[Math.floor(e.beat / per)] ? undefined : e.text
+        // A note held over by a tie is not picked again, so the tab shows nothing new for it, unless it carries
+        // a marking (a bend's release, a hammer-on's target): then it is shown in brackets.
+        if (!e.midi.length || !e.tab || (e.held && !text)) return new GhostNote({ duration: vexDur(e).replace('r', '') })
         const note = new TabNote({
           positions: e.tab.map((p) => ({ str: p.string, fret: p.fret })),
           duration: vexDur(e),
         })
-        if (e.text)
+        if (e.held) note.setGhost(true)
+        if (text)
           note.addModifier(
-            new Annotation(e.text)
+            new Annotation(text)
               .setFont('Arial', 10, 'bold')
               .setVerticalJustification(Annotation.VerticalJustify.TOP),
             0,
@@ -263,9 +277,12 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
           beamGroups.push(low)
         }
 
+        // A bar that opens with a note tied over from the bar before needs room for the tie to be seen.
+        const tiedIn = top[idx][0]?.held || bottom?.[idx]?.[0]?.held ? 20 : 0
+        if (!lower && tiedIn) upper.setNoteStartX(upper.getNoteStartX() + tiedIn)
         if (lower) {
           lower.setContext(ctx).draw()
-          const start = Math.max(upper.getNoteStartX(), lower.getNoteStartX())
+          const start = Math.max(upper.getNoteStartX(), lower.getNoteStartX()) + tiedIn
           upper.setNoteStartX(start)
           lower.setNoteStartX(start)
           if (i === 0)
@@ -295,9 +312,25 @@ export function Score({ piece, cursor, good, bad, flats, spelling, follow }: Pro
           new StaveTie({ first_note: first, last_note: last, first_indices: indices, last_indices: indices }).setContext(ctx).draw()
         if (a.line === b.line) tie(a.note, b.note)
         else {
-          // Across a line break the tie is drawn in two halves.
+          // Across a line break the tie is drawn in two halves. The second half is a short arc into each
+          // notehead, drawn by hand: VexFlow's own starts at the clef and runs through it.
           tie(a.note, null)
-          tie(null, b.note)
+          const dir = b.note.getStemDirection()
+          const x1 = b.note.getTieLeftX() - 1
+          // Start in the space left after the clef, so the arc is long enough to read even past an accidental.
+          const x0 = Math.min(x1 - 14, b.note.checkStave().getNoteStartX() - 15)
+          const mid = (x0 + x1) / 2
+          ctx.save()
+          for (const y0 of b.note.getYs()) {
+            const y = y0 + 6 * dir
+            ctx.beginPath()
+            ctx.moveTo(x0, y)
+            ctx.quadraticCurveTo(mid, y + 6 * dir, x1, y)
+            ctx.quadraticCurveTo(mid, y + 8 * dir, x0, y)
+            ctx.closePath()
+            ctx.fill()
+          }
+          ctx.restore()
         }
       })
     // Sustain pedal: "Ped." where it goes down, a line while it is held, and a hook where it lifts, under the lowest staff.

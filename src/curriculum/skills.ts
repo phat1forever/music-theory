@@ -16,7 +16,8 @@ export interface SkillInfo {
 export const SKILLS: Record<Instrument, SkillInfo[]> = {
   guitar: [
     { id: 'rhythm', name: 'Rhythm and strumming', benchmark: 'You can strum a whole song in time with a pattern that has gaps in it, and keep going through chord changes.' },
-    { id: 'chords', name: 'Chords and changes', benchmark: 'You change between open chords without stopping, and can play F and Bm as barre chords.' },
+    { id: 'chords', name: 'Chords and changes', benchmark: 'You change between the open chords in time, without stopping, all the way through a song.' },
+    { id: 'barre', name: 'Barre chords', benchmark: 'You can play F and Bm as full barre chords that ring clearly, and move both shapes to other frets.' },
     { id: 'fingerstyle', name: 'Fingerpicking', benchmark: 'You can keep an arpeggio pattern going with thumb and fingers through a chord progression.' },
     { id: 'lead', name: 'Scales and soloing', benchmark: 'You can improvise a simple solo over a 12-bar blues with the pentatonic scale, using bends and hammer-ons.' },
     { id: 'theory', name: 'Fretboard and theory', benchmark: 'You can name the notes on the two lowest strings, and say which chords belong to a key.' },
@@ -27,7 +28,7 @@ export const SKILLS: Record<Instrument, SkillInfo[]> = {
     { id: 'technique', name: 'Scales and technique', benchmark: 'You can play C, G and F major scales hands together with the correct fingering.' },
     { id: 'chords', name: 'Chords and accompaniment', benchmark: 'You can play I, IV and V in close position in two keys and accompany a melody from chord symbols.' },
     { id: 'hands', name: 'Hands together', benchmark: 'You can play a piece where the hands have different rhythms, such as a melody over a broken-chord bass.' },
-    { id: 'expression', name: 'Pedal and expression', benchmark: 'You change the sustain pedal cleanly with the harmony and can make a melody louder than its accompaniment.' },
+    { id: 'expression', name: 'Pedal and expression', benchmark: 'You change the sustain pedal cleanly with the harmony: no blur between chords and no gaps in the sound.' },
     { id: 'theory', name: 'Theory', benchmark: 'You can build major and minor triads, and say which chords belong to a key.' },
     { id: 'ear', name: 'Ear', benchmark: 'You can tell major from minor, and find a simple tune on the keys without music.' },
   ],
@@ -41,6 +42,9 @@ export function skillLessons(instrument: Instrument, skill: Skill): LessonRef[] 
   return LESSONS.filter((r) => (r.track.id === instrument || ((skill === 'theory' || skill === 'ear') && r.track.id === 'theory')) && lessonSkill(r) === skill)
 }
 
+/** Answers needed at a level before its score counts as passing it: the same ten the drill page asks for. */
+export const EAR_PASS_ANSWERS = 10
+
 /** Share of recent answers that were right at a level, or null with fewer than five answers. */
 export function earAccuracy(stat: EarStat | undefined, level: number): number | null {
   const recent = stat?.recent[level]?.slice(-10) ?? []
@@ -49,7 +53,10 @@ export function earAccuracy(stat: EarStat | undefined, level: number): number | 
 
 /** 0-1: how far ear training has come, from the highest level passed (80% of the last ten) in each drill. */
 export function earEvidence(p: Profile): number {
-  const best = EAR_DRILLS.map((d) => Math.max(0, ...[1, 2, 3].filter((lv) => (earAccuracy(p.ear[d], lv) ?? 0) >= 0.8)))
+  const passed = (d: string, lv: number) => (p.ear[d]?.recent[lv]?.length ?? 0) >= EAR_PASS_ANSWERS && (earAccuracy(p.ear[d], lv) ?? 0) >= 0.8
+  // A level that is being worked on but not yet passed earns part of its credit, so effort shows on the map.
+  const working = (d: string, lv: number) => Math.min(lv - 0.2, (earAccuracy(p.ear[d], lv) ?? 0) * lv * 0.6)
+  const best = EAR_DRILLS.map((d) => Math.max(0, ...[1, 2, 3].map((lv) => (passed(d, lv) ? lv : working(d, lv)))))
   return best.reduce((a, b) => a + b, 0) / (EAR_DRILLS.length * 3)
 }
 
@@ -63,6 +70,8 @@ export interface SkillState {
   evidence: number
   /** 0-1 overall: the self-rating and the evidence, averaged when both exist */
   level: number
+  /** the self-rating looks out of date: low, with much of the skill's work done since */
+  outgrown: boolean
 }
 
 export function skillState(instrument: Instrument, info: SkillInfo, p: Profile): SkillState {
@@ -75,8 +84,12 @@ export function skillState(instrument: Instrument, info: SkillInfo, p: Profile):
   if (info.id === 'ear') evidence = lessonShare * 0.3 + earEvidence(p) * 0.7
   const raw = p.skillSelf[`${instrument}:${info.id}`]
   const self = raw === undefined ? null : raw
-  const level = self === null ? evidence : (self / 3 + evidence) / 2
-  return { info, self, lessons, done, evidence, level }
+  // The rating and the evidence are averaged, but work done can only raise the bar: a "new to me" rating given
+  // before the lessons were taken must not hold it down afterwards.
+  const level = self === null ? evidence : Math.max(evidence, (self / 3 + evidence) / 2)
+  // Time to look at the rating again: it says "new" or "developing" but a good share of the lessons are done.
+  const outgrown = self !== null && self < 2 && lessons.length > 0 && done / lessons.length >= (self === 0 ? 0.3 : 0.6)
+  return { info, self, lessons, done, evidence, level, outgrown }
 }
 
 export function skillStates(instrument: Instrument, p: Profile): SkillState[] {
@@ -97,7 +110,9 @@ export interface Focus {
 export function focusSkills(instrument: Instrument, p: Profile, count = 2): Focus[] {
   return skillStates(instrument, p)
     .map((state) => {
-      const todo = state.lessons.filter((r) => p.lessons[r.lesson.id] !== 'done')
+      // Lessons the placement check marked as known come back only for a skill the player has rated as weak.
+      const weak = state.self !== null && state.self < 2
+      const todo = state.lessons.filter((r) => p.lessons[r.lesson.id] !== 'done' && (weak || p.lessons[r.lesson.id] !== 'skipped'))
       const advanced = (state.self ?? 0) >= 2
       const ordered = advanced ? [...todo.filter((r) => r.unit.free), ...todo.filter((r) => !r.unit.free && !p.lessons[r.lesson.id])] : todo
       return { state, lessons: ordered.slice(0, 3) }

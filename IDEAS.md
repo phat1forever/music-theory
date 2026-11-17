@@ -40,11 +40,14 @@ still missing, in order:
   - Finger crossings and extensions inside melodies; more pieces where both hands move throughout.
   - A repertoire lesson between each new concept (most lessons have about one piece).
   - Touch lessons: legato, staccato, loud and soft (needs the notation and MIDI work above).
+  - Articulation and dynamics marks in every piece (the piano teacher's biggest remaining gap).
+  - A second lead-sheet tune where the left hand needs inversions, and one in G.
   - A keyboard-first Jam with left-hand comping patterns.
 - **Guitar**
   - More solo studies: a minor blues, a study in boxes 2 to 5, one in another key.
   - Unison bends and double stops; turnaround licks; call-and-response drills.
   - Variations on the shuffle rhythm pattern; muted "chuck" strums (needs a muted-note symbol).
+  (Both testers ranked chuck strums as the most valuable missing guitar skill.)
   - Moving a lick to another key or position.
   - Alternate-tuning lessons (DADGAD, Open G) for fingerstyle.
   - A "comping" mode in Jam, where you play rhythm and the app plays lead or bass.
@@ -62,12 +65,17 @@ still missing, in order:
 - **Chord quality in inversions and in a key** (hear "the IV chord", not only "major").
 - **Feed ear drills into the review schedule**, like exercises.
 - **Reference tunes of your own choosing** saved per interval.
+- **Scale degrees in a key**: hear the home chord, then one note, and name it as 1 to 7 (the most useful drill for playing by ear).
+- **Scales of the same length side by side**: today a pentatonic can be spotted by counting five notes, not by its sound.
+- **A low-pitch "home" drone** under the play-it-back drill, as an option.
 
 ## Skill map
 
 - **A diagnostic to set the ratings**: a short playing check per skill in place of pure
   self-rating.
 - **Per-skill history**: how each bar has moved over the weeks.
+- **Placement by skill**: a missed question should stop only that skill, not every later unit, and a theory miss should never skip the fretboard-notes lesson that barre chords rely on.
+- **A bass-clef reading question** in the keyboard placement, and a chord-symbol question.
 - **Weekly plan** built from the two focus skills, with a suggested split of practice time.
 
 ## Practice and grading
@@ -82,6 +90,8 @@ still missing, in order:
 - **Bend target check**: listen for the pitch a bend reaches, not only its starting note.
 - **Rhythm-only drills**: tap or strum a rhythm with no pitch checking.
 - **Cap self-rated tempos** set far above an exercise's goal.
+- **Check a barre chord in step mode** by asking for each string in turn, not one tap on any dot.
+- **Check the pedal and dynamics** from a MIDI keyboard (sustain controller, velocity): the pedal lesson can only be self-checked today.
 - **Prompt a human check-in** every few weeks (a teacher, or filming your hands).
 
 ## Notation
